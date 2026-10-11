@@ -103,15 +103,26 @@ jobs:
             echo "It should point at the upstream llama-server-*-android-arm64-v8a.zip."
             exit 1
           fi
-          mkdir -p /tmp/llama
+          mkdir -p /tmp/llama/out
           curl -sSL --retry 5 --retry-delay 3 --retry-all-errors --max-time 900 \
-            "$LLAMA_SERVER_URL" -o /tmp/llama/bundle.zip
-          unzip -q -o /tmp/llama/bundle.zip -d /tmp/llama/out
+            "$LLAMA_SERVER_URL" -o /tmp/llama/bundle
 
-          echo "=== bundle contents ==="
-          unzip -l /tmp/llama/bundle.zip | head -40
-          echo "=== extracted tree ==="
-          find /tmp/llama/out -type f | head -40
+          # The published asset is named .zip but has changed shape between
+          # releases: some are a tarball outright, some are a zip wrapping a
+          # tarball. Sniff rather than trust the extension.
+          if tar -tzf /tmp/llama/bundle >/dev/null 2>&1; then
+            tar -xzf /tmp/llama/bundle -C /tmp/llama/out
+          else
+            unzip -q -o /tmp/llama/bundle -d /tmp/llama/out
+          fi
+          inner="$(find /tmp/llama/out -maxdepth 2 -name '*.tar.gz' | head -1 || true)"
+          if [ -n "$inner" ]; then
+            echo "Unwrapping inner tarball: $inner"
+            tar -xzf "$inner" -C /tmp/llama/out
+          fi
+
+          echo "=== extracted files ==="
+          find /tmp/llama/out -type f | sed "s|/tmp/llama/out/||" | sort | head -40
 
           jni="android/app/src/main/jniLibs/arm64-v8a"
           mkdir -p "$jni" assets/bin
