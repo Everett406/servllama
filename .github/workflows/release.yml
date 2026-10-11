@@ -84,6 +84,50 @@ jobs:
           keytool -list -v -keystore android/app/upload-keystore.jks \
             -storepass "$STORE_PASSWORD" | grep 'SHA256:' || true
 
+      # The llama-server binaries are not tracked in git — upstream ships
+      # them as a release asset built in the Snapdragon toolchain. Fetch that
+      # bundle so the APK can actually start a server instead of failing with
+      # ENOENT on libllama-server.so.
+      - name: Fetch llama-server native bundle
+        id: bundle
+        env:
+          # Upstream ships a prebuilt bundle per release. The default matches
+          # the llama.cpp version in assets/bin/llama_server_manifest.json;
+          # set the LLAMA_SERVER_URL repository variable to override it without
+          # editing this file.
+          LLAMA_SERVER_URL: ${{ vars.LLAMA_SERVER_URL || 'https://github.com/ArkaneFans/servllama/releases/download/1.2.2/llama-server-v0.4.1-android-arm64-v8a.zip' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$LLAMA_SERVER_URL" ]; then
+            echo "::error::repository variable LLAMA_SERVER_URL is not set"
+            echo "It should point at the upstream llama-server-*-android-arm64-v8a.zip."
+            exit 1
+          fi
+          mkdir -p /tmp/llama
+          curl -sSL --retry 5 --retry-delay 3 --retry-all-errors --max-time 900 \
+            "$LLAMA_SERVER_URL" -o /tmp/llama/bundle.zip
+          unzip -q -o /tmp/llama/bundle.zip -d /tmp/llama/out
+
+          jni="android/app/src/main/jniLibs/arm64-v8a"
+          mkdir -p "$jni" assets/bin
+
+          count=0
+          while IFS= read -r so; do
+            cp "$so" "$jni/"
+            count=$((count + 1))
+          done < <(find /tmp/llama/out -type f -name 'lib*.so')
+
+          if [ "$count" -eq 0 ]; then
+            echo "::error::the bundle contained no lib*.so files"
+            exit 1
+          fi
+          # Only the files the app shells out to are mandatory; the rest are
+          # accelerator backends and may legitimately be absent.
+          test -f "$jni/libllama-server.so"
+          test -f "assets/bin/llama_server_manifest.json"
+          echo "Staged $count native libraries:"
+          ls -la "$jni"
+
       - name: Build signed release APK
         # No --split-per-abi: the app pins ndk.abiFilters to arm64-v8a
         # because the llama-server binaries are arm64-only, and Gradle
