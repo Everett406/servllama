@@ -44,6 +44,10 @@ it). Tags and commits on `main` are SSH-signed — see
 - The release workflow failed to parse: a bare `grep SHA256:` was read as
   a YAML mapping key, and a column-0 heredoc terminator truncated the
   surrounding block scalar.
+- The release build no longer uses `--split-per-abi`. The app pins
+  `ndk.abiFilters` to `arm64-v8a` because the llama-server binaries are
+  arm64-only, and Gradle rejects a split whose ABIs overlap an explicit
+  filter.
 
 ## [1.3.1] - 2026-10-11
 
