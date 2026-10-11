@@ -6,8 +6,11 @@ import 'package:servllama/core/models/inference_engine.dart';
 /// separation, so they must be used as a set — swapping one member for a
 /// nearby hue breaks the guarantee.
 ///
-/// Engine identity is blue/orange. Blue + violet was tried first and rejected:
-/// it failed CVD separation badly (deutan ΔE 4.6 light, 1.3 dark).
+/// Engine identity is blue/amber. Blue + violet was tried first and rejected:
+/// it failed CVD separation badly (deutan ΔE 4.6 light, 1.3 dark). The amber
+/// is deliberately darker than the brand orange (#D97757) and engine identity
+/// is only ever rendered as an outlined chip with a text label, so the two
+/// are separated by form as well as hue.
 ///
 /// Status colors always appear with a dot or icon plus a label; the warning
 /// fill (#FAB219) is 1.83:1 on white and is never used for text — that is what
@@ -28,7 +31,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   static const AppPalette light = AppPalette(
     engineLlama: Color(0xFF3B6BF5),
-    engineMnn: Color(0xFFE5601F),
+    engineMnn: Color(0xFFC2703A),
     okMark: Color(0xFF0CA30C),
     okText: Color(0xFF0A7D0A),
     warningMark: Color(0xFFFAB219),
@@ -40,7 +43,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   static const AppPalette dark = AppPalette(
     engineLlama: Color(0xFF7DA2FF),
-    engineMnn: Color(0xFFE0703A),
+    engineMnn: Color(0xFFE08A54),
     okMark: Color(0xFF3ECF5E),
     okText: Color(0xFF6FE38A),
     warningMark: Color(0xFFFAB219),
