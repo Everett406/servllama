@@ -143,7 +143,7 @@ void main() {
     });
 
     testWidgets(
-      'does not highlight the currently selected session in history page',
+      'highlights the currently selected session in history page',
       (tester) async {
         final provider = await _createProvider(
           sessions: <ChatSessionRecord>[
@@ -156,29 +156,26 @@ void main() {
         await tester.pumpWidget(_TestHost(provider: provider));
         await tester.pumpAndSettle();
 
-        final colorScheme = Theme.of(
-          tester.element(find.byType(ChatHistoryPage)),
-        ).colorScheme;
-        final sessionInk = tester.widget<Ink>(
-          find.ancestor(
-            of: find.byKey(const Key('history_session_item_s2')),
-            matching: find.byType(Ink),
-          ),
-        );
-        final sessionTitle = tester.widget<Text>(
-          find.descendant(
-            of: find.byKey(const Key('history_session_item_s2')),
-            matching: find.text('会话二'),
-          ),
-        );
+        TextStyle titleStyleOf(String sessionId, String title) {
+          final text = tester.widget<Text>(
+            find.descendant(
+              of: find.byKey(Key('history_session_item_$sessionId')),
+              matching: find.text(title),
+            ),
+          );
+          return text.style!;
+        }
 
         expect(provider.selectedSession?.id, 's2');
-        expect(
-          (sessionInk.decoration! as BoxDecoration).color,
-          colorScheme.surfaceContainerLowest,
-        );
-        expect(sessionTitle.style?.color, colorScheme.onSurface);
-        expect(sessionTitle.style?.fontWeight, FontWeight.w500);
+
+        // The selected row has to be visibly distinct from an unselected
+        // one. The old page drew both identically and relied on the sidebar
+        // alone to show where you were, which left this page ambiguous.
+        final selected = titleStyleOf('s2', '会话二');
+        final unselected = titleStyleOf('s1', '会话一');
+        expect(selected.color, isNot(unselected.color));
+        expect(selected.fontWeight, FontWeight.w600);
+        expect(unselected.fontWeight, FontWeight.w400);
       },
     );
 

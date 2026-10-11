@@ -138,8 +138,19 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView), const Offset(0, -1200));
-      await tester.pumpAndSettle();
+      // The settings list is a SliverList: it only builds elements near the
+      // viewport, so which sliders are on screen depends on how tall the
+      // sections above them render. Sweep down until the performance sliders
+      // (the only ones with 7 divisions, 1-8) are built and visible, instead
+      // of guessing a fixed drag distance.
+      bool performanceSlidersVisible() => tester
+          .widgetList<Slider>(find.byType(Slider))
+          .any((slider) => slider.divisions == 7);
+
+      for (var i = 0; i < 12 && !performanceSlidersVisible(); i++) {
+        await tester.drag(find.byType(ListView), const Offset(0, -200));
+        await tester.pumpAndSettle();
+      }
 
       final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
       final performanceSliders = sliders.sublist(sliders.length - 2);

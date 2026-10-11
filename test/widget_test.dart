@@ -82,24 +82,21 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('新对话')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('chat_input_field')), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
 
     expect(find.text('首页'), findsNothing);
     expect(find.text('原型'), findsNothing);
     expect(find.text('聊天'), findsNothing);
-    expect(find.text('服务器'), findsOneWidget);
+    expect(find.text('模型库'), findsOneWidget);
     expect(find.text('设置'), findsOneWidget);
+    expect(find.text('关于'), findsOneWidget);
     expect(find.byKey(const Key('drawer_search_box')), findsOneWidget);
-    expect(find.byKey(const Key('drawer_history_button')), findsOneWidget);
     expect(find.byKey(const Key('drawer_server_action')), findsOneWidget);
     expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
-    expect(find.byKey(const Key('drawer_server_status_badge')), findsOneWidget);
+    expect(find.byKey(const Key('chat_server_status_badge')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s1')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s2')), findsOneWidget);
 
@@ -120,15 +117,12 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('新对话')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('chat_input_field')), findsOneWidget);
 
     // Returning from the server page restores the sidebar in whatever state it
     // was left in, so only reopen it when it actually closed.
     if (find.byKey(const Key('drawer_search_input')).evaluate().isEmpty) {
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
       await tester.pumpAndSettle();
     }
     // The filter lives on the provider and survives the round trip, so it
@@ -138,12 +132,9 @@ void main() {
     await tester.tap(find.byKey(const Key('chat_session_item_s2')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('会话二')),
-      findsOneWidget,
-    );
+    expect(find.text('会话二'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
     await tester.longPress(find.byKey(const Key('chat_session_item_s2')));
     await tester.pump();
@@ -193,12 +184,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('新对话')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('chat_input_field')), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
 
     expect(find.text('暂无对话'), findsOneWidget);
@@ -216,10 +204,7 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('新对话')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('chat_input_field')), findsOneWidget);
   });
 
   testWidgets('opens chat history page from drawer history button', (
@@ -258,9 +243,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('drawer_history_button')));
+    await tester.tap(find.byKey(const Key('chat_open_history_button')));
     await tester.pumpAndSettle();
 
     expect(
@@ -306,7 +289,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('drawer_settings_action')));
     await tester.pumpAndSettle();
@@ -358,18 +341,17 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('drawer_history_button')));
+    // History lives in the chat context bar, so there is no need to open the
+    // sidebar first — and the drawer scrim would swallow the tap anyway.
+    await tester.tap(find.byKey(const Key('chat_open_history_button')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('history_session_item_s2')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('会话二')),
-      findsOneWidget,
-    );
+    // Back on the chat canvas: the session title shows in the context bar
+    // and the sidebar is not left hanging open.
+    expect(find.text('会话二'), findsWidgets);
     expect(find.byKey(const Key('drawer_search_box')), findsNothing);
     expect(find.text('服务器'), findsNothing);
     expect(find.text('设置'), findsNothing);
