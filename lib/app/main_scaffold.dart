@@ -1,20 +1,32 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/widgets/brand_mark.dart';
+import 'package:servllama/app/widgets/shell_bits.dart';
+import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/features/chat/pages/chat_history_page.dart';
 import 'package:servllama/features/chat/pages/chat_page.dart';
-import 'package:servllama/features/chat/widgets/chat_session_drawer_section.dart';
+import 'package:servllama/features/chat/providers/chat_provider.dart';
+import 'package:servllama/features/chat/widgets/chat_session_list.dart';
 import 'package:servllama/features/chat/widgets/chat_session_search_field.dart';
-import 'package:servllama/features/mnn_test/pages/mnn_test_page.dart';
+import 'package:servllama/features/about/pages/about_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
-import 'package:servllama/features/server/pages/debug_page.dart';
 import 'package:servllama/features/server/pages/model_management_page.dart';
 import 'package:servllama/features/server/pages/server_page.dart';
 import 'package:servllama/features/settings/pages/settings_page.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/push_sidebar.dart';
 
+/// The application shell: a persistent sidebar on wide screens, an overlay
+/// on phones, and the chat canvas as the single child.
+///
+/// The sidebar deliberately stays chrome-free — no boxed "menu tiles", no
+/// nested cards. Warm neutrals plus a single accent only reads as calm if
+/// the structure comes from type and whitespace instead of borders.
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
 
@@ -23,165 +35,382 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  final PushSidebarController _sidebarController = PushSidebarController();
-  double _embeddedSidebarWidth = 300;
+  final PushSidebarController _sidebar = PushSidebarController();
+  double _sidebarWidth = 272;
 
-  Future<void> _closeSidebar() {
-    return _sidebarController.close();
+  void _closeSidebarIfOverlay() {
+    if (_sidebar.isDrawerMode && _sidebar.isOpen) {
+      unawaited(_sidebar.close());
+    }
   }
 
-  Future<void> _toggleSidebar() {
-    return _sidebarController.toggle();
-  }
+  Future<void> _openSidebar() => _sidebar.open();
 
-  Future<void> _pushFromSidebar(Widget page) async {
+  Future<void> _push(Widget page) async {
     final navigator = Navigator.of(context);
     await navigator.push(MaterialPageRoute<void>(builder: (_) => page));
   }
 
-  Future<void> _pushHistoryPage() async {
+  Future<void> _pushHistory() async {
     final navigator = Navigator.of(context);
     await navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => ChatHistoryPage(
-          onSessionOpened: () {
-            if (_sidebarController.isDrawerMode) {
-              _closeSidebar();
-            }
-          },
+          onSessionOpened: _closeSidebarIfOverlay,
         ),
       ),
     );
   }
 
-  Future<void> _handleSessionOpened() {
-    if (_sidebarController.isDrawerMode) {
-      return _closeSidebar();
-    }
-    return Future<void>.value();
-  }
-
-  void _handleSidebarWidthChanged(double width) {
-    setState(() {
-      _embeddedSidebarWidth = width;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final colorScheme = theme.colorScheme;
-    final serverProvider = context.watch<EngineRuntimeProvider?>();
-    final downloadProvider = context.watch<DownloadProvider?>();
+    final runtime = context.watch<EngineRuntimeProvider?>();
+    final downloads = context.watch<DownloadProvider?>();
+    final chat = context.watch<ChatProvider?>();
 
     return _DownloadCompletedListener(
       child: Scaffold(
         body: PushSidebar(
-          controller: _sidebarController,
-          semanticLabel: l10n.appTitle,
-          drawerWidth: 300,
-          maxScrimOpacity: 0.15,
-          embeddedSidebarWidth: _embeddedSidebarWidth,
-          onSidebarWidthChanged: _handleSidebarWidthChanged,
-          onSidebarWidthChangeEnd: _handleSidebarWidthChanged,
+          controller: _sidebar,
+          semanticLabel: context.l10n.appTitle,
+          embeddedSidebarWidth: _sidebarWidth,
+          onSidebarWidthChanged: (w) => setState(() => _sidebarWidth = w),
+          maxScrimOpacity: 0.18,
           drawer: DecoratedBox(
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLowest,
+              color: context.sidebar,
+              border: Border(right: BorderSide(color: context.border)),
             ),
             child: SafeArea(
+              right: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _SidebarHeader(controller: _sidebar),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 5),
-                    child: Row(
-                      children: [
-                        const Expanded(child: _DrawerSearchBox()),
-                        const SizedBox(width: 12),
-                        _DrawerCircleButton(
-                          key: const Key('drawer_history_button'),
-                          icon: Icons.history_rounded,
-                          tooltip: l10n.drawerAllHistoryTooltip,
-                          onPressed: _pushHistoryPage,
-                        ),
-                      ],
+                    padding: const EdgeInsets.fromLTRB(
+                      ClaudeSpacing.md,
+                      4,
+                      ClaudeSpacing.md,
+                      ClaudeSpacing.md,
+                    ),
+                    child: _NewChatButton(
+                      onPressed: () {
+                        _closeSidebarIfOverlay();
+                        chat?.createSession();
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: ClaudeSpacing.md,
+                    ),
+                    child: ChatSessionSearchField(
+                      key: const Key('drawer_search_box'),
+                      fieldKey: const Key('drawer_search_input'),
+                      hintText: context.l10n.chatSearchHint,
                     ),
                   ),
                   Expanded(
-                    child: ChatSessionDrawerSection(
-                      presentationContext: context,
-                      isChatSelected: true,
-                      onOpenChat: _handleSessionOpened,
+                    child: ChatSessionList(
+                      onSessionOpened: _closeSidebarIfOverlay,
                     ),
                   ),
-                  Divider(
-                    height: 1,
-                    color: colorScheme.outlineVariant.withAlpha(120),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
-                    child: Column(
-                      children: [
-                        _DrawerActionBlock(
-                          key: const Key('drawer_server_action'),
-                          icon: Icons.dns_outlined,
-                          title: l10n.drawerServer,
-                          showStatusBadge: true,
-                          isOnline: serverProvider?.isRunning == true,
-                          onTap: () => _pushFromSidebar(const ServerPage()),
-                        ),
-                        const SizedBox(height: 8),
-                        _DrawerActionBlock(
-                          key: const Key('drawer_models_action'),
-                          icon: Icons.inventory_2_outlined,
-                          title: l10n.modelLibraryTitle,
-                          badgeLabel:
-                              (downloadProvider?.activeTaskCount ?? 0) == 0
-                              ? null
-                              : '${downloadProvider!.activeTaskCount}',
-                          onTap: () =>
-                              _pushFromSidebar(const ModelManagementPage()),
-                        ),
-                        const SizedBox(height: 8),
-                        _DrawerActionBlock(
-                          key: const Key('drawer_settings_action'),
-                          icon: Icons.settings_outlined,
-                          title: l10n.drawerSettings,
-                          onTap: () => _pushFromSidebar(const SettingsPage()),
-                        ),
-                        if (kDebugMode) ...[
-                          const SizedBox(height: 8),
-                          _DrawerActionBlock(
-                            key: const Key('drawer_mnn_test_action'),
-                            icon: Icons.memory_outlined,
-                            // Debug-only entry; intentionally not localized.
-                            title: 'MNN 测试',
-                            onTap: () => _pushFromSidebar(const MnnTestPage()),
-                          ),
-                          const SizedBox(height: 8),
-                          _DrawerActionBlock(
-                            key: const Key('drawer_debug_action'),
-                            icon: Icons.bug_report_outlined,
-                            // Debug-only entry; intentionally not localized.
-                            title: '调试',
-                            onTap: () => _pushFromSidebar(const DebugPage()),
-                          ),
-                        ],
-                      ],
-                    ),
+                  _SidebarFooter(
+                    runtime: runtime,
+                    activeDownloads: downloads?.activeTaskCount ?? 0,
+                    onOpenServer: () => _push(const ServerPage()),
+                    onOpenModels: () => _push(const ModelManagementPage()),
+                    onOpenSettings: () => _push(const SettingsPage()),
+                    onOpenAbout: () => _push(const AboutPage()),
                   ),
                 ],
               ),
             ),
           ),
-          child: ChatPage(onOpenSidebar: _toggleSidebar),
+          child: ChatPage(
+            onOpenSidebar: _openSidebar,
+            onOpenHistory: _pushHistory,
+          ),
         ),
       ),
     );
   }
 }
 
+class _SidebarHeader extends StatelessWidget {
+  const _SidebarHeader({required this.controller});
+
+  final PushSidebarController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ClaudeSpacing.lg,
+        ClaudeSpacing.lg,
+        ClaudeSpacing.sm,
+        ClaudeSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          const Expanded(child: BrandLockup(size: 20)),
+          IconButton(
+            key: const Key('sidebar_collapse_button'),
+            tooltip: l10n.sidebarCollapse,
+            onPressed: controller.close,
+            icon: const Icon(Icons.keyboard_double_arrow_left_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewChatButton extends StatelessWidget {
+  const _NewChatButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: OutlinedButton.icon(
+        key: const Key('sidebar_new_chat_button'),
+        onPressed: onPressed,
+        icon: const Icon(Icons.add_rounded, size: 19),
+        label: Text(context.l10n.chatNewConversation),
+        style: OutlinedButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          backgroundColor: context.surface,
+          side: BorderSide(color: context.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(ClaudeRadius.md),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.md),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarFooter extends StatelessWidget {
+  const _SidebarFooter({
+    required this.runtime,
+    required this.activeDownloads,
+    required this.onOpenServer,
+    required this.onOpenModels,
+    required this.onOpenSettings,
+    required this.onOpenAbout,
+  });
+
+  final EngineRuntimeProvider? runtime;
+  final int activeDownloads;
+  final VoidCallback onOpenServer;
+  final VoidCallback onOpenModels;
+  final VoidCallback onOpenSettings;
+  final VoidCallback onOpenAbout;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: context.border)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          ClaudeSpacing.md,
+          ClaudeSpacing.sm,
+          ClaudeSpacing.md,
+          ClaudeSpacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _EngineStrip(runtime: runtime, onTap: onOpenServer),
+            const SizedBox(height: ClaudeSpacing.xs),
+            _SidebarNavRow(
+              keyValue: 'sidebar_models_row',
+              icon: Icons.dns_outlined,
+              label: l10n.modelLibraryTitle,
+              badge: activeDownloads == 0 ? null : '$activeDownloads',
+              onTap: onOpenModels,
+            ),
+            _SidebarNavRow(
+              keyValue: 'drawer_settings_action',
+              icon: Icons.tune_rounded,
+              label: l10n.drawerSettings,
+              onTap: onOpenSettings,
+            ),
+            _SidebarNavRow(
+              keyValue: 'sidebar_about_row',
+              icon: Icons.info_outline_rounded,
+              label: l10n.settingsAbout,
+              onTap: onOpenAbout,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Runtime summary strip. Doubles as the entry point to the server page
+/// because it is the one place that always answers "is anything running".
+class _EngineStrip extends StatelessWidget {
+  const _EngineStrip({required this.runtime, required this.onTap});
+
+  final EngineRuntimeProvider? runtime;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = runtime?.status ?? EngineRuntimeStatus.idle;
+    final (dotColor, label) = switch (status) {
+      EngineRuntimeStatus.ready => (context.okText, context.l10n.serverStatusRunning),
+      EngineRuntimeStatus.preparing => (
+        context.accent,
+        context.l10n.serverStatusPreparing,
+      ),
+      EngineRuntimeStatus.stopping => (
+        context.accent,
+        context.l10n.serverStatusStopping,
+      ),
+      EngineRuntimeStatus.error => (context.dangerText, context.l10n.serverStatusError),
+      EngineRuntimeStatus.idle => (
+        context.inkTertiary,
+        context.l10n.sidebarEngineIdle,
+      ),
+    };
+
+    final engineName = runtime?.activeEngine.displayName ?? 'llama.cpp';
+    final modelName = runtime?.activeModelName;
+    final detail = modelName == null || modelName.isEmpty
+        ? engineName
+        : '$engineName · $modelName';
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(ClaudeRadius.md),
+      child: InkWell(
+        key: const Key('drawer_server_action'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(ClaudeRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ClaudeSpacing.sm,
+            vertical: ClaudeSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              StatusDot(
+                color: dotColor,
+                size: 7,
+                pulsing: status == EngineRuntimeStatus.preparing ||
+                    status == EngineRuntimeStatus.stopping,
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: dotColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarNavRow extends StatelessWidget {
+  const _SidebarNavRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.keyValue,
+    this.badge,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final String? keyValue;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(ClaudeRadius.sm),
+      child: InkWell(
+        key: keyValue == null ? null : Key(keyValue!),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(ClaudeRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ClaudeSpacing.sm,
+            vertical: 9,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: context.inkSecondary),
+              const SizedBox(width: ClaudeSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.ink,
+                  ),
+                ),
+              ),
+              if (badge != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: context.accent,
+                    borderRadius: BorderRadius.circular(ClaudeRadius.pill),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: ClaudeColors.onAccent,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bridges the kernel's `onDownloadCompleted` hook to a snackbar. Lives here
+/// rather than in the provider because the kernel must not know about
+/// ScaffoldMessenger.
 class _DownloadCompletedListener extends StatefulWidget {
   const _DownloadCompletedListener({required this.child});
 
@@ -200,22 +429,16 @@ class _DownloadCompletedListenerState
   void didChangeDependencies() {
     super.didChangeDependencies();
     final downloads = context.read<DownloadProvider?>();
-    if (identical(_downloads, downloads)) {
-      return;
-    }
+    if (identical(_downloads, downloads)) return;
     _unbind();
     _downloads = downloads;
     _downloads?.onDownloadCompleted = _showCompleted;
   }
 
   void _showCompleted(String fileName) {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) {
-      return;
-    }
+    if (messenger == null) return;
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(content: Text(context.l10n.downloadCompleted(fileName))),
@@ -236,168 +459,4 @@ class _DownloadCompletedListenerState
 
   @override
   Widget build(BuildContext context) => widget.child;
-}
-
-class _DrawerSearchBox extends StatelessWidget {
-  const _DrawerSearchBox();
-
-  @override
-  Widget build(BuildContext context) {
-    return ChatSessionSearchField(
-      key: const Key('drawer_search_box'),
-      fieldKey: const Key('drawer_search_input'),
-      hintText: context.l10n.chatSearchHint,
-    );
-  }
-}
-
-class _DrawerCircleButton extends StatelessWidget {
-  const _DrawerCircleButton({
-    super.key,
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        foregroundColor: colorScheme.onSurfaceVariant,
-        hoverColor: colorScheme.surfaceContainerLow,
-        highlightColor: colorScheme.surfaceContainerLow,
-      ),
-      icon: Icon(icon, size: 26),
-    );
-  }
-}
-
-class _DrawerActionBlock extends StatefulWidget {
-  const _DrawerActionBlock({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.showStatusBadge = false,
-    this.isOnline = false,
-    this.badgeLabel,
-  });
-
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final bool showStatusBadge;
-  final bool isOnline;
-  final String? badgeLabel;
-
-  @override
-  State<_DrawerActionBlock> createState() => _DrawerActionBlockState();
-}
-
-class _DrawerActionBlockState extends State<_DrawerActionBlock> {
-  bool _isPressed = false;
-
-  void _setPressed(bool value) {
-    if (_isPressed == value || !mounted) return;
-    setState(() => _isPressed = value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final borderColor = colorScheme.outlineVariant.withAlpha(120);
-    final iconColor = colorScheme.onSurfaceVariant;
-    final contentOpacity = _isPressed ? 0.58 : 1.0;
-
-    return Semantics(
-      button: true,
-      enabled: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapUp: (_) => _setPressed(false),
-        onTapCancel: () => _setPressed(false),
-        onTap: widget.onTap,
-        child: AnimatedOpacity(
-          opacity: contentOpacity,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Icon(widget.icon, size: 22, color: iconColor),
-                      ),
-                      if (widget.showStatusBadge)
-                        Positioned(
-                          right: 8,
-                          bottom: -1,
-                          child: Container(
-                            key: const Key('drawer_server_status_badge'),
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: widget.isOnline
-                                  ? const Color(0xFF10B981)
-                                  : colorScheme.outlineVariant,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colorScheme.surfaceContainerLowest,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  if (widget.badgeLabel != null) ...[
-                    Badge(
-                      key: const Key('drawer_models_download_badge'),
-                      label: Text(widget.badgeLabel!),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: colorScheme.onSurfaceVariant.withAlpha(180),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

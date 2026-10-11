@@ -93,7 +93,7 @@
   "chatPreviousMessageVersion": "上一版本",
   "chatNextMessageVersion": "下一版本",
   "chatJumpToLatest": "跳到最新消息",
-  "chatMessageCopied": "消息已复制",
+  "chatMessageCopied": "已复制",
   "chatMessageUpdated": "消息已更新",
   "chatEditMessageTitle": "编辑消息",
   "chatEditMessageHint": "修改这条消息",
@@ -529,13 +529,21 @@
   "modelSettingsProjectorSelected": "当前选用",
   "modelSettingsProjectorDeleteConfirm": "删除「{fileName}」？删除当前版本后会选用其他已下载版本；没有其他版本时将关闭视觉。",
   "@modelSettingsProjectorDeleteConfirm": {
-    "placeholders": { "fileName": { "type": "String" } }
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
   },
   "modelSettingsOpenRepository": "打开模型仓库",
   "modelSettingsRepositoryOpenFailed": "无法打开模型仓库，请稍后重试。",
   "modelSettingsVisionUpdateFailed": "更新视觉配置失败：{error}",
   "@modelSettingsVisionUpdateFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "modelSettingsProjectorDownloadPending": "投影器下载完成或取消后，可重命名或删除模型。",
   "repoVisionNoMmproj": "该仓库没有 mmproj 文件。",
@@ -635,7 +643,13 @@
   "mnnBackendTitle": "MNN 推理后端",
   "mnnBackendNextStart": "下次加载模型时生效。",
   "mnnBackendActive": "已加载的后端：{backend}",
-  "@mnnBackendActive": {"placeholders": {"backend": {"type": "String"}}},
+  "@mnnBackendActive": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
   "mnnBackendRefresh": "检测可用后端",
   "mnnBackendCpu": "CPU",
   "mnnBackendOpencl": "OpenCL GPU",
@@ -668,7 +682,9 @@
   "mnnMmapCacheSubtitle": "当前缓存：{size}",
   "@mnnMmapCacheSubtitle": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
   "mnnMmapCacheEmpty": "暂无 mmap 缓存",
@@ -678,15 +694,29 @@
   "mnnMmapCacheDialogContent": "将删除已生成的 mmap 和 GPU 运行时缓存（{size}）。下次加载模型时会重新生成。",
   "@mnnMmapCacheDialogContent": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
   "mnnMmapCacheCleared": "已清理 {size} mmap 缓存",
   "@mnnMmapCacheCleared": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
-  "mnnMmapCacheClearFailed": "无法清理 mmap 缓存。"
-
+  "mnnMmapCacheClearFailed": "无法清理 mmap 缓存。",
+  "chatNewConversation": "新对话",
+  "chatGroupToday": "今天",
+  "chatGroupYesterday": "昨天",
+  "chatGroupPreviousSevenDays": "过去 7 天",
+  "chatGroupPreviousThirtyDays": "过去 30 天",
+  "chatGroupOlder": "更早",
+  "sidebarCollapse": "收起侧栏",
+  "sidebarExpand": "展开侧栏",
+  "sidebarBrowseModels": "浏览模型",
+  "sidebarEngineIdle": "未运行",
+  "chatThinkingLabel": "思考过程"
 }

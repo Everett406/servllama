@@ -198,7 +198,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatJumpToLatest => '跳到最新消息';
 
   @override
-  String get chatMessageCopied => '消息已复制';
+  String get chatMessageCopied => '已复制';
 
   @override
   String get chatMessageUpdated => '消息已更新';
@@ -1540,4 +1540,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mnnMmapCacheClearFailed => '无法清理 mmap 缓存。';
+
+  @override
+  String get chatNewConversation => '新对话';
+
+  @override
+  String get chatGroupToday => '今天';
+
+  @override
+  String get chatGroupYesterday => '昨天';
+
+  @override
+  String get chatGroupPreviousSevenDays => '过去 7 天';
+
+  @override
+  String get chatGroupPreviousThirtyDays => '过去 30 天';
+
+  @override
+  String get chatGroupOlder => '更早';
+
+  @override
+  String get sidebarCollapse => '收起侧栏';
+
+  @override
+  String get sidebarExpand => '展开侧栏';
+
+  @override
+  String get sidebarBrowseModels => '浏览模型';
+
+  @override
+  String get sidebarEngineIdle => '未运行';
+
+  @override
+  String get chatThinkingLabel => '思考过程';
 }

@@ -201,7 +201,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatJumpToLatest => 'Jump to latest';
 
   @override
-  String get chatMessageCopied => 'Message copied';
+  String get chatMessageCopied => 'Copied';
 
   @override
   String get chatMessageUpdated => 'Message updated';
@@ -1625,4 +1625,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mnnMmapCacheClearFailed => 'Could not clear the mmap cache.';
+
+  @override
+  String get chatNewConversation => 'New chat';
+
+  @override
+  String get chatGroupToday => 'Today';
+
+  @override
+  String get chatGroupYesterday => 'Yesterday';
+
+  @override
+  String get chatGroupPreviousSevenDays => 'Previous 7 days';
+
+  @override
+  String get chatGroupPreviousThirtyDays => 'Previous 30 days';
+
+  @override
+  String get chatGroupOlder => 'Older';
+
+  @override
+  String get sidebarCollapse => 'Collapse sidebar';
+
+  @override
+  String get sidebarExpand => 'Expand sidebar';
+
+  @override
+  String get sidebarBrowseModels => 'Browse models';
+
+  @override
+  String get sidebarEngineIdle => 'Not running';
+
+  @override
+  String get chatThinkingLabel => 'Thinking';
 }

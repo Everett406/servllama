@@ -455,7 +455,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatMessageCopied.
   ///
   /// In en, this message translates to:
-  /// **'Message copied'**
+  /// **'Copied'**
   String get chatMessageCopied;
 
   /// No description provided for @chatMessageUpdated.
@@ -2890,6 +2890,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not clear the mmap cache.'**
   String get mnnMmapCacheClearFailed;
+
+  /// No description provided for @chatNewConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get chatNewConversation;
+
+  /// No description provided for @chatGroupToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get chatGroupToday;
+
+  /// No description provided for @chatGroupYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get chatGroupYesterday;
+
+  /// No description provided for @chatGroupPreviousSevenDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous 7 days'**
+  String get chatGroupPreviousSevenDays;
+
+  /// No description provided for @chatGroupPreviousThirtyDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous 30 days'**
+  String get chatGroupPreviousThirtyDays;
+
+  /// No description provided for @chatGroupOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get chatGroupOlder;
+
+  /// No description provided for @sidebarCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse sidebar'**
+  String get sidebarCollapse;
+
+  /// No description provided for @sidebarExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand sidebar'**
+  String get sidebarExpand;
+
+  /// No description provided for @sidebarBrowseModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse models'**
+  String get sidebarBrowseModels;
+
+  /// No description provided for @sidebarEngineIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running'**
+  String get sidebarEngineIdle;
+
+  /// No description provided for @chatThinkingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get chatThinkingLabel;
 }
 
 class _AppLocalizationsDelegate

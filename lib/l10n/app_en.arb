@@ -93,7 +93,7 @@
   "chatPreviousMessageVersion": "Previous version",
   "chatNextMessageVersion": "Next version",
   "chatJumpToLatest": "Jump to latest",
-  "chatMessageCopied": "Message copied",
+  "chatMessageCopied": "Copied",
   "chatMessageUpdated": "Message updated",
   "chatEditMessageTitle": "Edit message",
   "chatEditMessageHint": "Update this message",
@@ -626,13 +626,21 @@
   "modelSettingsProjectorSelected": "Selected",
   "modelSettingsProjectorDeleteConfirm": "Delete “{fileName}”? If it is selected, another downloaded version will be used. Vision turns off when no versions remain.",
   "@modelSettingsProjectorDeleteConfirm": {
-    "placeholders": { "fileName": { "type": "String" } }
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
   },
   "modelSettingsOpenRepository": "Open model repository",
   "modelSettingsRepositoryOpenFailed": "Could not open the model repository. Please try again.",
   "modelSettingsVisionUpdateFailed": "Could not update vision settings: {error}",
   "@modelSettingsVisionUpdateFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "modelSettingsProjectorDownloadPending": "Finish or cancel projector downloads before renaming or deleting the model.",
   "repoVisionNoMmproj": "This repository has no mmproj files.",
@@ -841,7 +849,13 @@
   "mnnBackendTitle": "MNN inference backend",
   "mnnBackendNextStart": "Changes apply the next time a model is loaded.",
   "mnnBackendActive": "Loaded backend: {backend}",
-  "@mnnBackendActive": {"placeholders": {"backend": {"type": "String"}}},
+  "@mnnBackendActive": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
   "mnnBackendRefresh": "Check available backends",
   "mnnBackendCpu": "CPU",
   "mnnBackendOpencl": "OpenCL GPU",
@@ -854,7 +868,9 @@
   "mnnBackendHexagonArchitecture": "Automatically matched the {architecture} runtime.",
   "@mnnBackendHexagonArchitecture": {
     "placeholders": {
-      "architecture": { "type": "String" }
+      "architecture": {
+        "type": "String"
+      }
     }
   },
   "mnnBackendNotBuilt": "Not included in this plugin build.",
@@ -879,7 +895,9 @@
   "mnnMmapCacheSubtitle": "Current cache: {size}",
   "@mnnMmapCacheSubtitle": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
   "mnnMmapCacheEmpty": "No mmap cache yet",
@@ -889,15 +907,29 @@
   "mnnMmapCacheDialogContent": "This deletes generated mmap and GPU runtime caches ({size}). The next model load will rebuild them.",
   "@mnnMmapCacheDialogContent": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
   "mnnMmapCacheCleared": "Cleared {size} of mmap cache",
   "@mnnMmapCacheCleared": {
     "placeholders": {
-      "size": { "type": "String" }
+      "size": {
+        "type": "String"
+      }
     }
   },
-  "mnnMmapCacheClearFailed": "Could not clear the mmap cache."
-
+  "mnnMmapCacheClearFailed": "Could not clear the mmap cache.",
+  "chatNewConversation": "New chat",
+  "chatGroupToday": "Today",
+  "chatGroupYesterday": "Yesterday",
+  "chatGroupPreviousSevenDays": "Previous 7 days",
+  "chatGroupPreviousThirtyDays": "Previous 30 days",
+  "chatGroupOlder": "Older",
+  "sidebarCollapse": "Collapse sidebar",
+  "sidebarExpand": "Expand sidebar",
+  "sidebarBrowseModels": "Browse models",
+  "sidebarEngineIdle": "Not running",
+  "chatThinkingLabel": "Thinking"
 }
