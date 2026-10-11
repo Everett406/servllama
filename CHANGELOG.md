@@ -11,7 +11,7 @@ tracked in the upstream repository's tag history; see
 `pubspec.yaml` holds the single source of truth:
 
 ```yaml
-version: 1.3.4+19
+version: 1.3.5+20
 #        │ │    └─ build number, must strictly increase across releases
 #        │ └────── semantic version, shown to users
 #        └──────── major

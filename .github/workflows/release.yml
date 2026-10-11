@@ -108,6 +108,11 @@ jobs:
             "$LLAMA_SERVER_URL" -o /tmp/llama/bundle.zip
           unzip -q -o /tmp/llama/bundle.zip -d /tmp/llama/out
 
+          echo "=== bundle contents ==="
+          unzip -l /tmp/llama/bundle.zip | head -40
+          echo "=== extracted tree ==="
+          find /tmp/llama/out -type f | head -40
+
           jni="android/app/src/main/jniLibs/arm64-v8a"
           mkdir -p "$jni" assets/bin
 
