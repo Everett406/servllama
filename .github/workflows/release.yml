@@ -159,17 +159,33 @@ jobs:
             build/app/outputs/flutter-apk/app-release.apk | head -20
 
       # v1.3.3 shipped an APK that installed and then failed to start a
-      # server, because the native libraries were silently absent. Assert
-      # they are actually inside the archive before anything is published,
-      # and that they are stored uncompressed -- extractNativeLibs only works
-      # on STORED entries, so a compressed .so would reproduce the exact same
-      # ENOENT at runtime.
+      # server, because the native libraries were absent. v1.3.6 added them
+      # but nothing checked the packaging mode they ended up in.
+      #
+      # The app execs libllama-server.so as a child process, so it has to
+      # exist as a real file in nativeLibraryDir. That requires
+      # extractNativeLibs="true", which in turn means compressed .so entries
+      # are correct and STORED ones would be the anomaly. Assert the
+      # invariant rather than guessing at either one.
       - name: Assert native libraries are packaged
         run: |
           set -euo pipefail
           apk=build/app/outputs/flutter-apk/app-release.apk
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | tail -1)"
+
+          echo "=== extractNativeLibs ==="
+          flag="$("$BT/aapt2" dump xmltree --file AndroidManifest.xml "$apk" \
+            | grep -oE 'extractNativeLibs[^ ]*' | head -1 || true)"
+          echo "${flag:-<absent>}"
+          if ! "$BT/aapt2" dump xmltree --file AndroidManifest.xml "$apk" \
+            | grep -q 'extractNativeLibs.*0xffffffff'; then
+            echo "::error::extractNativeLibs is not enabled; nativeLibraryDir will not be populated"
+            exit 1
+          fi
+
           echo "=== native entries in the APK ==="
-          unzip -l "$apk" | grep -E "lib/.*[.]so$" | head -30 || true
+          unzip -lv "$apk" \
+            | awk '$NF ~ /^lib\/arm64-v8a\/lib.*[.]so$/ { print }' | head -30
 
           if ! unzip -l "$apk" | grep -q "lib/arm64-v8a/libllama-server.so"; then
             echo "::error::libllama-server.so is not in the APK"
@@ -177,15 +193,7 @@ jobs:
           fi
           count="$(unzip -l "$apk" | grep -cE "lib/arm64-v8a/lib.*[.]so$" || true)"
           echo "arm64 native libraries in APK: $count"
-
-          compressed="$(unzip -lv "$apk" \
-            | awk '$NF ~ /^lib\/arm64-v8a\/lib.*[.]so$/ && $4 != "Stored"' || true)"
-          if [ -n "$compressed" ]; then
-            echo "$compressed"
-            echo "::error::native libraries must be STORED; compressed entries break extractNativeLibs"
-            exit 1
-          fi
-          echo "All native libraries are stored uncompressed."
+          [ "$count" -ge 2 ] || { echo "::error::expected the llama/ggml libraries too"; exit 1; }
 
       - name: Package artefacts
         run: |
