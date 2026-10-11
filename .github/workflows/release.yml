@@ -158,6 +158,35 @@ jobs:
           "$BT/apksigner" verify --print-certs \
             build/app/outputs/flutter-apk/app-release.apk | head -20
 
+      # v1.3.3 shipped an APK that installed and then failed to start a
+      # server, because the native libraries were silently absent. Assert
+      # they are actually inside the archive before anything is published,
+      # and that they are stored uncompressed -- extractNativeLibs only works
+      # on STORED entries, so a compressed .so would reproduce the exact same
+      # ENOENT at runtime.
+      - name: Assert native libraries are packaged
+        run: |
+          set -euo pipefail
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          echo "=== native entries in the APK ==="
+          unzip -l "$apk" | grep -E "lib/.*[.]so$" | head -30 || true
+
+          if ! unzip -l "$apk" | grep -q "lib/arm64-v8a/libllama-server.so"; then
+            echo "::error::libllama-server.so is not in the APK"
+            exit 1
+          fi
+          count="$(unzip -l "$apk" | grep -cE "lib/arm64-v8a/lib.*[.]so$" || true)"
+          echo "arm64 native libraries in APK: $count"
+
+          compressed="$(unzip -lv "$apk" \
+            | awk '$NF ~ /^lib\/arm64-v8a\/lib.*[.]so$/ && $4 != "Stored"' || true)"
+          if [ -n "$compressed" ]; then
+            echo "$compressed"
+            echo "::error::native libraries must be STORED; compressed entries break extractNativeLibs"
+            exit 1
+          fi
+          echo "All native libraries are stored uncompressed."
+
       - name: Package artefacts
         run: |
           set -euo pipefail
