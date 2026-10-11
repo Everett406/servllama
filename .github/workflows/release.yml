@@ -73,15 +73,14 @@ jobs:
             exit 1
           fi
           printf '%s' "$KEYSTORE_B64" | base64 -d > android/app/upload-keystore.jks
-          cat > android/key.properties <<EOF
-storePassword=$STORE_PASSWORD
-keyPassword=$STORE_PASSWORD
-keyAlias=$KEY_ALIAS
-storeFile=upload-keystore.jks
-EOF
+          # printf rather than a heredoc: a heredoc terminator has to sit
+          # at column 0, which terminates the YAML block scalar early.
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
+            "$STORE_PASSWORD" "$STORE_PASSWORD" "$KEY_ALIAS" upload-keystore.jks \
+            > android/key.properties
           echo "Keystore fingerprint:"
           keytool -list -v -keystore android/app/upload-keystore.jks \
-            -storepass "$STORE_PASSWORD" | grep SHA256:
+            -storepass "$STORE_PASSWORD" | grep 'SHA256:'
 
       - name: Build signed release APK
         run: flutter build apk --release --split-per-abi

@@ -75,12 +75,14 @@ android {
 
     buildTypes {
         release {
-            // Falls back to debug signing until android/key.properties is configured.
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            // No debug fallback. A release signed with the throwaway debug
+            // key cannot be upgraded later, because the signing identity is
+            // fixed at install time — so a missing keystore has to fail the
+            // build rather than produce an artifact nobody can replace.
+            check(keystorePropertiesFile.exists()) {
+                "android/key.properties is missing; release builds need a real signing key"
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
