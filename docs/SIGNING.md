@@ -14,13 +14,24 @@ git clone --filter=blob:none https://github.com/Everett406/servllama
 cd servllama
 git fetch origin 'refs/tags/v1.3.0:refs/tags/v1.3.0'
 
-# allow git to resolve the signer identity
+# The allowed-signers file is "principal key", not a bare public key —
+# without the principal line git reports "No principal matched" even
+# though the signature itself is valid.
 mkdir -p .git/allowed
-cp docs/signing_key.pub .git/allowed/signing_key
+printf '%s %s\n' \
+  'everett406@users.noreply.github.com' \
+  "$(cut -d' ' -f1,2 docs/signing_key.pub)" > .git/allowed/signing_key
 git config gpg.ssh.allowedSignersFile .git/allowed/signing_key
 
 git verify-tag v1.3.0
 git verify-commit v1.3.0
+```
+
+Both print:
+
+```
+Good "git" signature for everett406@users.noreply.github.com with
+ED25519 key SHA256:eE2ayuCvr2ZgWgORxfHtUfxJx+SqbtNYfKrB4vNH9WQ
 ```
 
 `git verify-tag` prints the key fingerprint and the identity bound to
