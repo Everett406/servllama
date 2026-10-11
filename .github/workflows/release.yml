@@ -78,9 +78,11 @@ jobs:
           printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
             "$STORE_PASSWORD" "$STORE_PASSWORD" "$KEY_ALIAS" upload-keystore.jks \
             > android/key.properties
-          echo "Keystore fingerprint:"
+          # A bare keytool failure here would be the only clue about a bad
+          # secret, so print the fingerprint and let the build continue onto
+          # the step that will fail with a real error message.
           keytool -list -v -keystore android/app/upload-keystore.jks \
-            -storepass "$STORE_PASSWORD" | grep 'SHA256:'
+            -storepass "$STORE_PASSWORD" | grep 'SHA256:' || true
 
       - name: Build signed release APK
         run: flutter build apk --release --split-per-abi
