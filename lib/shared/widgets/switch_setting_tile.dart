@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/design/tokens.dart';
 
+/// A label + description + switch row. The whole row toggles, which matters
+/// on phones where the switch itself is a small target.
 class SwitchSettingTile extends StatelessWidget {
   const SwitchSettingTile({
     super.key,
@@ -16,45 +19,45 @@ class SwitchSettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => onChanged(!value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: ClaudeSpacing.lg,
+            vertical: 12,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      subtitle!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.35,
+                      title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    if (subtitle != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Switch.adaptive(
-              value: value,
-              onChanged: onChanged,
-            ),
-          ],
+              const SizedBox(width: ClaudeSpacing.md),
+              Switch(value: value, onChanged: onChanged),
+            ],
+          ),
         ),
       ),
     );

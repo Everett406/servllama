@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mnn_engine/mnn_engine.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/widgets/page_scaffold.dart';
 import 'package:servllama/core/services/llama_server_service.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/settings_menu_tile.dart';
@@ -169,15 +171,20 @@ class _AboutPageState extends State<AboutPage> {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.aboutTitle)),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+    return PageScaffold(
+      title: l10n.aboutTitle,
+      maxWidth: 620,
+      padding: const EdgeInsets.fromLTRB(
+        ClaudeSpacing.lg,
+        ClaudeSpacing.xl,
+        ClaudeSpacing.lg,
+        ClaudeSpacing.xxl,
+      ),
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const _AboutHero(),
-            const SizedBox(height: 18),
+            const SizedBox(height: ClaudeSpacing.lg),
             SettingsSection(
               child: SettingsTileList(
                 children: [
@@ -212,7 +219,7 @@ class _AboutPageState extends State<AboutPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: ClaudeSpacing.lg),
             SettingsSection(
               child: SettingsTileList(
                 children: [
@@ -237,7 +244,6 @@ class _AboutPageState extends State<AboutPage> {
               ),
             ),
           ],
-        ),
       ),
     );
   }
@@ -249,10 +255,14 @@ class _AboutHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return SettingsSection(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        ClaudeSpacing.lg,
+        ClaudeSpacing.lg,
+        ClaudeSpacing.lg,
+        ClaudeSpacing.lg,
+      ),
       child: Row(
         children: [
           SizedBox(
@@ -268,19 +278,15 @@ class _AboutHero extends StatelessWidget {
               children: [
                 Text(
                   'ServLlama',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontSize: 19,
+                    height: 1.25,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   context.l10n.aboutDescription,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
                 ),
               ],
             ),

@@ -68,7 +68,7 @@ class _DownloadsPageState extends State<DownloadsPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.downloadsTitle)),
+      appBar: AppBar(title: Text(l10n.downloadsTitle, style: _pageTitle(context))),
       body: Consumer<DownloadProvider>(
         builder: (context, downloads, _) {
           final tasks = downloads.tasks;
@@ -117,3 +117,10 @@ class _DownloadsPageState extends State<DownloadsPage> {
     );
   }
 }
+
+
+/// Page titles use the display serif to match [PageScaffold]; the app bar
+/// itself stays unstyled so pushed pages and the shell header agree.
+TextStyle? _pageTitle(BuildContext context) => Theme.of(
+  context,
+).textTheme.titleLarge?.copyWith(fontFamily: 'serif', fontWeight: FontWeight.w600);

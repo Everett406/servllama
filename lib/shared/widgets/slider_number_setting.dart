@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/design/tokens.dart';
 
 class SliderNumberSetting extends StatefulWidget {
   const SliderNumberSetting({
@@ -74,29 +76,33 @@ class _SliderNumberSettingState extends State<SliderNumberSetting> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final effectiveValue = _dragValue ?? widget.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        if (widget.description != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            widget.description!,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.35,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.xs),
+          child: Text(
+            widget.label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ],
-        const SizedBox(height: 8),
+        ),
+        if (widget.description != null)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: 2,
+              left: ClaudeSpacing.xs,
+              right: ClaudeSpacing.xl,
+            ),
+            child: Text(
+              widget.description!,
+              style: theme.textTheme.labelSmall?.copyWith(height: 1.45),
+            ),
+          ),
+        const SizedBox(height: ClaudeSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -142,9 +148,9 @@ class _SliderNumberSettingState extends State<SliderNumberSetting> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: ClaudeSpacing.md),
             SizedBox(
-              width: 76,
+              width: 72,
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
@@ -157,23 +163,23 @@ class _SliderNumberSettingState extends State<SliderNumberSetting> {
                 // converge on _handleFocusChanged.
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest.withAlpha(90),
+                  fillColor: context.surfaceSunken,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: colorScheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(ClaudeRadius.sm),
+                    borderSide: BorderSide(color: context.border),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: colorScheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(ClaudeRadius.sm),
+                    borderSide: BorderSide(color: context.border),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: colorScheme.primary),
+                    borderRadius: BorderRadius.circular(ClaudeRadius.sm),
+                    borderSide: BorderSide(color: ClaudeColors.accent, width: 1.5),
                   ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 8,
-                    vertical: 10,
+                    vertical: 9,
                   ),
                 ),
               ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/widgets/page_scaffold.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
@@ -23,13 +25,18 @@ class SettingsPage extends StatelessWidget {
       AppLocaleProvider,
       ChatTimeoutProvider
     >(
-      builder: (context, themeProvider, localeProvider, chatTimeoutProvider, _) => Scaffold(
-        appBar: AppBar(title: Text(l10n.settingsTitle)),
-        body: SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: [
+      builder: (context, themeProvider, localeProvider, chatTimeoutProvider, _) => PageScaffold(
+        title: l10n.settingsTitle,
+        maxWidth: 620,
+        padding: const EdgeInsets.fromLTRB(
+          ClaudeSpacing.lg,
+          ClaudeSpacing.xl,
+          ClaudeSpacing.lg,
+          ClaudeSpacing.xxl,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
               SettingsSection(
                 title: l10n.settingsSectionGeneral,
                 child: SettingsTileList(
@@ -90,7 +97,6 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );
@@ -121,7 +127,7 @@ class SettingsPage extends StatelessWidget {
                 l10n.settingsThemeModeSheetTitle,
                 style: Theme.of(
                   sheetContext,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleLarge?.copyWith(fontFamily: 'serif'),
               ),
               const SizedBox(height: 14),
               ..._themeModeOptions.map(
@@ -164,7 +170,7 @@ class SettingsPage extends StatelessWidget {
                 l10n.settingsLanguageSheetTitle,
                 style: Theme.of(
                   sheetContext,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleLarge?.copyWith(fontFamily: 'serif'),
               ),
               const SizedBox(height: 14),
               ..._localeModeOptions.map(

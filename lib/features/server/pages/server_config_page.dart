@@ -75,7 +75,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
               (runtime) => runtime.activeEngine,
             );
         return Scaffold(
-          appBar: AppBar(title: Text(l10n.serverConfigTitle)),
+          appBar: AppBar(title: Text(l10n.serverConfigTitle, style: _pageTitle(context))),
           body: !provider.hasCompletedInitialLoad
               ? const Center(child: CircularProgressIndicator())
               : Column(
@@ -418,3 +418,10 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
     return roundedValue < step ? step : roundedValue;
   }
 }
+
+
+/// Page titles use the display serif to match [PageScaffold]; the app bar
+/// itself stays unstyled so pushed pages and the shell header agree.
+TextStyle? _pageTitle(BuildContext context) => Theme.of(
+  context,
+).textTheme.titleLarge?.copyWith(fontFamily: 'serif', fontWeight: FontWeight.w600);

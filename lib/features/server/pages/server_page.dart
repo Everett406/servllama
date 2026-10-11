@@ -80,7 +80,7 @@ class _ServerPageState extends State<ServerPage> {
     _syncUptimeTicker();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.serverTitle)),
+      appBar: AppBar(title: Text(l10n.serverTitle, style: _pageTitle(context))),
       body: SafeArea(
         top: false,
         child: ListView(
@@ -449,3 +449,10 @@ class _MenuItemData {
   final VoidCallback onTap;
   final String? trailing;
 }
+
+
+/// Page titles use the display serif to match [PageScaffold]; the app bar
+/// itself stays unstyled so pushed pages and the shell header agree.
+TextStyle? _pageTitle(BuildContext context) => Theme.of(
+  context,
+).textTheme.titleLarge?.copyWith(fontFamily: 'serif', fontWeight: FontWeight.w600);

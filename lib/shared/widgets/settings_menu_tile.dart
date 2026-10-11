@@ -1,38 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/design/tokens.dart';
 
-/// A single setting row that matches the app's standard settings tile:
-/// a 24px icon box, a `titleMedium` w700 title, an optional trailing value
-/// and chevron (when [onTap] is set), or an arbitrary [trailing] widget
-/// (e.g. a switch) when no chevron is wanted.
+/// A single row in a settings group.
 ///
-/// Extracted from the private `_MenuTile` so the download section can share
-/// the exact same typography, spacing and press animation as the rest of the
-/// settings page.
+/// Typography is deliberately mid-weight: the old tile used w700 throughout,
+/// which made an entire settings page look like a list of alerts. Weight now
+/// carries hierarchy — the title is merely emphasised, the value recedes.
 class SettingsMenuTile extends StatefulWidget {
   const SettingsMenuTile({
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
     this.value,
     this.onTap,
     this.trailing,
     this.enabled = true,
+    this.showDivider = false,
+    this.iconColor,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
   final String? value;
 
-  /// When non-null, this widget is shown on the right instead of the value
-  /// text + chevron. Use it for in-row controls such as switches.
+  /// When non-null, replaces the value + chevron. Use for in-row controls.
   final Widget? trailing;
 
-  /// When null and [trailing] is null, the tile is non-interactive and shows
-  /// no chevron. When set, the whole row is tappable and a chevron is shown
-  /// (unless [trailing] overrides the trailing slot).
+  /// When set, the whole row is tappable and a chevron is shown.
   final VoidCallback? onTap;
 
   final bool enabled;
+
+  /// Draws a hairline under this row. Prefer explicit control over
+  /// auto-dividers so the last row can stay unlined.
+  final bool showDivider;
+
+  final Color? iconColor;
 
   @override
   State<SettingsMenuTile> createState() => _SettingsMenuTileState();
@@ -41,78 +47,98 @@ class SettingsMenuTile extends StatefulWidget {
 class _SettingsMenuTileState extends State<SettingsMenuTile> {
   bool _isPressed = false;
 
-  void _setPressed(bool value) {
-    if (_isPressed == value || !mounted) {
-      return;
-    }
-    setState(() {
-      _isPressed = value;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final contentOpacity = _isPressed ? 0.58 : 1.0;
     final effectiveOnTap = widget.enabled ? widget.onTap : null;
+
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ClaudeSpacing.lg,
+        vertical: 13,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            widget.icon,
+            size: 20,
+            color: widget.enabled
+                ? (widget.iconColor ?? context.inkSecondary)
+                : context.inkTertiary,
+          ),
+          const SizedBox(width: ClaudeSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: widget.enabled ? context.ink : context.inkTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (widget.subtitle != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      widget.subtitle!,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (widget.trailing != null) ...[
+            const SizedBox(width: ClaudeSpacing.md),
+            widget.trailing!,
+          ] else if (widget.value != null) ...[
+            const SizedBox(width: ClaudeSpacing.md),
+            Text(
+              widget.value!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          if (widget.trailing == null && effectiveOnTap != null) ...[
+            const SizedBox(width: ClaudeSpacing.xs),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: context.inkTertiary,
+              size: 20,
+            ),
+          ],
+        ],
+      ),
+    );
 
     return Semantics(
       button: effectiveOnTap != null,
       enabled: widget.enabled,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: effectiveOnTap == null ? null : (_) => _setPressed(true),
-        onTapUp: effectiveOnTap == null ? null : (_) => _setPressed(false),
-        onTapCancel: effectiveOnTap == null ? null : () => _setPressed(false),
-        onTap: effectiveOnTap,
-        child: AnimatedOpacity(
-          opacity: widget.enabled ? contentOpacity : 0.5,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: Row(
+      child: Material(
+        color: _isPressed ? context.surfaceSunken : Colors.transparent,
+        child: InkWell(
+          onTap: effectiveOnTap,
+          onTapDown: effectiveOnTap == null
+              ? null
+              : (_) => setState(() => _isPressed = true),
+          onTapCancel: effectiveOnTap == null
+              ? null
+              : () => setState(() => _isPressed = false),
+          onTapUp: effectiveOnTap == null
+              ? null
+              : (_) => setState(() => _isPressed = false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 24,
-                child: Icon(
-                  widget.icon,
-                  size: 22,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (widget.trailing != null) ...[
-                const SizedBox(width: 12),
-                widget.trailing!,
-              ] else if (widget.value != null) ...[
-                const SizedBox(width: 12),
-                Text(
-                  widget.value!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-              if (widget.trailing == null && effectiveOnTap != null) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.onSurfaceVariant,
-                  size: 24,
-                ),
-              ],
+              content,
+              if (widget.showDivider)
+                Divider(height: 1, indent: 52, color: context.border),
             ],
           ),
         ),

@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/design/tokens.dart';
 
+/// A titled group of settings.
+///
+/// Rows are separated by hairlines rather than stacked as individual cards —
+/// a column of boxes inside a box is what made the old settings screen feel
+/// heavy, and one container per group keeps the rhythm without doubling the
+/// border count.
 class SettingsSection extends StatelessWidget {
   const SettingsSection({
     super.key,
     this.title,
     this.subtitle,
-    this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    this.padding = const EdgeInsets.symmetric(vertical: 4),
     required this.child,
   });
 
@@ -16,45 +24,44 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title != null)
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.only(
+              left: ClaudeSpacing.xs,
+              bottom: ClaudeSpacing.xs,
+            ),
             child: Text(
               title!,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: context.inkTertiary,
+                letterSpacing: 0.4,
               ),
             ),
           ),
-        if (subtitle != null) ...[
-          if (title != null) const SizedBox(height: 4),
+        if (subtitle != null)
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.only(
+              left: ClaudeSpacing.xs,
+              bottom: ClaudeSpacing.sm,
+              right: ClaudeSpacing.xl,
+            ),
             child: Text(
               subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(height: 1.5),
             ),
           ),
-        ],
-        if (title != null || subtitle != null) const SizedBox(height: 10),
+        if (title != null || subtitle != null)
+          const SizedBox(height: ClaudeSpacing.sm),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: isLight ? Colors.white : colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withAlpha(110),
-            ),
+            color: context.surface,
+            borderRadius: BorderRadius.circular(ClaudeRadius.lg),
+            border: Border.all(color: context.border),
           ),
           child: Padding(padding: padding, child: child),
         ),
