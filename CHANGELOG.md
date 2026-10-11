@@ -37,6 +37,14 @@ Tags are `vX.Y.Z` (the `v` prefix is new in `1.3.0`; earlier tags omit
 it). Tags and commits on `main` are SSH-signed — see
 [Verifying a release](#verifying-a-release).
 
+## [1.3.2] - 2026-10-11
+
+### Fixed
+
+- The release workflow failed to parse: a bare `grep SHA256:` was read as
+  a YAML mapping key, and a column-0 heredoc terminator truncated the
+  surrounding block scalar.
+
 ## [1.3.1] - 2026-10-11
 
 ### Added
