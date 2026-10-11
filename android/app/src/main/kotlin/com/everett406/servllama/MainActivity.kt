@@ -1,4 +1,4 @@
-package com.arkanefans.servllama
+package com.everett406.servllama
 
 import android.Manifest
 import android.content.Context
@@ -22,7 +22,7 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            "com.arkanefans.servllama/native_libs",
+            "com.everett406.servllama/native_libs",
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "getNativeLibraryDir" -> result.success(applicationInfo.nativeLibraryDir)
@@ -31,7 +31,7 @@ class MainActivity : FlutterActivity() {
         }
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            "com.arkanefans.servllama/download_environment",
+            "com.everett406.servllama/download_environment",
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "networkTransport" -> result.success(resolveNetworkTransport())
@@ -43,7 +43,7 @@ class MainActivity : FlutterActivity() {
         }
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            "com.arkanefans.servllama/file_export",
+            "com.everett406.servllama/file_export",
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "saveToDownloads" -> saveToDownloads(call, result)

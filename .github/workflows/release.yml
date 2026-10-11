@@ -1,0 +1,123 @@
+name: release
+
+# Builds a signed release APK and attaches it to a GitHub release.
+#
+# Signing material never enters the repository. The keystore travels as a
+# base64 blob in ANDROID_KEYSTORE_B64 and is materialised into
+# android/key.properties + android/app/<keystore> only for the duration of
+# the build. Losing either secret means losing the signing identity for
+# good — Android offers no way to re-sign an already-published app.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build when not triggered by a tag (e.g. 1.3.0). Blank uses pubspec.yaml.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.5'
+          channel: stable
+          cache: true
+
+      # Match the keystore to the version being built so a rerun produces
+      # the same signature rather than silently reusing the last one.
+      - name: Resolve version
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          # pubspec carries "1.3.0+15"; the build number has to come along
+          # or Android will refuse to install over an equal versionCode.
+          from_pubspec="$(grep -m1 '^version:' pubspec.yaml | awk '{print $2}')"
+          name="${from_pubspec%%+*}"
+          code="${from_pubspec##*+}"
+          if [ "$name" != "$version" ]; then
+            echo "::warning::pubspec.yaml says $name but this build was asked for $version; using the tag."
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Materialise release keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::signing secrets are not configured; refusing to fall back to a debug-signed release"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+storePassword=$STORE_PASSWORD
+keyPassword=$STORE_PASSWORD
+keyAlias=$KEY_ALIAS
+storeFile=upload-keystore.jks
+EOF
+          echo "Keystore fingerprint:"
+          keytool -list -v -keystore android/app/upload-keystore.jks \
+            -storepass "$STORE_PASSWORD" | grep SHA256:
+
+      - name: Build signed release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Verify signature
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          [ -d "$BT" ] || BT="$(ls -d "$ANDROID_HOME"/build-tools/* | tail -1)"
+          "$BT/apksigner" verify --print-certs \
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | head -20
+
+      - name: Package artefacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-*-release.apk dist/
+          cd dist
+          for f in app-*-release.apk; do
+            mv "$f" "servllama-${{ steps.ver.outputs.name }}-$f"
+          done
+          sha256sum ./*.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # A workflow_dispatch run has no tag to hang the release on yet.
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            TAG="v${{ steps.ver.outputs.name }}"
+            git tag -a "$TAG" -m "Release $TAG" && git push origin "$TAG"
+          fi
+          gh release create "$TAG" dist/* \
+            --title "${TAG} — signed release" \
+            --generate-notes --latest \
+            || gh release upload "$TAG" dist/* --clobber

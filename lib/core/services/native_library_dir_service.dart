@@ -4,7 +4,7 @@ class NativeLibraryDirService {
   NativeLibraryDirService({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(_channelName);
 
-  static const String _channelName = 'com.arkanefans.servllama/native_libs';
+  static const String _channelName = 'com.everett406.servllama/native_libs';
 
   final MethodChannel _channel;
   String? _cachedDir;

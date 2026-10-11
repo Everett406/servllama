@@ -37,6 +37,26 @@ Tags are `vX.Y.Z` (the `v` prefix is new in `1.3.0`; earlier tags omit
 it). Tags and commits on `main` are SSH-signed — see
 [Verifying a release](#verifying-a-release).
 
+## [1.3.1] - 2026-10-11
+
+### Added
+
+- Signed release workflow (`.github/workflows/release.yml`) that builds
+  per-ABI APKs and attaches them to the GitHub release. Signing material
+  lives in repository secrets and is materialised only for the build.
+
+### Changed
+
+- **The app now has its own identity.** `applicationId` moved from
+  `com.arkanefans.servllama` to `com.everett406.servllama`, and the
+  release is signed with a project-owned keystore rather than anything
+  associated with the upstream project. Both the Android `namespace` and
+  the three native method-channel names were moved with it — the Kotlin
+  and Dart sides have to agree on those strings or every platform call
+  silently fails.
+- Release builds no longer fall back to debug signing when
+  `android/key.properties` is absent; the workflow fails loudly instead.
+
 ## [1.3.0] - 2026-10-11
 
 Complete UI rework onto a Claude-inspired design language. The engine

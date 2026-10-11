@@ -1,4 +1,4 @@
-package com.arkanefans.servllama
+package com.everett406.servllama
 
 import android.content.ContentValues
 import android.content.Context

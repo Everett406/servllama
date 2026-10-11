@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.arkanefans.servllama"
+    namespace = "com.everett406.servllama"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.arkanefans.servllama"
+        applicationId = "com.everett406.servllama"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 28

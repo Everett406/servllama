@@ -30,7 +30,7 @@ class DownloadEnvironmentService {
   const DownloadEnvironmentService();
 
   static const MethodChannel _channel = MethodChannel(
-    'com.arkanefans.servllama/download_environment',
+    'com.everett406.servllama/download_environment',
   );
 
   Future<DownloadNetworkTransport> networkTransport() async {

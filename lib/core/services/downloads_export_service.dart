@@ -17,7 +17,7 @@ class DownloadsExportService {
        _downloadsDirectory = downloadsDirectory,
        _platform = platform ?? defaultTargetPlatform;
 
-  static const String _channelName = 'com.arkanefans.servllama/file_export';
+  static const String _channelName = 'com.everett406.servllama/file_export';
 
   final MethodChannel _channel;
   final Future<Directory> Function() _temporaryDirectory;
