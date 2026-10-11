@@ -174,14 +174,15 @@ jobs:
           BT="$(ls -d "$ANDROID_HOME"/build-tools/* | tail -1)"
 
           echo "=== extractNativeLibs ==="
+          # aapt2 prints the resolved value, e.g. extractNativeLibs(0x010104ea)=true
           flag="$("$BT/aapt2" dump xmltree --file AndroidManifest.xml "$apk" \
-            | grep -oE 'extractNativeLibs[^ ]*' | head -1 || true)"
+            | grep -oE 'extractNativeLibs\([^)]*\)=[^ ]+' | head -1 || true)"
           echo "${flag:-<absent>}"
-          if ! "$BT/aapt2" dump xmltree --file AndroidManifest.xml "$apk" \
-            | grep -q 'extractNativeLibs.*0xffffffff'; then
-            echo "::error::extractNativeLibs is not enabled; nativeLibraryDir will not be populated"
-            exit 1
-          fi
+          case "$flag" in
+            *=true) ;;
+            *) echo "::error::extractNativeLibs is not enabled; nativeLibraryDir will not be populated"
+               exit 1 ;;
+          esac
 
           echo "=== native entries in the APK ==="
           unzip -lv "$apk" \
