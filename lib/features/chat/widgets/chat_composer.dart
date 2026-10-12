@@ -41,7 +41,7 @@ class ChatComposer extends StatefulWidget {
   final VoidCallback onOpenEngineSettings;
 
   @override
-  State<ChatComposer> createState() => ChatComposerState();
+  ChatComposerState createState() => ChatComposerState();
 }
 
 class ChatComposerState extends State<ChatComposer> {
@@ -62,6 +62,11 @@ class ChatComposerState extends State<ChatComposer> {
     _focusNode.dispose();
     super.dispose();
   }
+
+  /// The page needs this to put the keyboard back the way the user had it
+  /// after a sub-page returns. A private node would make that impossible
+  /// without a side channel.
+  FocusNode get focusNode => _focusNode;
 
   void _syncText() {
     final hasText = widget.controller.text.trim().isNotEmpty;

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/keyboard/keyboard_state.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/core/models/inference_engine.dart';
@@ -69,7 +70,12 @@ class _ChatView extends StatefulWidget {
   State<_ChatView> createState() => _ChatViewState();
 }
 
-class _ChatViewState extends State<_ChatView> {
+class _ChatViewState extends State<_ChatView>
+    with WidgetsBindingObserver, KeyboardStateRestorer<_ChatView> {
+  final GlobalKey<ChatComposerState> _composerKey =
+      GlobalKey<ChatComposerState>();
+
+  FocusNode? get _composerFocus => _composerKey.currentState?.focusNode;
   final ChatScrollCoordinator _scroll = ChatScrollCoordinator();
   final TextEditingController _input = TextEditingController();
   final ImageAttachmentService _images = ImageAttachmentService();
@@ -243,9 +249,18 @@ class _ChatViewState extends State<_ChatView> {
     if (mounted) _showRuntimeError(runtime);
   }
 
+  /// Every route out of the chat records the keyboard first and puts it back
+  /// on return. Doing it in one place is the point: it was missed on two of
+  /// these before, and that is how the keyboard started reappearing by itself.
+  Future<void> _pushAndRestore(Route<void> route) async {
+    rememberKeyboard();
+    await Navigator.of(context).push(route);
+    if (mounted) restoreKeyboard(focusNode: _composerFocus);
+  }
+
   void _openDiscovery() {
     unawaited(
-      Navigator.of(context).push(
+      _pushAndRestore(
         MaterialPageRoute<void>(builder: (_) => const ModelDiscoveryPage()),
       ),
     );
@@ -256,9 +271,9 @@ class _ChatViewState extends State<_ChatView> {
   /// plausible-sounding answer and a wrong one.
   void _openEngineSettings() {
     unawaited(
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => const ServerConfigPage())),
+      _pushAndRestore(
+        MaterialPageRoute<void>(builder: (_) => const ServerConfigPage()),
+      ),
     );
   }
 
@@ -307,17 +322,18 @@ class _ChatViewState extends State<_ChatView> {
                           )
                         : Stack(
                             children: [
-                              ChatMessageListView(
-                                coordinator: _scroll,
-                                // The transcript runs right up under the
-                                // pills. The old padding reserved a full
-                                // fade's worth of dead space above the first
-                                // line, which read as an empty band rather
-                                // than as breathing room.
-                                topInset: _topRunway,
-                                bottomInset: _bottomRunway,
+                              DismissKeyboardOnTap(
+                                child: ChatMessageListView(
+                                  coordinator: _scroll,
+                                  // The transcript runs right up under the
+                                  // pills. The old padding reserved a full
+                                  // fade's worth of dead space above the
+                                  // first line, which read as an empty band
+                                  // rather than as breathing room.
+                                  topInset: _topRunway,
+                                  bottomInset: _bottomRunway,
+                                ),
                               ),
-                              // Only at the composer. There is no fade at the
                               // The pills are opaque and painted after this
                               // band, so they stay crisp. The fade is here so
                               // text dissolves on its way up to them instead
@@ -363,6 +379,7 @@ class _ChatViewState extends State<_ChatView> {
                           maxWidth: ClaudeSpacing.readingWidth,
                         ),
                         child: ChatComposer(
+                          key: _composerKey,
                           controller: _input,
                           onSend: _send,
                           onStop: chat.cancelStreaming,

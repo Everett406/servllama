@@ -1035,7 +1035,9 @@ class _MnnModelSettingsSheetState extends State<_MnnModelSettingsSheet> {
       return;
     }
 
-    FocusScope.of(context).unfocus();
+        // Tapping outside dismisses rather than unfocusing the scope: EditableText
+    // holds its own node and puts focus straight back.
+    FocusManager.instance.primaryFocus?.unfocus();
     final message = await context
         .read<ModelManagementProvider>()
         .renameLibraryModel(model, nextName);
