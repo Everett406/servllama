@@ -109,6 +109,12 @@ class _SliderNumberSettingState extends State<SliderNumberSetting> {
             Expanded(
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
+                  // No bubble. Sized to the whole track, so on a full-width
+                  // card the indicator ran 20dp off the right edge of the
+                  // screen — an overflow that only appears while a finger is
+                  // down, which is why it survived every earlier check. The
+                  // value is already in the field beside the slider.
+                  showValueIndicator: ShowValueIndicator.never,
                   trackHeight: 4,
                   thumbShape: const RoundSliderThumbShape(
                     enabledThumbRadius: 7,

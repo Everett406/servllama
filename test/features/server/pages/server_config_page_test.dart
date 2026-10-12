@@ -453,14 +453,211 @@ void main() {
       );
       expect(serverProvider.displayAddress, '127.0.0.1:8080');
     });
+
+    testWidgets('the overflow probe still detects an overflow', (
+      tester,
+    ) async {
+      // The canary. An earlier version of this check reported a clean page
+      // because the probe had stopped matching anything and nothing in the
+      // suite noticed. If this fails, the scale tests below are passing for the
+      // wrong reason.
+      const phone = Size(360, 780);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: phone.width,
+              child: Align(
+                child: SizedBox(
+                  width: phone.width * 2,
+                  child: const Text('deliberately too wide'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(_escapes(tester, window: phone), isNotEmpty);
+    });
+
+    for (final scale in <double>[1.0, 1.3, 1.5, 2.0]) {
+      testWidgets('nothing escapes the page at text scale $scale', (
+        tester,
+      ) async {
+        const phone = Size(360, 780);
+        tester.view.physicalSize = phone;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        final kvStorage = KvStorage();
+        final configProvider = ServerConfigProvider(
+          kvStorage: kvStorage,
+          settingsLoader: _FixedServerLaunchSettingsLoader(
+            const ServerLaunchSettings(),
+          ),
+          // The longest strings the page can show: a real device name, and
+          // the raw probe output that is the only way to tell an absent HTP
+          // from an unsupported one.
+          llamaCppDeviceProbeService: LlamaCppDeviceProbeService(
+            resultOverride: () => const LlamaCppDeviceProbeResult(
+              openclDeviceName: 'Adreno (TM) 825',
+              hexagonDeviceName: 'Qualcomm HTP (QNN)',
+              rawOutput:
+                  'ggml_opencl: platform IDs not available.\n'
+                  '/vendor/lib64/libcdsprpc.so: undefined symbol: '
+                  'android::binder2os::get_trace_enabled_tags()',
+            ),
+          ),
+        );
+        final serverService = _FakeLlamaServerService();
+        final serverProvider = EngineRuntimeProvider(
+          llamaCppAdapter: LlamaCppEngineAdapter(
+            serverService: serverService,
+            settingsLoader: _FixedServerLaunchSettingsLoader(
+              const ServerLaunchSettings(),
+            ),
+            modelRepository: _FixedModelStoragePaths('/app/models'),
+          ),
+          mnnAdapter: StubEngineAdapter(),
+          settingsLoader: _FixedServerLaunchSettingsLoader(
+            const ServerLaunchSettings(),
+          ),
+        );
+        addTearDown(() {
+          configProvider.dispose();
+          serverProvider.dispose();
+          serverService.dispose();
+        });
+
+        await tester.pumpWidget(
+          _TestApp(
+            serverProvider: serverProvider,
+            textScale: scale,
+            child: ServerConfigPage(provider: configProvider),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Walk the whole page. What the user showed was in the middle of the
+        // scroll, so only measuring the resting position would miss it.
+        // Gather the whole list before failing. Stopping at the first hit
+        // reports one box at a time and makes this a guessing game.
+        final found = <String>[];
+        final list = find.byType(ListView);
+        for (var i = 0; i < 6; i++) {
+          for (final e in _escapes(tester, window: phone)) {
+            found.add('step $i: $e');
+          }
+          if (list.evaluate().isEmpty) break;
+          await tester.drag(list, const Offset(0, -240));
+          await tester.pumpAndSettle();
+        }
+        expect(found, isEmpty, reason: 'text scale $scale');
+      });
+    }
+
   });
 }
 
+/// One box that reaches outside the window it is supposed to stay inside.
+class _Escape {
+  _Escape(this.rect, this.description);
+
+  final Rect rect;
+  final String description;
+
+  @override
+  String toString() =>
+      '${rect.left.toStringAsFixed(1)}..${rect.right.toStringAsFixed(1)} '
+      '(window ${rect.width.toStringAsFixed(1)}) — $description';
+}
+
+/// Every rendered box that reaches past the window's left or right edge.
+///
+/// The previous version of this check reported "0 overflows" and was wrong:
+/// the filter had been rewritten three times, the last grep came back empty,
+/// and nothing proved the assertion had ever run. So this one carries a canary
+/// — a test that feeds it a deliberately oversized child. A probe that quietly
+/// stops matching has to fail rather than report a clean page.
+/// RenderClipRect, RenderClipRRect, RenderClipOval and friends all name
+/// themselves "Clip". That is the cheapest reliable test here; a structural one
+/// needs the generic RenderClipper type, which is not exported.
+bool _clipsByDefault(RenderObject box) =>
+    box.runtimeType.toString().contains('Clip');
+
+bool _isExplicitlyClipping(RenderBox box) {
+  try {
+    return (box as dynamic).clipBehavior != Clip.none;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// True when some ancestor clips the overflow away.
+///
+/// Flutter sizes a text field's editable to at least its content and then
+/// clips it. That box genuinely extends past its container and genuinely
+/// paints nothing there, so counting it would be chasing a phantom — which is
+/// how a previous version of this check ended up reporting either nothing or
+/// everything. Only a box whose overflow is actually painted outside the
+/// window counts.
+bool _clippedByAncestor(RenderObject box, Size window) {
+  var node = box.parent;
+  var hops = 0;
+  while (node != null && hops < 40) {
+    if (node is RenderBox && node.hasSize) {
+      final rect = node.localToGlobal(Offset.zero) & node.size;
+      // Anything that clips and sits inside the window takes the overflow
+      // with it. RenderClipRRect/Rect/Oval all expose clipBehavior; a plain
+      // RenderBox with no clip does not.
+      final clips = _clipsByDefault(node) || _isExplicitlyClipping(node);
+      if (clips && rect.left >= -0.5 && rect.right <= window.width + 0.5) {
+        return true;
+      }
+    }
+    node = node.parent;
+    hops++;
+  }
+  return false;
+}
+
+List<_Escape> _escapes(WidgetTester tester, {required Size window}) {
+  final out = <_Escape>[];
+  void visit(RenderObject child) {
+    if (child is RenderBox && child.hasSize && child.attached) {
+      final origin = child.localToGlobal(Offset.zero);
+      final pastLeft = origin.dx < -0.5;
+      final pastRight = origin.dx + child.size.width > window.width + 0.5;
+      if ((pastLeft || pastRight) && !_clippedByAncestor(child, window)) {
+        // Name the field, not just the render class. Every text field on the
+        // page is the same render object, so "a TextField overflowed" is not
+        // an answer.
+        out.add(
+          _Escape(
+            origin & child.size,
+            '${child.runtimeType} w=${child.size.width.toStringAsFixed(0)} '
+            'x=${origin.dx.toStringAsFixed(0)}',
+          ),
+        );
+      }
+    }
+    child.visitChildren(visit);
+  }
+
+  visit(tester.binding.rootElement!.renderObject!);
+  return out;
+}
+
 class _TestApp extends StatelessWidget {
-  const _TestApp({required this.serverProvider, required this.child});
+  const _TestApp({
+    required this.serverProvider,
+    required this.child,
+    this.textScale = 1.0,
+  });
 
   final EngineRuntimeProvider serverProvider;
   final Widget child;
+  final double textScale;
 
   @override
   Widget build(BuildContext context) {
@@ -470,7 +667,16 @@ class _TestApp extends StatelessWidget {
           value: serverProvider,
         ),
       ],
-      child: MaterialApp(home: child),
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }
