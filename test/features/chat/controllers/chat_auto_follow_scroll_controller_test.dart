@@ -16,6 +16,10 @@ void main() {
       controller.jumpTo(controller.position.maxScrollExtent);
 
       await _pumpList(tester, controller: controller, itemCount: 16);
+      // The follow-up is now an eased animation started in a post-frame
+      // callback rather than a teleport during layout, so it needs a frame to
+      // begin and another to land.
+      await tester.pumpAndSettle();
 
       expect(controller.offset, controller.position.maxScrollExtent);
     });
@@ -75,7 +79,8 @@ void main() {
 
       shouldAutoFollow = true;
       controller.jumpTo(estimatedMaxFromTop);
-      await tester.pump();
+      // Eased, and started after layout settles rather than during it.
+      await tester.pumpAndSettle();
 
       expect(controller.offset, controller.position.maxScrollExtent);
       expect(controller.offset, lessThan(estimatedMaxFromTop));

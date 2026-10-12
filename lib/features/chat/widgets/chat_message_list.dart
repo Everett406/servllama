@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:servllama/app/scroll/vela_scroll_physics.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
@@ -73,6 +74,7 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
         child: ListView.builder(
           key: const ValueKey('chat_message_list'),
           controller: widget.coordinator.scrollController,
+          physics: const VelaScrollPhysics(),
           padding: EdgeInsets.only(
             top: widget.topInset,
             bottom: widget.bottomInset + ClaudeSpacing.sm,

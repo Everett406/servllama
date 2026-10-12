@@ -33,16 +33,24 @@ class AnswerMarkdown extends StatelessWidget {
       animation: isStreaming
           ? GptMarkdownAnimation.blurIn
           : GptMarkdownAnimation.none,
-      blockAnimation: GptMarkdownBlockAnimation.growIn,
+      // Per block, not per character: this is what makes lines arrive one at
+      // a time. growIn was too quick to read as a line arriving — a
+      // three-line paragraph resolved as one gesture.
+      blockAnimation: GptMarkdownBlockAnimation.fadeIn,
       isStreaming: isStreaming,
-      // Faster than the model produces, so the trail never lags behind the
-      // text; the per-character fade is what carries the softness, not the
-      // pacing.
-      charactersPerSecond: 900,
+      // 900 was so far above the model's own pace that a whole paragraph
+      // revealed inside a single frame, which is why it looked like an
+      // instant dump with no typewriter at all. Slow enough that a
+      // paragraph assembles; still comfortably above a local model's typical
+      // output rate, so the trail still leads rather than lags.
+      charactersPerSecond: 180,
       // How long one character keeps resolving after the head passes. A long
       // trail reads as the sentence assembling itself; a short one reads as
       // a stutter.
-      revealFadeSeconds: 0.32,
+      revealFadeSeconds: 0.38,
+      // Lines arrive a beat apart rather than all at once.
+      blockAnimationDuration: const Duration(milliseconds: 340),
+      blockAnimationCurve: Curves.easeOutCubic,
     );
   }
 
