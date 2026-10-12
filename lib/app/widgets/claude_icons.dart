@@ -36,26 +36,26 @@ class ClaudeIcons {
     return Icon(icon, size: size, color: color);
   }
 
-  static IconData get send => _ClaudeSend();
-  static IconData get stop => _ClaudeStop();
-  static IconData get plus => _ClaudePlus();
-  static IconData get image => _ClaudeImage();
-  static IconData get ghost => _ClaudeGhost();
-  static IconData get menu => _ClaudeMenu();
-  static IconData get copy => _ClaudeCopy();
-  static IconData get edit => _ClaudeEdit();
-  static IconData get regenerate => _ClaudeRegenerate();
-  static IconData get trash => _ClaudeTrash();
-  static IconData get chip => _ClaudeChip();
-  static IconData get search => _ClaudeSearch();
-  static IconData get chevronRight => _ClaudeChevronRight();
-  static IconData get close => _ClaudeClose();
-  static IconData get info => _ClaudeInfo();
-  static IconData get sliders => _ClaudeSliders();
-  static IconData get layers => _ClaudeLayers();
-  static IconData get download => _ClaudeDownload();
-  static IconData get play => _ClaudePlay();
-  static IconData get chevronDown => _ClaudeChevronDown();
+  static IconData get send => const _ClaudeSend();
+  static IconData get stop => const _ClaudeStop();
+  static IconData get plus => const _ClaudePlus();
+  static IconData get image => const _ClaudeImage();
+  static IconData get ghost => const _ClaudeGhost();
+  static IconData get menu => const _ClaudeMenu();
+  static IconData get copy => const _ClaudeCopy();
+  static IconData get edit => const _ClaudeEdit();
+  static IconData get regenerate => const _ClaudeRegenerate();
+  static IconData get trash => const _ClaudeTrash();
+  static IconData get chip => const _ClaudeChip();
+  static IconData get search => const _ClaudeSearch();
+  static IconData get chevronRight => const _ClaudeChevronRight();
+  static IconData get close => const _ClaudeClose();
+  static IconData get info => const _ClaudeInfo();
+  static IconData get sliders => const _ClaudeSliders();
+  static IconData get layers => const _ClaudeLayers();
+  static IconData get download => const _ClaudeDownload();
+  static IconData get play => const _ClaudePlay();
+  static IconData get chevronDown => const _ClaudeChevronDown();
 
   /// Stroke weight scales with the rendered size so a 16px icon keeps the
   /// same visual density as a 24px one.
