@@ -222,15 +222,15 @@ void main() {
       );
     });
 
-    test('does not persist a hidden llama.cpp OpenCL backend', () async {
+    test('round-trips an offered llama.cpp backend', () async {
+      // OpenCL used to be hidden here and rewritten to CPU. It is on the
+      // list again, so it persists like any other offered backend.
       await loader.save(
         const ServerLaunchSettings(llamaCppBackend: LlamaCppBackend.opencl),
       );
-      expect(await kvStorage.getString(ServerPrefsKeys.llamaCppBackend), 'cpu');
-      await kvStorage.setString(ServerPrefsKeys.llamaCppBackend, 'opencl');
+      expect(await kvStorage.getString(ServerPrefsKeys.llamaCppBackend), 'opencl');
       final restored = await loader.load();
-      expect(restored.llamaCppBackend, LlamaCppBackend.cpu);
-      expect(await kvStorage.getString(ServerPrefsKeys.llamaCppBackend), 'cpu');
+      expect(restored.llamaCppBackend, LlamaCppBackend.opencl);
     });
 
     test('does not persist a hidden backend from a settings object', () async {

@@ -1049,14 +1049,38 @@ abstract class AppLocalizations {
   /// No description provided for @llamaCppBackendHexagonDescription.
   ///
   /// In en, this message translates to:
-  /// **'NPU acceleration on Snapdragon 8 Gen 2 and later.'**
+  /// **'Hexagon HTP NPU. Needs both the model and the device firmware to support it.'**
   String get llamaCppBackendHexagonDescription;
 
   /// No description provided for @llamaCppBackendUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Not available on this device.'**
+  /// **'This device does not offer it.'**
   String get llamaCppBackendUnavailable;
+
+  /// No description provided for @llamaCppDetectedDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected accelerators'**
+  String get llamaCppDetectedDevices;
+
+  /// No description provided for @llamaCppDetectedNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No GPU or NPU was found, so CPU is the only option.'**
+  String get llamaCppDetectedNone;
+
+  /// No description provided for @llamaCppDetectedShowRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Show raw output'**
+  String get llamaCppDetectedShowRaw;
+
+  /// No description provided for @llamaCppDetectedHideRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide raw output'**
+  String get llamaCppDetectedHideRaw;
 
   /// No description provided for @llamaCppBackendProbeFailed.
   ///

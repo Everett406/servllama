@@ -59,56 +59,62 @@ class _OutlinedTextSettingState extends State<OutlinedTextSetting> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.label,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        if (widget.description != null) ...[
-          const SizedBox(height: 2),
+    return Padding(
+      // The section card has no horizontal inset of its own; every child
+      // brings one. Without this the label sat on the border and the field
+      // ran the full width of the card, next to rows that were inset.
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            widget.description!,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.35,
+            widget.label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (widget.description != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              widget.description!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          TextField(
+            controller: _controller,
+            keyboardType: widget.keyboardType,
+            obscureText: widget.obscureText,
+            inputFormatters: widget.inputFormatters,
+            onChanged: widget.onChanged,
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withAlpha(90),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary),
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
             ),
           ),
         ],
-        const SizedBox(height: 10),
-        TextField(
-          controller: _controller,
-          keyboardType: widget.keyboardType,
-          obscureText: widget.obscureText,
-          inputFormatters: widget.inputFormatters,
-          onChanged: widget.onChanged,
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withAlpha(90),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.primary),
-            ),
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

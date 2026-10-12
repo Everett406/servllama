@@ -13,7 +13,6 @@ import 'package:servllama/features/chat/pages/chat_history_page.dart';
 import 'package:servllama/features/chat/pages/chat_page.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/widgets/chat_session_list.dart';
-import 'package:servllama/features/chat/widgets/chat_session_search_field.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/features/server/pages/model_management_page.dart';
 import 'package:servllama/features/server/pages/server_page.dart';
@@ -87,12 +86,7 @@ class _MainScaffoldState extends State<MainScaffold> {
                 children: [
                   _SidebarHeader(controller: _sidebar),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      ClaudeSpacing.md,
-                      4,
-                      ClaudeSpacing.md,
-                      ClaudeSpacing.md,
-                    ),
+                    padding: const EdgeInsets.only(top: 4),
                     child: _NewChatButton(
                       onPressed: () {
                         _closeSidebarIfOverlay();
@@ -100,19 +94,14 @@ class _MainScaffoldState extends State<MainScaffold> {
                       },
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: ClaudeSpacing.md,
-                    ),
-                    child: ChatSessionSearchField(
-                      key: const Key('drawer_search_box'),
-                      fieldKey: const Key('drawer_search_input'),
-                      hintText: context.l10n.chatSearchHint,
-                      onOpenHistory: () {
-                        _closeSidebarIfOverlay();
-                        _pushHistory();
-                      },
-                    ),
+                  _SidebarActionButton(
+                    key: const Key('sidebar_search_button'),
+                    icon: ClaudeIcons.search,
+                    label: context.l10n.chatSearchHint,
+                    onPressed: () {
+                      _closeSidebarIfOverlay();
+                      _pushHistory();
+                    },
                   ),
                   Expanded(
                     child: ChatSessionList(
@@ -180,21 +169,57 @@ class _NewChatButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: OutlinedButton.icon(
-        key: const Key('sidebar_new_chat_button'),
-        onPressed: onPressed,
-        icon: ClaudeIcon(ClaudeIcons.plus, size: 18),
-        label: Text(context.l10n.chatNewConversation),
-        style: OutlinedButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          backgroundColor: context.surface,
-          side: BorderSide(color: context.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ClaudeRadius.md),
+    return _SidebarActionButton(
+      key: const Key('sidebar_new_chat_button'),
+      icon: ClaudeIcons.plus,
+      label: context.l10n.chatNewConversation,
+      onPressed: onPressed,
+    );
+  }
+}
+
+/// The sidebar's row-shaped action.
+///
+/// Search used to be a text field pinned under the new-chat button, which
+/// made two controls of the same kind sit there looking like none: one you
+/// type into and one you press. It is a navigation action like the other, so
+/// it is drawn like the other; the history page it opens is where you type.
+class _SidebarActionButton extends StatelessWidget {
+  const _SidebarActionButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ClaudeSpacing.md,
+        0,
+        ClaudeSpacing.md,
+        ClaudeSpacing.md,
+      ),
+      child: SizedBox(
+        height: 42,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: ClaudeIcon(icon, size: 18),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            backgroundColor: context.surface,
+            side: BorderSide(color: context.border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(ClaudeRadius.md),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.md),
         ),
       ),
     );

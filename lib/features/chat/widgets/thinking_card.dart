@@ -357,8 +357,6 @@ class _RingPainter extends CustomPainter {
       oldDelegate.track != track || oldDelegate.arc != arc;
 }
 
-const Duration _zero = Duration.zero;
-
 /// The full thought, in a sheet.
 ///
 /// A sheet rather than an inline expansion because the thought is often
@@ -369,8 +367,9 @@ Future<void> showThinkingSheet(
   BuildContext context, {
   required String content,
   required Duration elapsed,
+  required String messageId,
   ValueListenable<String>? liveContent,
-  ValueListenable<Duration>? liveElapsed,
+  bool answerStarted = false,
 }) {
   final chinese = Localizations.localeOf(context).languageCode == 'zh';
   return showModalBottomSheet<void>(
@@ -387,8 +386,11 @@ Future<void> showThinkingSheet(
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
             child: ValueListenableBuilder<Duration>(
-              valueListenable:
-                  liveElapsed ?? const AlwaysStoppedAnimation(_zero),
+              valueListenable: _ThinkingClock(
+                messageId: messageId,
+                fallback: elapsed,
+                answerStarted: answerStarted,
+              ),
               builder: (context, liveValue, _) => Text(
                 context.l10n.chatThinkingSheetTitle(
                   formatThinkingDuration(liveValue, chinese: chinese),
@@ -423,4 +425,53 @@ Future<void> showThinkingSheet(
       ),
     ),
   );
+}
+
+/// The elapsed time, as a notifier the sheet can listen to.
+///
+/// It used to be a [ValueNotifier] built at open time and handed in as
+/// `liveElapsed`, which meant it held whatever it was constructed with and
+/// never moved again: the title showed the time as of the moment the sheet
+/// opened and stood there for the rest of the thought. A sheet is where you
+/// go to watch something happen, so the clock has to be one of the things
+/// that happens.
+///
+/// Ticking stops the moment the answer starts, because at that point the
+/// thought is over and the real elapsed time is [ThinkingTimings.frozen].
+class _ThinkingClock extends ValueNotifier<Duration> {
+  _ThinkingClock({
+    required String messageId,
+    required Duration fallback,
+    required bool answerStarted,
+  }) : super(fallback) {
+    _messageId = messageId;
+    _answerStarted = answerStarted;
+    _restart();
+  }
+
+  late final String _messageId;
+  late bool _answerStarted;
+  Timer? _ticker;
+
+  void _restart() {
+    _ticker?.cancel();
+    _ticker = null;
+    final frozen = ThinkingTimings.frozen(_messageId);
+    if (frozen != null) {
+      value = frozen;
+      return;
+    }
+    final started = ThinkingTimings.startedAt(_messageId);
+    if (_answerStarted || started == null) return;
+    value = DateTime.now().difference(started);
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      value = DateTime.now().difference(started);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
 }

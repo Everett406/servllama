@@ -7,8 +7,8 @@ import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/features/chat/controllers/streaming_chat_message_notifier.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
-import 'package:servllama/features/chat/widgets/streaming_fade_text.dart';
 import 'package:servllama/features/chat/widgets/token_stats.dart';
+import 'package:servllama/features/chat/widgets/answer_markdown.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 
@@ -29,6 +29,9 @@ class ChatMessageItem extends StatefulWidget {
     this.canManage = false,
     this.onCopy,
     this.onRegenerate,
+
+    /// Kept on the public API so callers do not have to know which actions
+    /// moved behind the long press. It is what that menu calls.
     this.onEdit,
     this.onDelete,
   });
@@ -49,6 +52,9 @@ class ChatMessageItem extends StatefulWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onRegenerate;
   final VoidCallback? onEdit;
+
+  /// Not offered anywhere. Kept so removing it stays a call-site decision
+  /// rather than a signature change.
   final VoidCallback? onDelete;
 
   @override
@@ -81,15 +87,61 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
       context,
       content: message.reasoningContent ?? '',
       elapsed: elapsed,
+      messageId: message.id,
       liveContent: widget.liveReasoning,
-      liveElapsed: ValueNotifier<Duration>(
-        ThinkingTimings.frozen(message.id) ?? elapsed,
-      ),
+      answerStarted: (message.content).trim().isNotEmpty,
     );
     if (mounted) setState(() => _showReasoning = false);
   }
 
   bool get _isUser => widget.message.role == ChatRole.user;
+
+  /// Copy or edit, asked for rather than offered.
+  ///
+  /// Destructive or rarely used actions behind a press-and-hold is the
+  /// mobile convention; a permanent row under the bubble spends vertical
+  /// space on every message in the transcript to advertise two buttons.
+  Future<void> _openUserActions(String content) async {
+    final l10n = context.l10n;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: sheetContext.surface,
+            borderRadius: BorderRadius.circular(ClaudeRadius.xl),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: ClaudeIcon(ClaudeIcons.copy),
+                title: Text(l10n.chatCopyMessage),
+                onTap: () => Navigator.of(sheetContext).pop('copy'),
+              ),
+              ListTile(
+                leading: ClaudeIcon(ClaudeIcons.edit),
+                title: Text(l10n.chatEditMessage),
+                onTap: () => Navigator.of(sheetContext).pop('edit'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    switch (choice) {
+      case 'copy':
+        widget.onCopy?.call();
+      case 'edit':
+        widget.onEdit?.call();
+      default:
+        break;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +165,18 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
           if (message.imageFilePaths.isNotEmpty)
             _MessageImages(paths: message.imageFilePaths, alignEnd: _isUser),
           if (_isUser && hasContent)
-            _UserBubble(content: content, id: message.id),
+            _UserBubble(
+              content: content,
+              id: message.id,
+              // Your own message carries its actions behind a long press
+              // instead of printing them under the bubble. Two grey buttons
+              // under every question is a lot of chrome for something you
+              // use twice.
+              onLongPress: widget.canManage &&
+                      (widget.onCopy != null || widget.onEdit != null)
+                  ? () => _openUserActions(content)
+                  : null,
+            ),
           if (!_isUser) ...[
             // Shown while generating even with nothing to quote yet: a
             // reply that has not appeared needs to say why it has not
@@ -147,23 +210,26 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
           // Actions live in the row's own vertical rhythm and simply fade
           // out, so an assistant turn doesn't shift the transcript when the
           // pointer leaves.
-          _ActionBar(
-            // Was gated on hover, which is a pointer concept. On a
-            // phone there is no hover, so the row simply never appeared.
-            visible: widget.canManage,
-            isStreaming: widget.isStreaming,
-            messageId: message.id,
-            onCopy: hasContent ? widget.onCopy : null,
-            onRegenerate: _isUser ? null : widget.onRegenerate,
-            onEdit: _isUser ? widget.onEdit : null,
-            onDelete: widget.onDelete,
-            timestamp: !_isUser && !widget.isStreaming
-                ? _formatTimestamp(context, message.createdAt)
-                : null,
-            throughput: !_isUser && !widget.isStreaming
-                ? _formatThroughput(context, message.id)
-                : null,
-          ),
+          // Assistant only. A user turn carries copy and edit behind a long
+          // press; a reply carries copy and retry inline with its timestamp
+          // and rate. Delete was on both rows and was never asked for, and
+          // on a reply it is the one button nobody should tap by accident.
+          if (!_isUser)
+            _ActionBar(
+              // Was gated on hover, which is a pointer concept. On a
+              // phone there is no hover, so the row simply never appeared.
+              visible: widget.canManage,
+              isStreaming: widget.isStreaming,
+              messageId: message.id,
+              onCopy: hasContent ? widget.onCopy : null,
+              onRegenerate: widget.onRegenerate,
+              timestamp: !widget.isStreaming
+                  ? _formatTimestamp(context, message.createdAt)
+                  : null,
+              throughput: !widget.isStreaming
+                  ? _formatThroughput(context, message.id)
+                  : null,
+            ),
         ],
       ),
     );
@@ -193,14 +259,21 @@ String? _formatThroughput(BuildContext context, String messageId) {
 }
 
 class _UserBubble extends StatelessWidget {
-  const _UserBubble({required this.content, required this.id});
+  const _UserBubble({
+    required this.content,
+    required this.id,
+    this.onLongPress,
+  });
 
   final String content;
   final String id;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 520),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
@@ -214,6 +287,7 @@ class _UserBubble extends StatelessWidget {
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: context.ink, height: 1.55),
+        ),
         ),
       ),
     );
@@ -239,7 +313,11 @@ class _AssistantBody extends StatelessWidget {
         ).textTheme.bodyLarge?.copyWith(color: context.ink, height: 1.68) ??
         const TextStyle();
     return RepaintBoundary(
-      child: FadingMarkdown(
+      // The package's own reveal: each character resolves out of a blur while
+      // it fades in. The previous version painted a canvas-coloured gradient
+      // over the last line instead, which veiled whatever happened to be
+      // sitting at the bottom — a different effect, and the wrong one.
+      child: AnswerMarkdown(
         content: content.isEmpty && isStreaming ? '…' : content,
         isStreaming: isStreaming,
         style: style,
@@ -300,8 +378,6 @@ class _ActionBar extends StatelessWidget {
     required this.messageId,
     required this.onCopy,
     required this.onRegenerate,
-    required this.onEdit,
-    required this.onDelete,
     this.timestamp,
     this.throughput,
   });
@@ -311,8 +387,6 @@ class _ActionBar extends StatelessWidget {
   final String messageId;
   final VoidCallback? onCopy;
   final VoidCallback? onRegenerate;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
 
   /// Rendered at the row's leading edge, opposite the controls. When it was
   /// absent the row started with a button and no idea of when anything was
@@ -331,33 +405,35 @@ class _ActionBar extends StatelessWidget {
         padding: const EdgeInsets.only(top: 2),
         child: Row(
           children: [
+            // When and how fast, then the two things you can do with it.
+            // A row that starts with a button gives no idea when anything
+            // was said, which is the first thing a scrollback reader wants.
+            if (timestamp != null || throughput != null) ...[
+              Flexible(
+                child: Text(
+                  [timestamp, throughput].whereType<String>().join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.inkTertiary,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
             _ActionButton(
               key: Key('chat_message_copy_button_$messageId'),
               icon: ClaudeIcons.copy,
               tooltip: context.l10n.chatCopyMessage,
               onPressed: onCopy == null ? null : () => onCopy!(),
             ),
-            if (onEdit != null)
-              _ActionButton(
-                key: Key('chat_message_edit_button_$messageId'),
-                icon: ClaudeIcons.edit,
-                tooltip: context.l10n.chatEditMessage,
-                onPressed: onEdit,
-              ),
             if (onRegenerate != null && !isStreaming)
               _ActionButton(
                 key: Key('chat_message_regenerate_button_$messageId'),
                 icon: ClaudeIcons.regenerate,
                 tooltip: context.l10n.chatRegenerateMessage,
                 onPressed: onRegenerate,
-              ),
-            if (onDelete != null)
-              _ActionButton(
-                key: Key('chat_message_delete_button_$messageId'),
-                icon: ClaudeIcons.trash,
-                tooltip: context.l10n.commonDelete,
-                onPressed: onDelete,
-                destructive: true,
               ),
           ],
         ),
@@ -372,13 +448,11 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.destructive = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
-  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
@@ -389,11 +463,7 @@ class _ActionButton extends StatelessWidget {
         icon: ClaudeIcons.render(icon, size: 17),
         visualDensity: VisualDensity.compact,
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),
-        color: destructive
-            ? context.dangerText
-            : onPressed == null
-            ? context.inkTertiary
-            : context.inkSecondary,
+        color: onPressed == null ? context.inkTertiary : context.inkSecondary,
         iconSize: 17,
       ),
     );

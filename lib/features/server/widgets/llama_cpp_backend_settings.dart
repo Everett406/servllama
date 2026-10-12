@@ -6,6 +6,7 @@ import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/server_config_provider.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/slider_number_setting.dart';
 
@@ -59,23 +60,26 @@ class _LlamaCppBackendSettingsState extends State<LlamaCppBackendSettings> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.llamaCppBackendNextStart,
-                  style: Theme.of(context).textTheme.bodySmall,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.llamaCppBackendNextStart,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ),
-              ),
-              IconButton(
-                key: const Key('llama_cpp_backend_refresh'),
-                tooltip: l10n.llamaCppBackendRefresh,
-                onPressed: provider.loadingLlamaCppBackends || running
-                    ? null
-                    : () => provider.loadLlamaCppBackends(force: true),
-                icon: const Icon(Icons.refresh),
-              ),
-            ],
+                IconButton(
+                  key: const Key('llama_cpp_backend_refresh'),
+                  tooltip: l10n.llamaCppBackendRefresh,
+                  onPressed: provider.loadingLlamaCppBackends || running
+                      ? null
+                      : () => provider.loadLlamaCppBackends(force: true),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
           ),
           if (running)
             Padding(
@@ -107,6 +111,7 @@ class _LlamaCppBackendSettingsState extends State<LlamaCppBackendSettings> {
             if (backend != LlamaCppBackend.cpu) const Divider(height: 1),
             _backendTile(context, provider, backend, probe, probeKnown),
           ],
+          _detectedDevices(context, probe, probeKnown),
           if (provider.llamaCppBackend != LlamaCppBackend.cpu) ...[
             const Divider(height: 1),
             SliderNumberSetting(
@@ -177,5 +182,121 @@ class _LlamaCppBackendSettingsState extends State<LlamaCppBackendSettings> {
       LlamaCppBackend.opencl => l10n.llamaCppBackendOpenclDescription,
       LlamaCppBackend.hexagon => l10n.llamaCppBackendHexagonDescription,
     };
+  }
+
+  /// What the probe actually saw.
+  ///
+  /// The old copy asserted "Snapdragon 8 Gen 2 and above" whether or not the
+  /// device qualified, so a phone with no usable HTP got the same sentence as
+  /// one that does. The number that decides this is what `--list-devices`
+  /// printed, so that is what the row shows, verbatim and expandable.
+  Widget _detectedDevices(
+    BuildContext context,
+    LlamaCppDeviceProbeResult probe,
+    bool probeKnown,
+  ) {
+    final l10n = context.l10n;
+    final found = <String>[
+      if (probe.openclAvailable) 'OpenCL — ${probe.openclDeviceName}',
+      if (probe.hexagonAvailable) 'Hexagon — ${probe.hexagonDeviceName}',
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.llamaCppDetectedDevices,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: context.inkTertiary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (!probeKnown)
+            Text(
+              l10n.llamaCppBackendRefresh,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else if (found.isEmpty)
+            Text(
+              l10n.llamaCppDetectedNone,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            for (final line in found)
+              Text(
+                line,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.accent,
+                ),
+              ),
+          if (probe.rawOutput.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _RawOutputToggle(raw: probe.rawOutput),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Collapsed to one line until asked. The raw listing is the only way to tell
+/// an absent HTP device from an unsupported one, and it is never something
+/// anyone wants to read by default.
+class _RawOutputToggle extends StatefulWidget {
+  const _RawOutputToggle({required this.raw});
+
+  final String raw;
+
+  @override
+  State<_RawOutputToggle> createState() => _RawOutputToggleState();
+}
+
+class _RawOutputToggleState extends State<_RawOutputToggle> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              _open
+                  ? l10n.llamaCppDetectedHideRaw
+                  : l10n.llamaCppDetectedShowRaw,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.accent,
+                decoration: TextDecoration.underline,
+                decorationColor: context.accent,
+              ),
+            ),
+          ),
+        ),
+        if (_open)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 4, bottom: 10),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: context.surfaceSunken,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              widget.raw.trim(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
+                height: 1.4,
+                color: context.inkSecondary,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

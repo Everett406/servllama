@@ -79,9 +79,16 @@ class ServerLaunchSettings {
   // Shown and launched backends. A compiled backend can stay in
   // [LlamaCppBackend] and still be reported by the device probe; remove it
   // from this list to hide it. CPU stays first and is the fallback.
-  // OpenCL is compiled, but Adreno results are not reliable enough to offer.
+  //
+  // OpenCL used to be hidden on the grounds that Adreno results were not
+  // reliable. The plumbing was all there — arg, probe, CPU fallback — so the
+  // only effect of hiding it was that a phone with a perfectly good Adreno
+  // GPU had no way to use it. It is offered again, gated on the probe: if
+  // the device reports an OpenCL device the row is live, if not it is dimmed
+  // and explains why.
   static const List<LlamaCppBackend> supportedLlamaCppBackends = [
     LlamaCppBackend.cpu,
+    LlamaCppBackend.opencl,
     LlamaCppBackend.hexagon,
   ];
 

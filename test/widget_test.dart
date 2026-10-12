@@ -95,7 +95,7 @@ void main() {
     expect(find.text('设置'), findsOneWidget);
     // About is a settings row now, not a drawer entry.
     expect(find.text('关于'), findsNothing);
-    expect(find.byKey(const Key('drawer_search_box')), findsOneWidget);
+    expect(find.byKey(const Key('sidebar_search_button')), findsOneWidget);
     expect(find.byKey(const Key('drawer_server_action')), findsOneWidget);
     expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
     // The status dot moved to the sidebar's engine strip when the chat
@@ -103,12 +103,6 @@ void main() {
     expect(find.byKey(const Key('sidebar_engine_status_badge')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s1')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s2')), findsOneWidget);
-
-    await tester.enterText(find.byKey(const Key('drawer_search_input')), '会话一');
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('chat_session_item_s1')), findsOneWidget);
-    expect(find.byKey(const Key('chat_session_item_s2')), findsNothing);
 
     await tester.tap(find.byKey(const Key('drawer_server_action')));
     await tester.pumpAndSettle();
@@ -125,14 +119,10 @@ void main() {
 
     // Returning from the server page restores the sidebar in whatever state it
     // was left in, so only reopen it when it actually closed.
-    if (find.byKey(const Key('drawer_search_input')).evaluate().isEmpty) {
+    if (find.byKey(const Key('sidebar_search_button')).evaluate().isEmpty) {
       await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
       await tester.pumpAndSettle();
     }
-    // The filter lives on the provider and survives the round trip, so it
-    // still hides s2 until it is cleared.
-    await tester.enterText(find.byKey(const Key('drawer_search_input')), '');
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('chat_session_item_s2')));
     await tester.pumpAndSettle();
 
@@ -140,7 +130,7 @@ void main() {
     // Wide surfaces keep the sidebar embedded and the same button collapses
     // it; narrow ones close it on selection. Only tap when it is actually
     // closed, the same guard the setup above uses.
-    if (find.byKey(const Key('drawer_search_box')).evaluate().isEmpty) {
+    if (find.byKey(const Key('sidebar_search_button')).evaluate().isEmpty) {
       await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
       await tester.pumpAndSettle();
     }
@@ -253,7 +243,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('drawer_open_history_button')));
+    await tester.tap(find.byKey(const Key('sidebar_search_button')));
     await tester.pumpAndSettle();
 
     expect(
@@ -355,7 +345,7 @@ void main() {
     // sidebar first — and the drawer scrim would swallow the tap anyway.
     await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('drawer_open_history_button')));
+    await tester.tap(find.byKey(const Key('sidebar_search_button')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('history_session_item_s2')));
@@ -370,7 +360,7 @@ void main() {
       ),
       findsNothing,
     );
-    expect(find.byKey(const Key('drawer_search_box')), findsNothing);
+    expect(find.byKey(const Key('sidebar_search_button')), findsNothing);
     expect(find.text('服务器'), findsNothing);
     expect(find.text('设置'), findsNothing);
   });

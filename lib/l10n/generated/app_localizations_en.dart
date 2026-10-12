@@ -530,10 +530,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get llamaCppBackendHexagonDescription =>
-      'NPU acceleration on Snapdragon 8 Gen 2 and later.';
+      'Hexagon HTP NPU. Needs both the model and the device firmware to support it.';
 
   @override
-  String get llamaCppBackendUnavailable => 'Not available on this device.';
+  String get llamaCppBackendUnavailable => 'This device does not offer it.';
+
+  @override
+  String get llamaCppDetectedDevices => 'Detected accelerators';
+
+  @override
+  String get llamaCppDetectedNone =>
+      'No GPU or NPU was found, so CPU is the only option.';
+
+  @override
+  String get llamaCppDetectedShowRaw => 'Show raw output';
+
+  @override
+  String get llamaCppDetectedHideRaw => 'Hide raw output';
 
   @override
   String get llamaCppBackendProbeFailed =>

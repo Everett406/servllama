@@ -70,7 +70,8 @@ void main() {
       );
     }
 
-    expect(find.byKey(const Key('llama_cpp_backend_opencl')), findsNothing);
+    // Offered again: the probe decides whether the row is live, not the list.
+    expect(find.byKey(const Key('llama_cpp_backend_opencl')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('llama_cpp_backend_hexagon')));
     await tester.pumpAndSettle();
@@ -99,7 +100,14 @@ void main() {
           .onTap,
       isNotNull,
     );
-    expect(find.byKey(const Key('llama_cpp_backend_opencl')), findsNothing);
+    // Listed but not selectable: the probe found neither, so tapping OpenCL
+    // has to be a no-op rather than a launch that quietly falls back.
+    expect(
+      tester
+          .widget<ListTile>(find.byKey(const Key('llama_cpp_backend_opencl')))
+          .onTap,
+      isNull,
+    );
     expect(
       tester
           .widget<ListTile>(find.byKey(const Key('llama_cpp_backend_hexagon')))

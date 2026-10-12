@@ -514,10 +514,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get llamaCppBackendOpenclDescription => '通过 OpenCL 将层卸载到 Adreno GPU。';
 
   @override
-  String get llamaCppBackendHexagonDescription => '支持骁龙 8 Gen 2 及以上NPU加速';
+  String get llamaCppBackendHexagonDescription => '通过高通 HTP 使用 NPU，需要模型与固件都支持。';
 
   @override
   String get llamaCppBackendUnavailable => '此设备不可用。';
+
+  @override
+  String get llamaCppDetectedDevices => '检测到的加速设备';
+
+  @override
+  String get llamaCppDetectedNone => '没有检测到 GPU / NPU，只能用 CPU。';
+
+  @override
+  String get llamaCppDetectedShowRaw => '查看原始输出';
+
+  @override
+  String get llamaCppDetectedHideRaw => '收起原始输出';
 
   @override
   String get llamaCppBackendProbeFailed =>

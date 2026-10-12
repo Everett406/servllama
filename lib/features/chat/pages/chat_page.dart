@@ -317,30 +317,24 @@ class _ChatViewState extends State<_ChatView> {
                             children: [
                               ChatMessageListView(
                                 coordinator: _scroll,
-                                // Enough runway that the first and last
-                                // lines can always clear the band.
-                                topInset: _edgeFadeHeight,
-                                bottomInset: _edgeFadeHeight,
+                                // The transcript runs right up under the
+                                // pills. The old padding reserved a full
+                                // fade's worth of dead space above the first
+                                // line, which read as an empty band rather
+                                // than as breathing room.
+                                topInset: _topRunway,
+                                bottomInset: _bottomRunway,
                               ),
-                              // Inside this band only. Painting them at
-                              // the page's Stack level veiled the header
-                              // and the composer too, which is a different
-                              // thing entirely: those are panels in the
-                              // same plane, not surfaces floating above it.
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: _edgeFadeHeight,
-                                child: IgnorePointer(
-                                  child: _EdgeFade(alignment: Alignment.topCenter),
-                                ),
-                              ),
+                              // Only at the composer. There is no fade at the
+                              // top: the pills are solid, so a gradient under
+                              // them would dim the transcript for no reason.
+                              // What is wanted there is the text arriving, not
+                              // the text fading before it gets there.
                               Positioned(
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
-                                height: _edgeFadeHeight,
+                                height: _bottomFade,
                                 child: IgnorePointer(
                                   child: _EdgeFade(alignment: Alignment.bottomCenter),
                                 ),
@@ -420,7 +414,18 @@ class _ChatViewState extends State<_ChatView> {
 /// runway and the gradient that covers it are the same length, which means
 /// text only fades once it has already scrolled clear of where the eye
 /// reads.
-const double _edgeFadeHeight = 56;
+/// Clearance above the first line.
+///
+/// Small on purpose. The header is three solid pills floating over the
+/// transcript, not a bar the text has to queue behind, so the runway only
+/// has to keep a line from being sliced by the very top of the screen.
+const double _topRunway = 14;
+
+/// The composer is an opaque panel, so text genuinely has to leave the way
+/// it came in. Runway and fade share a length: a line starts dissolving
+/// exactly where the panel's shadow begins.
+const double _bottomRunway = 46;
+const double _bottomFade = 46;
 
 /// A gradient that hands the canvas over to whatever is behind it.
 ///

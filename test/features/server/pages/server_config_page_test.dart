@@ -31,6 +31,7 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+
     testWidgets('shows loading first and then renders loaded slider value', (
       tester,
     ) async {
