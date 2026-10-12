@@ -86,6 +86,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatSelectModel => '选择模型';
 
   @override
+  String get chatBrowseLibrary => '浏览模型库';
+
+  @override
   String get chatRefreshModels => '刷新模型';
 
   @override
@@ -1393,10 +1396,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get chatEmptyTitle => '想聊点什么？';
+  String get chatEmptyTitle => '只差一阵风';
 
   @override
-  String get chatEmptyDescription => '选定模型后服务会自动启动。';
+  String get chatEmptyDescription => '帆已经挂好了。它只在这台设备上走，不去别处。';
 
   @override
   String get chatEmptyAction => '选择模型';
@@ -1661,4 +1664,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String chatContextValue(Object used, Object total) {
     return '已用 $used / $total';
   }
+
+  @override
+  String get engineMenuRunning => '运行中';
+
+  @override
+  String engineMenuStart(String engine) {
+    return '启动 $engine';
+  }
+
+  @override
+  String engineMenuSwitchTo(String engine) {
+    return '切换到 $engine';
+  }
+
+  @override
+  String get engineMenuStop => '停止';
 }

@@ -32,6 +32,7 @@
     }
   },
   "chatSelectModel": "Select model",
+  "chatBrowseLibrary": "Browse library",
   "chatRefreshModels": "Refresh models",
   "chatLoadedModels": "Loaded models",
   "chatAvailableModels": "Available models",
@@ -834,9 +835,9 @@
       }
     }
   },
-  "chatEmptyTitle": "What are we talking about?",
-  "chatEmptyDescription": "Choosing a model starts the server for you.",
-  "chatEmptyAction": "Choose a model",
+  "chatEmptyTitle": "Just needs a wind",
+  "chatEmptyDescription": "The sail is already up. It only travels on this device, and nowhere else.",
+  "chatEmptyAction": "Pick a model",
   "chatChooseEngineToStart": "Choose the inference engine to start",
   "chatEngineDefaultModel": "Default model: {model}",
   "@chatEngineDefaultModel": {
@@ -993,5 +994,23 @@
       "used": {},
       "total": {}
     }
-  }
+  },
+  "engineMenuRunning": "Running",
+  "engineMenuStart": "Start {engine}",
+  "@engineMenuStart": {
+    "placeholders": {
+      "engine": {
+        "type": "String"
+      }
+    }
+  },
+  "engineMenuSwitchTo": "Switch to {engine}",
+  "@engineMenuSwitchTo": {
+    "placeholders": {
+      "engine": {
+        "type": "String"
+      }
+    }
+  },
+  "engineMenuStop": "Stop"
 }

@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/sheet/vela_menu.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/features/chat/models/chat_model_option.dart';
@@ -37,8 +39,10 @@ class ChatComposer extends StatefulWidget {
   final VoidCallback onStop;
   final VoidCallback onPickImage;
   final VoidCallback onStartServer;
-  final VoidCallback onSelectModel;
-  final VoidCallback onOpenEngineSettings;
+  /// Take the anchor's context rather than the page's: a menu has to hang off
+  /// the chip that opened it, and the page's context is nowhere near it.
+  final void Function(BuildContext anchor) onSelectModel;
+  final void Function(BuildContext anchor) onOpenEngineSettings;
 
   @override
   ChatComposerState createState() => ChatComposerState();
@@ -170,14 +174,29 @@ class ChatComposerState extends State<ChatComposer> {
                 ),
                 const SizedBox(width: 6),
                 Flexible(
-                  child: _ModelChip(model: model, onTap: widget.onSelectModel),
+                  child: VelaAnchor(
+                    child: Builder(
+                      builder: (chipContext) => _ModelChip(
+                        model: model,
+                        onTap: () => widget.onSelectModel(chipContext),
+                      ),
+                    ),
+                  ),
                 ),
                 const Spacer(),
-                _EngineButton(
-                  running: isRunning,
-                  onTap: isRunning
-                      ? widget.onOpenEngineSettings
-                      : widget.onStartServer,
+                VelaAnchor(
+                  prefer: AxisDirection.down,
+                  child: Builder(
+                    // The same button and the same menu in every state. It
+                    // used to start the server when down and open settings
+                    // when up, so the control changed meaning under the
+                    // thumb depending on state you had to read to know.
+                    builder: (buttonContext) => _EngineButton(
+                      running: isRunning,
+                      busy: context.watch<EngineRuntimeProvider?>()?.isBusy ?? false,
+                      onTap: () => widget.onOpenEngineSettings(buttonContext),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 6),
                 _SendStopButton(
@@ -206,9 +225,14 @@ class ChatComposerState extends State<ChatComposer> {
 /// is up. Same affordance the sidebar's status strip offers, kept here so
 /// the composer never has to explain itself.
 class _EngineButton extends StatelessWidget {
-  const _EngineButton({required this.running, required this.onTap});
+  const _EngineButton({
+    required this.running,
+    required this.busy,
+    required this.onTap,
+  });
 
   final bool running;
+  final bool busy;
   final VoidCallback onTap;
 
   @override
@@ -245,6 +269,22 @@ class _EngineButton extends StatelessWidget {
                       ClaudeIcons.slash,
                       size: 17,
                       color: context.inkTertiary,
+                    ),
+                  // A running engine in one glyph: a dot in the corner. The
+                  // chip's colour already says it; a second shape says it
+                  // from further away.
+                  if (running && !busy)
+                    Positioned(
+                      right: 7,
+                      top: 7,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: context.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                     ),
                 ],
               ),

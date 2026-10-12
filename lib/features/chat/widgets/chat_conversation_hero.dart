@@ -40,35 +40,25 @@ class ChatConversationHero extends StatelessWidget {
     final heroDescriptionColor = isLight
         ? const Color(0xFF7D8698)
         : colorScheme.onSurfaceVariant.withAlpha(210);
-    final heroButtonBackgroundColor = _chatActionButtonBackgroundColor(
-      brightness,
-    );
-    final heroButtonForegroundColor = _chatActionButtonForegroundColor(
-      brightness,
-    );
-
+    // The copy invites; it does not report. The previous wording was a
+    // status readout — "模型准备好了", "还差最后一步" — which is what a
+    // loading label says. The composer's model chip and engine button are one
+    // tap away and do both jobs, so a third button down here was redundant.
     final String description;
-    final String actionLabel;
-    final VoidCallback? onAction;
-
     if (isPreparing) {
       description = preparingLabel ?? l10n.chatPreparingModel;
-      actionLabel = preparingLabel ?? l10n.chatPreparingModel;
-      onAction = null;
     } else if (!hasLibraryModels) {
-      // Nothing to pick yet, so the download entry is promoted to primary.
       description = l10n.chatEmptyNoModelsDescription;
-      actionLabel = l10n.discoverTitle;
-      onAction = onDiscoverModels;
     } else {
       description = l10n.chatEmptyDescription;
-      actionLabel = l10n.chatEmptyAction;
-      onAction = onOpenModels;
     }
 
     return Align(
       key: const Key('chat_conversation_hero_align'),
-      alignment: const Alignment(0, -0.236),
+      // Centred and a touch above the middle. -0.236 put it well up the
+      // screen, where it read as a header rather than as the thing you are
+      // about to do.
+      alignment: const Alignment(0, -0.08),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -103,58 +93,6 @@ class ChatConversationHero extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            FilledButton(
-              key: const Key('chat_empty_state_action_button'),
-              onPressed: onAction,
-              style: FilledButton.styleFrom(
-                backgroundColor: heroButtonBackgroundColor,
-                disabledBackgroundColor: heroButtonBackgroundColor.withAlpha(
-                  isLight ? 190 : 210,
-                ),
-                foregroundColor: heroButtonForegroundColor,
-                disabledForegroundColor: heroButtonForegroundColor.withAlpha(
-                  214,
-                ),
-                minimumSize: const Size(0, 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 44,
-                  vertical: 10,
-                ),
-                shape: const StadiumBorder(),
-                elevation: 0,
-                textStyle: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 160),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: isPreparing
-                    ? Row(
-                        key: ValueKey<String>(actionLabel),
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            key: const Key('chat_empty_state_action_progress'),
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                heroButtonForegroundColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(actionLabel),
-                        ],
-                      )
-                    : Text(actionLabel, key: ValueKey<String>(actionLabel)),
-              ),
-            ),
             // Secondary entry so downloading stays one tap away even once the
             // primary action has become "pick a model".
             if (!isPreparing && hasLibraryModels)
@@ -176,14 +114,4 @@ class ChatConversationHero extends StatelessWidget {
   }
 }
 
-Color _chatActionButtonBackgroundColor(Brightness brightness) {
-  return brightness == Brightness.light
-      ? const Color(0xFF565C68)
-      : const Color(0xFF253042);
-}
 
-Color _chatActionButtonForegroundColor(Brightness brightness) {
-  return brightness == Brightness.light
-      ? Colors.white
-      : const Color(0xFFF4F7FD);
-}

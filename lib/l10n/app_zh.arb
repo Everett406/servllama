@@ -32,6 +32,7 @@
     }
   },
   "chatSelectModel": "选择模型",
+  "chatBrowseLibrary": "浏览模型库",
   "chatRefreshModels": "刷新模型",
   "chatLoadedModels": "已加载模型",
   "chatAvailableModels": "可用模型",
@@ -628,8 +629,8 @@
   "settingsClearStagingDone": "已清理未完成的下载",
   "aboutMnnVersion": "MNN 版本",
   "aboutMnnVersionDetail": "MNN 版本：{value}",
-  "chatEmptyTitle": "想聊点什么？",
-  "chatEmptyDescription": "选定模型后服务会自动启动。",
+  "chatEmptyTitle": "只差一阵风",
+  "chatEmptyDescription": "帆已经挂好了。它只在这台设备上走，不去别处。",
   "chatEmptyAction": "选择模型",
   "chatChooseEngineToStart": "选择要启动的推理引擎",
   "chatEngineDefaultModel": "默认模型：{model}",
@@ -780,5 +781,9 @@
       "used": {},
       "total": {}
     }
-  }
+  },
+  "engineMenuRunning": "运行中",
+  "engineMenuStart": "启动 {engine}",
+  "engineMenuSwitchTo": "切换到 {engine}",
+  "engineMenuStop": "停止"
 }

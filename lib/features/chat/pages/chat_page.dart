@@ -19,12 +19,13 @@ import 'package:servllama/features/chat/widgets/context_usage_bar.dart';
 import 'package:servllama/features/chat/widgets/chat_empty_state.dart';
 import 'package:servllama/features/chat/widgets/chat_engine_start_sheet.dart';
 import 'package:servllama/features/chat/widgets/chat_message_list.dart';
-import 'package:servllama/features/chat/widgets/chat_model_sheet.dart';
+import 'package:servllama/features/chat/widgets/chat_menus.dart';
 import 'package:servllama/features/downloads/pages/model_discovery_page.dart';
-import 'package:servllama/features/server/pages/server_config_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
+import 'package:servllama/app/sheet/vela_menu.dart';
+import 'package:servllama/core/utils/format_utils.dart';
 import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// The chat canvas: a thin contextual bar, then either an empty-state hero
@@ -202,15 +203,17 @@ class _ChatViewState extends State<_ChatView>
     return modelId;
   }
 
-  Future<void> _showModels() async {
+  Future<void> _showModels([BuildContext? anchor]) async {
     final runtime = context.read<EngineRuntimeProvider?>();
     if (runtime == null) return;
     final library = context.read<ModelManagementProvider>();
     unawaited(library.load());
 
-    final picked = await showVelaSheet<LibraryModel>(
+    final anchorState = anchor == null ? null : VelaAnchor.of(anchor);
+    if (anchorState == null) return;
+
+    final picked = await anchorState.show<LibraryModel>(
       context: context,
-      isScrollControlled: true,
       builder: (sheetContext) =>
           Consumer3<
             EngineRuntimeProvider,
@@ -220,14 +223,21 @@ class _ChatViewState extends State<_ChatView>
             builder: (_, runtime, library, downloads, __) {
               final engine = runtime.activeEngine;
               final error = runtime.lastError;
-              return ChatModelSheet(
-                engine: engine,
-                models: library.libraryModelsFor(engine),
+              final libraryModels = library.libraryModelsFor(engine);
+              return ChatModelMenu(
+                models: [
+                  for (final model in libraryModels)
+                    (
+                      id: model.runtimeId,
+                      name: model.name,
+                      detail: FormatUtils.bytes(model.sizeBytes),
+                    ),
+                ],
                 activeModelId: runtime.isRunning ? runtime.activeModelId : null,
                 pendingModelId: runtime.isBusy ? runtime.selectedModelId : null,
                 downloading: downloads.activeTasks
                     .where((task) => task.engine == engine)
-                    .toList(growable: false),
+                    .length,
                 errorText: error == null
                     ? null
                     : RuntimeLabels.runtimeError(
@@ -235,7 +245,9 @@ class _ChatViewState extends State<_ChatView>
                         error,
                         runtime.port,
                       ),
-                onSelect: (model) => Navigator.of(sheetContext).pop(model),
+                onSelect: (entry) => Navigator.of(
+                  sheetContext,
+                ).pop(libraryModels.firstWhere((m) => m.runtimeId == entry.id)),
                 onDiscover: () {
                   Navigator.of(sheetContext).pop();
                   _openDiscovery();
@@ -270,12 +282,42 @@ class _ChatViewState extends State<_ChatView>
   /// The composer sits next to send, so its button should open the engine
   /// and not the whole app's settings. A global preferences page is a
   /// plausible-sounding answer and a wrong one.
-  void _openEngineSettings() {
-    unawaited(
-      _pushAndRestore(
-        MaterialPageRoute<void>(builder: (_) => const ServerConfigPage()),
+  /// The engine picker as a menu on the composer's engine button.
+  ///
+  /// It was a bottom sheet listing two engines — a whole card pushed up over
+  /// the composer to say something a two-row menu says while leaving the
+  /// composer visible and the anchor in view.
+  Future<void> _showEngineMenu(BuildContext anchor) async {
+    final library = context.read<ModelManagementProvider>();
+    unawaited(library.load());
+    final anchorState = VelaAnchor.of(anchor);
+    if (anchorState == null) return;
+
+    final runtime = context.read<EngineRuntimeProvider>();
+    final current = runtime.activeEngine;
+    final picked = await anchorState.show<InferenceEngine>(
+      context: context,
+      builder: (panelContext) => ChatEngineMenu(
+        entries: [
+          for (final engine in InferenceEngine.values)
+            (
+              engine: engine.name,
+              label: engine.displayName,
+              detail: _modelDisplayName(
+                library,
+                engine,
+                runtime.selectedModelIdFor(engine),
+              ) ?? '',
+            ),
+        ],
+        onSelect: (entry) => Navigator.of(
+          panelContext,
+        ).pop(InferenceEngine.values.byName(entry.engine)),
       ),
     );
+    if (picked == null || !mounted || picked == current) return;
+    await runtime.switchEngine(picked);
+    if (mounted) _showRuntimeError(runtime);
   }
 
   void _showRuntimeError(EngineRuntimeProvider runtime) {
@@ -318,7 +360,7 @@ class _ChatViewState extends State<_ChatView>
                                 .libraryModels
                                 .isNotEmpty,
                             onStartServer: _startServer,
-                            onSelectModel: _showModels,
+                            onSelectModel: () => _showModels(),
                             onBrowseModels: () => _openDiscovery(),
                           )
                         : Stack(
@@ -387,7 +429,8 @@ class _ChatViewState extends State<_ChatView>
                           onPickImage: _pickImage,
                           onStartServer: _startServer,
                           onSelectModel: _showModels,
-                          onOpenEngineSettings: _openEngineSettings,
+                          onOpenEngineSettings: (anchor) =>
+                              _showEngineMenu(anchor),
                         ),
                       ),
                     ),

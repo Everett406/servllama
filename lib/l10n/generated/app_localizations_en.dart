@@ -86,6 +86,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSelectModel => 'Select model';
 
   @override
+  String get chatBrowseLibrary => 'Browse library';
+
+  @override
   String get chatRefreshModels => 'Refresh models';
 
   @override
@@ -1463,14 +1466,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chatEmptyTitle => 'What are we talking about?';
+  String get chatEmptyTitle => 'Just needs a wind';
 
   @override
   String get chatEmptyDescription =>
-      'Choosing a model starts the server for you.';
+      'The sail is already up. It only travels on this device, and nowhere else.';
 
   @override
-  String get chatEmptyAction => 'Choose a model';
+  String get chatEmptyAction => 'Pick a model';
 
   @override
   String get chatChooseEngineToStart => 'Choose the inference engine to start';
@@ -1747,4 +1750,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String chatContextValue(Object used, Object total) {
     return '$used of $total used';
   }
+
+  @override
+  String get engineMenuRunning => 'Running';
+
+  @override
+  String engineMenuStart(String engine) {
+    return 'Start $engine';
+  }
+
+  @override
+  String engineMenuSwitchTo(String engine) {
+    return 'Switch to $engine';
+  }
+
+  @override
+  String get engineMenuStop => 'Stop';
 }

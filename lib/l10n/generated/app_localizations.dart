@@ -248,6 +248,12 @@ abstract class AppLocalizations {
   /// **'Select model'**
   String get chatSelectModel;
 
+  /// No description provided for @chatBrowseLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse library'**
+  String get chatBrowseLibrary;
+
   /// No description provided for @chatRefreshModels.
   ///
   /// In en, this message translates to:
@@ -2624,19 +2630,19 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'What are we talking about?'**
+  /// **'Just needs a wind'**
   String get chatEmptyTitle;
 
   /// No description provided for @chatEmptyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Choosing a model starts the server for you.'**
+  /// **'The sail is already up. It only travels on this device, and nowhere else.'**
   String get chatEmptyDescription;
 
   /// No description provided for @chatEmptyAction.
   ///
   /// In en, this message translates to:
-  /// **'Choose a model'**
+  /// **'Pick a model'**
   String get chatEmptyAction;
 
   /// No description provided for @chatChooseEngineToStart.
@@ -3100,6 +3106,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{used} of {total} used'**
   String chatContextValue(Object used, Object total);
+
+  /// No description provided for @engineMenuRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get engineMenuRunning;
+
+  /// No description provided for @engineMenuStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {engine}'**
+  String engineMenuStart(String engine);
+
+  /// No description provided for @engineMenuSwitchTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {engine}'**
+  String engineMenuSwitchTo(String engine);
+
+  /// No description provided for @engineMenuStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get engineMenuStop;
 }
 
 class _AppLocalizationsDelegate
