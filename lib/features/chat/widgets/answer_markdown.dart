@@ -51,6 +51,41 @@ class AnswerMarkdown extends StatelessWidget {
       // Lines arrive a beat apart rather than all at once.
       blockAnimationDuration: const Duration(milliseconds: 340),
       blockAnimationCurve: Curves.easeOutCubic,
+      // The package gives every heading level the same padding, so a second
+      // level sitting under a first one opens as much space as a section
+      // break would. This is the only place to correct for that.
+      headingBuilder: _heading,
+    );
+  }
+
+  /// Per-level heading rhythm.
+  ///
+  /// Space above a heading should shrink as the heading gets more nested: a
+  /// title earns a section's worth of air, a fourth-level label under one
+  /// earns almost none. One flat value cannot express that, and the flat
+  /// value is what put a screen's worth of blank between a document's title
+  /// and the first line under it.
+  static Widget _heading(
+    BuildContext context,
+    int level,
+    Widget content,
+    HeadingStyle style,
+  ) {
+    const above = <int, double>{
+      1: 26,
+      2: 18,
+      3: 13,
+      4: 10,
+      5: 8,
+      6: 6,
+    };
+    final top = above[level.clamp(1, 6)] ?? 6;
+    // Nothing before the very first heading: the message already has its own
+    // top padding and the two stacked into a visible gap.
+    final isFirst = level == 1;
+    return Padding(
+      padding: EdgeInsets.only(top: top, bottom: isFirst ? 2 : 4),
+      child: content,
     );
   }
 
@@ -63,7 +98,11 @@ class AnswerMarkdown extends StatelessWidget {
     return GptMarkdownStyleSheet(
       heading: HeadingStyle(
         textStyle: const TextStyle(letterSpacing: -0.3, height: 1.35),
-        padding: const EdgeInsets.only(top: 22, bottom: 6),
+        // No padding here. HeadingStyle applies one value to every level, so
+        // an h2 directly under an h1 got the same 22dp lead as a section
+        // break and the pair read as two separate sections. The per-level
+        // rhythm lives in headingBuilder below.
+        padding: EdgeInsets.zero,
         // No rule. The size step already separates a heading from the
         // paragraph under it, and a rule turns every title into a banner.
         showDivider: false,
@@ -117,6 +156,13 @@ class AnswerMarkdown extends StatelessWidget {
       table: TableStyle(
         borderColor: context.border,
         borderWidth: 1,
+        // No columnWidth. It used to be FlexColumnWidth, which divides the
+        // available width proportionally and measures nothing — on a phone
+        // that is the difference between a readable table and a column of
+        // single characters stacked on each other, since five columns share
+        // 360dp and each gets one glyph per line. Left unset, the package
+        // measures each column to its content and lets the table exceed the
+        // viewport, which already scrolls horizontally.
         // No outer frame and no header fill: a boxed table reads as a dialog.
         borderRadius: Radius.zero,
         cellPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -128,7 +174,6 @@ class AnswerMarkdown extends StatelessWidget {
           letterSpacing: 0.3,
         ),
         rowStripeColor: Colors.transparent,
-        columnWidth: const FlexColumnWidth(),
       ),
       hr: HrStyle(
         color: context.border,
