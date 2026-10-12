@@ -313,14 +313,39 @@ class _ChatViewState extends State<_ChatView> {
                             onSelectModel: _showModels,
                             onBrowseModels: () => _openDiscovery(),
                           )
-                        : ChatMessageListView(
-                            coordinator: _scroll,
-                            // Enough runway that the first and last lines
-                            // can always clear the floating surfaces.
-                            topInset: _headerExtent(context),
-                            bottomInset:
-                                _composerExtent(context) +
-                                _composerBottomInset(context),
+                        : Stack(
+                            children: [
+                              ChatMessageListView(
+                                coordinator: _scroll,
+                                // Enough runway that the first and last
+                                // lines can always clear the band.
+                                topInset: _edgeFadeHeight,
+                                bottomInset: _edgeFadeHeight,
+                              ),
+                              // Inside this band only. Painting them at
+                              // the page's Stack level veiled the header
+                              // and the composer too, which is a different
+                              // thing entirely: those are panels in the
+                              // same plane, not surfaces floating above it.
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: _edgeFadeHeight,
+                                child: IgnorePointer(
+                                  child: _EdgeFade(alignment: Alignment.topCenter),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: _edgeFadeHeight,
+                                child: IgnorePointer(
+                                  child: _EdgeFade(alignment: Alignment.bottomCenter),
+                                ),
+                              ),
+                            ],
                           ),
                   ),
                   Padding(
@@ -353,29 +378,6 @@ class _ChatViewState extends State<_ChatView> {
                   ),
                 ],
               ),
-              // Dissolve, not cut. Without these the toolbar and composer
-              // slice whatever line happens to be passing behind them.
-              if (!isEmpty) ...[
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: _headerExtent(context),
-                  child: IgnorePointer(
-                    child: _EdgeFade(alignment: Alignment.topCenter),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height:
-                      _composerExtent(context) + _composerBottomInset(context),
-                  child: IgnorePointer(
-                    child: _EdgeFade(alignment: Alignment.bottomCenter),
-                  ),
-                ),
-              ],
               if (!isEmpty)
                 // Above the composer, not on it. It used to sit bottom-
                 // right, which is precisely where the send button lives,
@@ -412,14 +414,13 @@ class _ChatViewState extends State<_ChatView> {
   }
 }
 
-/// The header's own height, so the transcript can be padded clear of it and
-/// the fade above it can end exactly where the pills begin.
-double _headerExtent(BuildContext context) =>
-    ClaudeSpacing.sm + 42 + ClaudeSpacing.xs;
-
-/// The composer's height with the keyboard down, excluding the system inset.
-double _composerExtent(BuildContext context) =>
-    MediaQuery.viewInsetsOf(context).bottom > 0 ? 150 : 112;
+/// How far the transcript dissolves at each end.
+///
+/// Shared by the padding and the fade so they meet exactly: the list's own
+/// runway and the gradient that covers it are the same length, which means
+/// text only fades once it has already scrolled clear of where the eye
+/// reads.
+const double _edgeFadeHeight = 56;
 
 /// A gradient that hands the canvas over to whatever is behind it.
 ///
