@@ -56,11 +56,11 @@ class ClaudeIcons {
   static IconData get download => const _ClaudeDownload();
   static IconData get play => const _ClaudePlay();
   static IconData get clock => const _ClaudeClock();
-  static IconData get newChat => _ClaudeNewChat();
-  static IconData get more => _ClaudeMore();
-  static IconData get slash => _ClaudeSlash();
-  static IconData get penSquare => _ClaudePenSquare();
-  static IconData get archive => _ClaudeArchive();
+  static IconData get newChat => const _ClaudeNewChat();
+  static IconData get more => const _ClaudeMore();
+  static IconData get slash => const _ClaudeSlash();
+  static IconData get penSquare => const _ClaudePenSquare();
+  static IconData get archive => const _ClaudeArchive();
   static IconData get chevronDown => const _ClaudeChevronDown();
 
   /// Stroke weight scales with the rendered size so a 16px icon keeps the
