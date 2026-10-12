@@ -85,8 +85,15 @@ void main() {
   testWidgets('the panel is a rounded card of menu width', (tester) async {
     await _open(tester);
     final panel = tester.getRect(find.text('panel'));
+    final screen = tester.view.physicalSize.width / tester.view.devicePixelRatio;
 
-    expect(panel.width, closeTo(248, 3));
+    // The panel is 248 wide unless it has to slide to stay on screen, which
+    // it does next to a right-edge trigger. What must hold either way is that
+    // it is menu-sized and fully visible.
+    expect(panel.width, lessThanOrEqualTo(248));
+    expect(panel.width, greaterThan(200));
+    expect(panel.left, greaterThanOrEqualTo(0));
+    expect(panel.right, lessThanOrEqualTo(screen));
     expect(
       tester
           .widgetList<DecoratedBox>(find.byType(DecoratedBox))

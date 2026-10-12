@@ -4,15 +4,26 @@ import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/keyboard/keyboard_state.dart';
 
 /// Marks the widget a menu hangs off.
+///
+/// The panel tracks this live through a [LayerLink]. It used to capture the
+/// trigger's `Rect` once when the menu opened and place the panel from that
+/// snapshot — which looked fine until the layout moved. Open the menu with the
+/// keyboard up, put the keyboard away, and the panel stayed at the height the
+/// composer had while the keyboard was up: hanging in the middle of an empty
+/// screen, nowhere near the button that opened it.
+///
+/// A follower also removes the height guesswork the snapshot needed. The panel
+/// can be any height and still sit against its trigger.
 class VelaAnchor extends StatefulWidget {
-  const VelaAnchor({super.key, required this.child, this.prefer = AxisDirection.up});
+  const VelaAnchor({
+    super.key,
+    required this.child,
+    this.prefer = AxisDirection.up,
+  });
 
   final Widget child;
 
-  /// Which side of the trigger the menu opens on.
-  ///
-  /// Falls back to the other side when the preferred one has no room, which
-  /// is what happens to a pill near the bottom of the screen.
+  /// Which side the menu opens on when there is room for it.
   final AxisDirection prefer;
 
   /// The nearest enclosing anchor, if [context] is inside one.
@@ -25,25 +36,56 @@ class VelaAnchor extends StatefulWidget {
 
 class VelaAnchorState extends State<VelaAnchor> {
   final LayerLink _link = LayerLink();
-  final GlobalKey _key = GlobalKey();
 
-  Rect? _rectOf(BuildContext context) {
-    final box = _key.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
-  }
+  /// Space between the trigger and the panel.
+  static const double _gap = 8;
 
   Future<T?> show<T>({
     required BuildContext context,
     required WidgetBuilder builder,
     double width = 248,
   }) {
-    final rect = _rectOf(context);
-    if (rect == null) return Future<T?>.value();
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || !box.attached) {
+      return Future<T?>.value();
+    }
+    final media = MediaQuery.of(context);
+    final trigger = box.localToGlobal(Offset.zero) & box.size;
 
-    // Remember the keyboard before the overlay steals the tap. Opening a menu
-    // from a focused field should not be a way to close it, and closing the
-    // menu should not be a way to open it either.
+    // Decide the side once, from the room there is right now. After that the
+    // follower keeps the panel attached even if the layout moves; a panel that
+    // needs its side re-deciding every frame is a panel that flickers between
+    // two positions as the keyboard animates.
+    final roomAbove = trigger.top - media.padding.top - 8;
+    final roomBelow = media.size.height - trigger.bottom - media.padding.bottom - 8;
+    const estimated = 220.0;
+
+    final preferUp = widget.prefer == AxisDirection.up;
+    final roomPreferred = preferUp ? roomAbove : roomBelow;
+    final roomOther = preferUp ? roomBelow : roomAbove;
+    // Symmetric. The two branches used to differ: the upward-preferred one
+    // could fall back to the other side, the downward-preferred one could not.
+    // An engine button at the bottom of the composer asked for "open below",
+    // found no room, and opened below anyway — the panel landed at y 899..1099
+    // on a 900pt screen, entirely off it.
+    final openAbove = switch (roomPreferred) {
+      final r when r >= estimated => preferUp,
+      _ when roomOther >= estimated => !preferUp,
+      _ => roomAbove >= roomBelow,
+    };
+
+    // Keep the panel's left edge on the trigger's left edge, and slide it back
+    // in if that would run it off the right of the screen. The vertical side
+    // is the follower's job; horizontal is not something it can express,
+    // because the panel's width is only known after layout.
+    final desiredLeft = trigger.left;
+    final maxLeft = media.size.width - width - 8;
+    final horizontalShift = desiredLeft > maxLeft
+        ? (maxLeft - desiredLeft).clamp(-desiredLeft + 8, 0.0)
+        : 0.0;
+
+    // Opening a menu from a focused field should not be a way to close it, and
+    // closing the menu should not be a way to open it.
     final keyboardWasUp = keyboardVisible(context);
 
     return showGeneralDialog<T>(
@@ -56,105 +98,67 @@ class VelaAnchorState extends State<VelaAnchor> {
       barrierColor: Colors.transparent,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder: (dialogContext, animation, _) => _AnchoredPosition(
-        animation: animation,
-        trigger: rect,
-        width: width,
-        prefer: widget.prefer,
-        child: Builder(
-          builder: (panelContext) => Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(panelContext).top),
-            child: VelaMenuEntrance(
-              alignment: widget.prefer == AxisDirection.up
-                  ? Alignment.bottomLeft
-                  : Alignment.topLeft,
-              child: VelaMenuPanel(
-                width: width,
-                child: Builder(builder: builder),
+      pageBuilder: (dialogContext, animation, _) => Center(
+        // The follower's child must be the panel itself, not a full-screen
+        // box with the panel inside it.
+        //
+        // `followerAnchor` names a point on the child's own rect. Give it a
+        // screen-filling box and `topLeft` means the *screen's* top-left, so
+        // aligning that to the trigger's bottom shifts the whole 900pt box
+        // down by the trigger's height and the panel — parked at the bottom of
+        // that box — lands hundreds of points off screen.
+        //
+        // The page does not fill the screen on purpose: the transparent
+        // barrier below it is what has to catch the outside tap.
+        child: CompositedTransformFollower(
+          link: _link,
+          // Corner to corner: the panel's edge and the trigger's edge end up
+          // one gap apart, without the panel ever needing to know its height.
+          // Opening above: the panel's *bottom* edge meets the trigger's
+          // *top* edge. Opening below: the panel's top meets the trigger's
+          // bottom. These were the wrong way round, which put the panel's top
+          // on the trigger's bottom and sent it downward off the screen.
+          targetAnchor: openAbove ? Alignment.topLeft : Alignment.bottomLeft,
+          followerAnchor: openAbove ? Alignment.bottomLeft : Alignment.topLeft,
+          offset: Offset(horizontalShift, openAbove ? -_gap : _gap),
+          child: Transform.scale(
+            scale: 0.86 + 0.14 * animation.value,
+            // Origin at the corner facing the trigger. Without it the panel
+            // scales around its centre and reads as a small dialog that
+            // happened to be nearby — the easiest thing to get wrong here.
+            alignment: openAbove
+                ? Alignment.bottomLeft
+                : Alignment.topLeft,
+            child: FadeTransition(
+              opacity: animation,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight:
+                      media.size.height -
+                      media.padding.top -
+                      media.padding.bottom -
+                      16,
+                ),
+                child: VelaMenuPanel(
+                  width: width,
+                  child: Builder(builder: builder),
+                ),
               ),
             ),
           ),
         ),
       ),
     ).whenComplete(() {
-      // Put the field back the way the user had it.
       if (keyboardWasUp) FocusManager.instance.primaryFocus?.requestFocus();
     });
   }
 
   @override
-  Widget build(BuildContext context) => CompositedTransformTarget(link: _link, child: KeyedSubtree(key: _key, child: widget.child));
+  Widget build(BuildContext context) =>
+      CompositedTransformTarget(link: _link, child: widget.child);
 }
 
-/// Places the panel against the trigger, flipping sides when it has to.
-///
-/// The scale origin in [VelaMenuEntrance] does most of the work; this only
-/// decides where the panel's corner lands.
-class _AnchoredPosition extends StatelessWidget {
-  const _AnchoredPosition({
-    required this.trigger,
-    required this.width,
-    required this.prefer,
-    required this.child,
-    required this.animation,
-  });
-
-  final Animation<double> animation;
-  final Rect trigger;
-  final double width;
-  final AxisDirection prefer;
-  final Widget child;
-
-  static const double gap = 8;
-
-  @override
-  Widget build(BuildContext context) {
-    final screen = MediaQuery.sizeOf(context);
-    final safeTop = MediaQuery.paddingOf(context).top + 8;
-    final safeBottom = MediaQuery.paddingOf(context).bottom + 8;
-
-    // A rough height to decide which side has room. Only the decision uses
-    // it; the actual placement is anchored to an edge and never uses it.
-    final estimated = 220.0;
-    final roomAbove = trigger.top - safeTop;
-    final roomBelow = screen.height - trigger.bottom - safeBottom;
-    // Flip only when the preferred side genuinely has no room. Falling back
-    // to "whichever side is bigger" would open downward for a pill in the
-    // middle of the screen, which is the opposite of what was asked for.
-    final above = prefer == AxisDirection.up
-        ? roomAbove >= estimated || roomBelow < estimated
-        : roomBelow >= estimated;
-
-    final left = trigger.left.clamp(
-      8.0,
-      (screen.width - width - 8).clamp(8.0, screen.width),
-    );
-
-    // Anchored by the edge nearest the trigger rather than by a top offset.
-    // A `Positioned(top:)` would need the panel's height before layout, and
-    // the panel is free to be any height — the thought sheet grows, a model
-    // list scrolls. Anchoring the bottom instead leaves the height to layout
-    // and cannot drift.
-    return Stack(
-      children: [
-        if (above)
-          Positioned(
-            left: left,
-            bottom: screen.height - trigger.top + gap,
-            child: FadeTransition(opacity: animation, child: child),
-          )
-        else
-          Positioned(
-            left: left,
-            top: trigger.bottom + gap,
-            child: FadeTransition(opacity: animation, child: child),
-          ),
-      ],
-    );
-  }
-}
-
-/// Convenience: the panel itself.
+/// The panel itself: a rounded card, menu width, soft shadow.
 class VelaMenuPanel extends StatelessWidget {
   const VelaMenuPanel({super.key, required this.child, this.width = 248});
 
@@ -197,48 +201,11 @@ class VelaMenuPanel extends StatelessWidget {
   }
 }
 
-/// Scales the panel out of its trigger.
-///
-/// [alignment] has to name the corner that touches the trigger. Without it
-/// Flutter scales around the centre and the menu reads as a dialog that
-/// happened to be small — which is the single easiest thing to get wrong
-/// here and the whole reason this wrapper exists.
-class VelaMenuEntrance extends StatelessWidget {
-  const VelaMenuEntrance({
-    super.key,
-    required this.alignment,
-    required this.child,
-  });
-
-  final Alignment alignment;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) => Opacity(
-        opacity: t.clamp(0.0, 1.0),
-        child: Transform.scale(
-          scale: 0.86 + 0.14 * t,
-          // Origin at the corner facing the trigger: the panel appears to
-          // come out of the pill.
-          alignment: alignment,
-          child: child,
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
 /// A row inside a menu panel.
 ///
-/// Sized like a list row, not like a settings row. The model picker used to
-/// be a sheet with settings-sized rows, which is most of why it read as
-/// bloated: twice the height it needs and a divider after every line.
+/// Sized like a list row, not like a settings row. The model picker used to be
+/// a sheet with settings-sized rows, which is most of why it read as bloated:
+/// twice the height it needs and a divider under every line.
 class VelaMenuItem extends StatelessWidget {
   const VelaMenuItem({
     super.key,
@@ -275,7 +242,9 @@ class VelaMenuItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: selected ? context.accent : context.ink,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: selected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                   if (subtitle != null && subtitle!.trim().isNotEmpty)

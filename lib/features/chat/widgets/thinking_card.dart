@@ -26,6 +26,8 @@ class ThinkingTimings {
 
   static final Map<String, Duration> _frozen = <String, Duration>{};
   static final Map<String, DateTime> _started = <String, DateTime>{};
+  static final Map<String, ValueNotifier<Duration>> _clocks =
+      <String, ValueNotifier<Duration>>{};
 
   static void markStarted(String messageId, DateTime at) {
     _started[messageId] ??= at;
@@ -33,8 +35,35 @@ class ThinkingTimings {
 
   static DateTime? startedAt(String messageId) => _started[messageId];
 
+  /// The live clock for a message. The row and the sheet read the same one.
+  ///
+  /// They used to keep separate counts — the row had a field it ticked, the
+  /// sheet built a notifier of its own from a `fallback` the row handed it.
+  /// Two clocks means two chances to disagree, and they did: the row rebuilt
+  /// whenever the transcript changed, re-derived its initial value from
+  /// `answeredAt - promptedAt`, and that span is about zero because
+  /// `answeredAt` is when the placeholder message was created rather than
+  /// when the first token arrived. The row showed 0s after having counted to
+  /// 8, and the sheet opened on the same 0.
+  ///
+  /// One notifier, keyed by message, that the row ticks and both read. Nothing
+  /// to reconcile.
+  static ValueNotifier<Duration> clockFor(String messageId) {
+    return _clocks.putIfAbsent(messageId, () {
+      final frozen = _frozen[messageId];
+      if (frozen != null) return ValueNotifier<Duration>(frozen);
+      final started = _started[messageId];
+      return ValueNotifier<Duration>(
+        started == null ? Duration.zero : DateTime.now().difference(started),
+      );
+    });
+  }
+
+  /// Stop the clock at [elapsed]. Idempotent — the first stop is the answer.
   static void freeze(String messageId, Duration elapsed) {
+    if (_frozen.containsKey(messageId)) return;
     _frozen[messageId] = elapsed;
+    _clocks[messageId]?.value = elapsed;
   }
 
   static Duration? frozen(String messageId) => _frozen[messageId];
@@ -91,13 +120,13 @@ class _ThinkingLineState extends State<ThinkingLine> {
 
   Timer? _ticker;
   Timer? _walker;
-  Duration _elapsed = Duration.zero;
   int _offset = 0;
 
   @override
   void initState() {
     super.initState();
-    _elapsed = _resolveInitialElapsed();
+    // Start the clock before reading it, or the first read sees a notifier
+    // built from a null start time and every row opens on zero.
     _restartTicker();
     _restartWalker();
   }
@@ -106,17 +135,39 @@ class _ThinkingLineState extends State<ThinkingLine> {
   void didUpdateWidget(ThinkingLine oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.messageId != widget.messageId) {
-      _elapsed = _resolveInitialElapsed();
+      }
+    // Thinking ended the moment the first token of the answer arrived, not
+    // when the stream finished. That transition used to freeze nothing: the
+    // freeze was hung off the live flag, which had not moved yet. So the
+    // count was simply abandoned at exactly the moment it became an answer,
+    // and if the row rebuilt afterwards — which the transcript does whenever
+    // the message list changes — `_resolveInitialElapsed` fell back to
+    // `answeredAt - promptedAt`. `answeredAt` is when the placeholder message
+    // was created, not when the first token landed, so that span is about
+    // zero and the row showed 0s after having counted up to 8.
+    if (oldWidget.answerStarted != widget.answerStarted &&
+        widget.answerStarted &&
+        !_isFrozen) {
+      ThinkingTimings.freeze(
+          widget.messageId,
+          ThinkingTimings.clockFor(widget.messageId).value,
+        );
     }
     if (oldWidget.live != widget.live) {
       // The stream ended. Whatever the clock last showed is the answer.
       if (!widget.live && !_isFrozen) {
-        ThinkingTimings.freeze(widget.messageId, _elapsed);
+        ThinkingTimings.freeze(
+          widget.messageId,
+          ThinkingTimings.clockFor(widget.messageId).value,
+        );
       }
     }
-    if (widget.live && !widget.answerStarted) {
-      _restartTicker();
-    }
+    // Always, not only while thinking. `_restartTicker` cancels the timer and
+    // returns early when the answer has started, but it was only ever *called*
+    // while thinking — so the periodic timer kept running after the first
+    // token and kept writing real elapsed time over the frozen value. The row
+    // showed the clock ticking on through the reply, and then dropping.
+    _restartTicker();
   }
 
   bool get _isFrozen => ThinkingTimings.frozen(widget.messageId) != null;
@@ -155,17 +206,7 @@ class _ThinkingLineState extends State<ThinkingLine> {
     });
   }
 
-  Duration _resolveInitialElapsed() {
-    final frozen = ThinkingTimings.frozen(widget.messageId);
-    if (frozen != null) return frozen;
-    final promptedAt = widget.promptedAt;
-    final answeredAt = widget.answeredAt;
-    if (promptedAt != null && answeredAt != null) {
-      final span = answeredAt.difference(promptedAt);
-      if (!span.isNegative && span.inSeconds > 0) return span;
-    }
-    return Duration.zero;
-  }
+
 
   void _restartTicker() {
     _ticker?.cancel();
@@ -173,19 +214,23 @@ class _ThinkingLineState extends State<ThinkingLine> {
       // The answer has started, or the reply is over: the clock is done.
       _ticker = null;
       if (!_isFrozen) {
-        ThinkingTimings.freeze(widget.messageId, _elapsed);
+        ThinkingTimings.freeze(
+          widget.messageId,
+          ThinkingTimings.clockFor(widget.messageId).value,
+        );
       }
       return;
     }
-    ThinkingTimings.markStarted(
-      widget.messageId,
-      ThinkingTimings.startedAt(widget.messageId) ?? DateTime.now(),
-    );
+    final at = ThinkingTimings.startedAt(widget.messageId) ?? DateTime.now();
+    ThinkingTimings.markStarted(widget.messageId, at);
+    ThinkingTimings.clockFor(widget.messageId).value = DateTime.now().difference(at);
     _ticker = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       if (!mounted) return;
       final started = ThinkingTimings.startedAt(widget.messageId);
       if (started == null) return;
-      setState(() => _elapsed = DateTime.now().difference(started));
+      ThinkingTimings.clockFor(widget.messageId).value =
+          DateTime.now().difference(started);
+      if (mounted) setState(() {});
     });
   }
 
@@ -386,11 +431,11 @@ Future<void> showThinkingSheet(
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
             child: ValueListenableBuilder<Duration>(
-              valueListenable: _ThinkingClock(
-                messageId: messageId,
-                fallback: elapsed,
-                answerStarted: answerStarted,
-              ),
+              // The same notifier the row ticks. It used to construct its own
+              // from a `fallback` the row passed in, which meant opening the
+              // sheet after the row had rebuilt showed whatever the row's
+              // re-derived value happened to be — often zero.
+              valueListenable: ThinkingTimings.clockFor(messageId),
               builder: (context, liveValue, _) => Text(
                 context.l10n.chatThinkingSheetTitle(
                   formatThinkingDuration(liveValue, chinese: chinese),
@@ -438,40 +483,3 @@ Future<void> showThinkingSheet(
 ///
 /// Ticking stops the moment the answer starts, because at that point the
 /// thought is over and the real elapsed time is [ThinkingTimings.frozen].
-class _ThinkingClock extends ValueNotifier<Duration> {
-  _ThinkingClock({
-    required String messageId,
-    required Duration fallback,
-    required bool answerStarted,
-  }) : super(fallback) {
-    _messageId = messageId;
-    _answerStarted = answerStarted;
-    _restart();
-  }
-
-  late final String _messageId;
-  late bool _answerStarted;
-  Timer? _ticker;
-
-  void _restart() {
-    _ticker?.cancel();
-    _ticker = null;
-    final frozen = ThinkingTimings.frozen(_messageId);
-    if (frozen != null) {
-      value = frozen;
-      return;
-    }
-    final started = ThinkingTimings.startedAt(_messageId);
-    if (_answerStarted || started == null) return;
-    value = DateTime.now().difference(started);
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      value = DateTime.now().difference(started);
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-}
