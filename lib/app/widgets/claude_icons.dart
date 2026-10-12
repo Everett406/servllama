@@ -122,14 +122,19 @@ class ClaudeIcons {
     );
   }
 
-  /// Strokes [icon]'s drawing onto [canvas] at [size] logical pixels.
+  /// Strokes the drawing at [codePoint] onto [canvas] at [size] pixels.
+  ///
+  /// Takes the codepoint rather than an [IconData] on purpose. Rebuilding an
+  /// IconData here from a value only known at runtime is non-constant, and
+  /// the release tree shaker refuses to build a binary that contains one —
+  /// so the painter below passes its own int straight through.
   static void draw(
     Canvas canvas,
-    IconData icon, {
+    int codePoint, {
     required Color color,
     required double size,
   }) {
-    final shapes = paths[icon.codePoint];
+    final shapes = paths[codePoint];
     if (shapes == null || shapes.isEmpty) return;
 
     final scale = size / 24.0;
@@ -315,12 +320,7 @@ class ClaudeIconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
-    ClaudeIcons.draw(
-      canvas,
-      IconData(codePoint, fontFamily: ClaudeIcons.family),
-      color: color,
-      size: size,
-    );
+    ClaudeIcons.draw(canvas, codePoint, color: color, size: size);
   }
 
   @override
