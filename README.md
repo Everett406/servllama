@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="assets/app_icon.svg" alt="ServLlama icon" width="112" />
-  <h1>ServLlama</h1>
+  <img src="assets/app_icon.svg" alt="Vela icon" width="112" />
+  <h1>Vela</h1>
   <p><strong>Turn your phone into a powerful local LLM server with one tap</strong></p>
 
   <p>
-    <a href="https://github.com/ArkaneFans/Servllama/releases/latest">
+    <a href="https://github.com/Everett406/servllama/releases/latest">
       <img alt="Download the latest release" src="https://img.shields.io/badge/Download-Latest_Release-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
     </a>
   </p>
@@ -27,9 +27,15 @@
 
 </div>
 
-## Overview
+## Vela
 
-ServLlama turns your Android device into a self-contained local LLM server, combining model discovery and downloads, switching between the llama.cpp and MNN inference engines, server controls, log viewing, and chat in a single app. Model inference runs directly on the device, and other apps on the same phone or local network can call it through an OpenAI-compatible API.
+A fork of [ArkaneFans/servllama](https://github.com/ArkaneFans/servllama), re-skinned around
+a Claude-inspired interface. The inference kernel is upstream's and untouched; the UI, the
+release pipeline and the Android identity are this repository's. Named after *Vela*, the
+brightest of the eighty-eight constellations and a sail in Latin — which is exactly what a
+local model is: it turns the wind you give it into motion, and it goes nowhere on its own.
+
+Vela turns your Android device into a self-contained local LLM server, combining model discovery and downloads, switching between the llama.cpp and MNN inference engines, server controls, log viewing, and chat in a single app. Model inference runs directly on the device, and other apps on the same phone or local network can call it through an OpenAI-compatible API.
 
 ## Features
 
@@ -65,7 +71,7 @@ Actual speed and memory usage depend on the model, quantization, context length,
 1. Download the latest APK from [GitHub Releases](https://github.com/ArkaneFans/Servllama/releases/latest) and install it.
 2. Open the model library. Download a model from Hugging Face or ModelScope, or import a local GGUF or MNN model.
 3. Choose an inference engine and model from the Chat or Server page.
-4. Start the server and chat in ServLlama, or copy the API Base URL into another AI client.
+4. Start the server and chat in Vela, or copy the API Base URL into another AI client.
 5. For access from another device, select **Listen on all** in Server config and set an API key.
 
 The default server address is `http://127.0.0.1:8080`, which is accessible only from the Android device itself.
@@ -110,7 +116,7 @@ The GitHub workflow `.github/workflows/build-llama-server-android.yml` builds th
 ## Usage Notes
 
 - Listening on all network interfaces exposes the server to the current Wi-Fi, hotspot, and VPN networks. Use an API key and a trusted network.
-- Some Android vendors restrict long-running background services. If requests stop after the app enters the background, allow ServLlama to auto-start and run in the background, and disable battery optimization for it.
+- Some Android vendors restrict long-running background services. If requests stop after the app enters the background, allow Vela to auto-start and run in the background, and disable battery optimization for it.
 - Models can consume several gigabytes of storage and memory. Choose models that fit your device.
 
 ## Related Projects
@@ -121,7 +127,11 @@ The GitHub workflow `.github/workflows/build-llama-server-android.yml` builds th
 
 ## License
 
-ServLlama is released under the [GNU Affero General Public License v3.0](LICENSE).
+Vela is released under the [GNU Affero General Public License v3.0](LICENSE), inherited from
+upstream ServLlama. The inference kernel, model catalog and download logic are ArkaneFans's;
+everything under `lib/app/` and `lib/features/chat/widgets/` is this fork's work on top of
+them. AGPL-3.0 requires that anyone who offers this over a network releases the corresponding
+source — including your modifications.
 
 ---
 Acknowledgements [`Linux DO Community`](https://linux.do/).

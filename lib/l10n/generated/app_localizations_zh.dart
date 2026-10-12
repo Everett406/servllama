@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'ServLlama';
+  String get appTitle => 'Vela';
 
   @override
   String get commonAuto => '自动';
@@ -363,10 +363,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverCopyBaseUrl => '复制 API Base URL';
 
   @override
-  String get serverForegroundNotificationTitle => 'ServLlama 正在运行';
+  String get serverForegroundNotificationTitle => 'Vela 正在运行';
 
   @override
-  String get serverForegroundNotificationText => 'ServLlama 服务器正在后台运行';
+  String get serverForegroundNotificationText => 'Vela 服务器正在后台运行';
 
   @override
   String get serverStartFailedCheckLogs => '启动失败，请查看日志。';
@@ -1295,7 +1295,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get downloadForegroundTitle => 'ServLlama 正在下载模型';
+  String get downloadForegroundTitle => 'Vela 正在下载模型';
 
   @override
   String downloadForegroundText(int count, int percent) {

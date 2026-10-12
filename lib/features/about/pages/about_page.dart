@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:servllama/app/widgets/brand_mark.dart';
 import 'package:mnn_engine/mnn_engine.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:servllama/app/design/tokens.dart';
@@ -136,10 +137,10 @@ class _AboutPageState extends State<AboutPage> {
   void _openLicenses() {
     showLicensePage(
       context: context,
-      applicationName: 'ServLlama',
-      applicationIcon: Padding(
-        padding: const EdgeInsets.all(8),
-        child: SvgPicture.asset('assets/app_icon.svg', width: 48, height: 48),
+      applicationName: 'Vela',
+      applicationIcon: const Padding(
+        padding: EdgeInsets.all(8),
+        child: BrandMark(size: 48),
       ),
     );
   }
@@ -277,7 +278,7 @@ class _AboutHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ServLlama',
+                  'Vela',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontSize: 19,
                     height: 1.25,

@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'ServLlama'**
+  /// **'Vela'**
   String get appTitle;
 
   /// No description provided for @commonAuto.
@@ -767,13 +767,13 @@ abstract class AppLocalizations {
   /// No description provided for @serverForegroundNotificationTitle.
   ///
   /// In en, this message translates to:
-  /// **'ServLlama is running'**
+  /// **'Vela is running'**
   String get serverForegroundNotificationTitle;
 
   /// No description provided for @serverForegroundNotificationText.
   ///
   /// In en, this message translates to:
-  /// **'ServLlama server is running in the background'**
+  /// **'Vela server is running in the background'**
   String get serverForegroundNotificationText;
 
   /// No description provided for @serverStartFailedCheckLogs.
@@ -2438,7 +2438,7 @@ abstract class AppLocalizations {
   /// No description provided for @downloadForegroundTitle.
   ///
   /// In en, this message translates to:
-  /// **'ServLlama is downloading models'**
+  /// **'Vela is downloading models'**
   String get downloadForegroundTitle;
 
   /// No description provided for @downloadForegroundText.

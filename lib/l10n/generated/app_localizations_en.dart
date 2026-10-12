@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'ServLlama';
+  String get appTitle => 'Vela';
 
   @override
   String get commonAuto => 'Auto';
@@ -365,11 +365,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverCopyBaseUrl => 'Copy API Base URL';
 
   @override
-  String get serverForegroundNotificationTitle => 'ServLlama is running';
+  String get serverForegroundNotificationTitle => 'Vela is running';
 
   @override
   String get serverForegroundNotificationText =>
-      'ServLlama server is running in the background';
+      'Vela server is running in the background';
 
   @override
   String get serverStartFailedCheckLogs =>
@@ -1360,7 +1360,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get downloadForegroundTitle => 'ServLlama is downloading models';
+  String get downloadForegroundTitle => 'Vela is downloading models';
 
   @override
   String downloadForegroundText(int count, int percent) {

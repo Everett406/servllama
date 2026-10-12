@@ -13,8 +13,8 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     PackageInfo.setMockInitialValues(
-      appName: 'ServLlama',
-      packageName: 'com.arkanefans.servllama',
+      appName: 'Vela',
+      packageName: 'com.everett406.servllama',
       version: '1.1.0',
       buildNumber: '9',
       buildSignature: '',
@@ -57,7 +57,7 @@ void main() {
   testWidgets('lays out branding and details from the top', (tester) async {
     await pumpAbout(tester);
 
-    expect(find.text('ServLlama'), findsOneWidget);
+    expect(find.text('Vela'), findsOneWidget);
     expect(find.text('\u624b\u673a\u4e0a\u7684\u5927\u6a21\u578b\u63a8\u7406\u670d\u52a1\u5668'), findsOneWidget);
     expect(find.text('\u7248\u672c'), findsOneWidget);
     expect(find.text('1.1.0 / 9'), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
     expect(find.text('\u5f00\u6e90\u8bb8\u53ef'), findsOneWidget);
 
     final iconBox = tester.getRect(find.byKey(const Key('about_hero_icon')));
-    final nameBox = tester.getRect(find.text('ServLlama'));
+    final nameBox = tester.getRect(find.text('Vela'));
     expect(iconBox.top, lessThan(120));
     expect(nameBox.left, greaterThan(iconBox.right));
     expect(nameBox.top, lessThan(160));

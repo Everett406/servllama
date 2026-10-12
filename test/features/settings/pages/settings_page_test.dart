@@ -176,7 +176,7 @@ void main() {
         find.descendant(of: find.byType(AppBar), matching: find.text('关于')),
         findsOneWidget,
       );
-      expect(find.text('ServLlama'), findsOneWidget);
+      expect(find.text('Vela'), findsOneWidget);
     });
   });
 }

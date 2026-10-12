@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "ServLlama",
+  "appTitle": "Vela",
   "commonAuto": "Auto",
   "commonOptional": "Optional",
   "commonRename": "Rename",
@@ -176,8 +176,8 @@
   "serverBaseUrlLabel": "API Base URL",
   "serverBaseUrlCopied": "API Base URL copied",
   "serverCopyBaseUrl": "Copy API Base URL",
-  "serverForegroundNotificationTitle": "ServLlama is running",
-  "serverForegroundNotificationText": "ServLlama server is running in the background",
+  "serverForegroundNotificationTitle": "Vela is running",
+  "serverForegroundNotificationText": "Vela server is running in the background",
   "serverStartFailedCheckLogs": "Server failed to start. Check logs.",
   "serverStartFailed": "Failed to start: {error}",
   "@serverStartFailed": {
@@ -786,7 +786,7 @@
       }
     }
   },
-  "downloadForegroundTitle": "ServLlama is downloading models",
+  "downloadForegroundTitle": "Vela is downloading models",
   "downloadForegroundText": "{count} tasks - {percent}%",
   "@downloadForegroundText": {
     "placeholders": {

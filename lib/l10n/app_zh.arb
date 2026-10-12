@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appTitle": "ServLlama",
+  "appTitle": "Vela",
   "commonAuto": "自动",
   "commonOptional": "可选",
   "commonRename": "修改名称",
@@ -176,8 +176,8 @@
   "serverBaseUrlLabel": "API Base URL",
   "serverBaseUrlCopied": "API Base URL 已复制",
   "serverCopyBaseUrl": "复制 API Base URL",
-  "serverForegroundNotificationTitle": "ServLlama 正在运行",
-  "serverForegroundNotificationText": "ServLlama 服务器正在后台运行",
+  "serverForegroundNotificationTitle": "Vela 正在运行",
+  "serverForegroundNotificationText": "Vela 服务器正在后台运行",
   "serverStartFailedCheckLogs": "启动失败，请查看日志。",
   "serverStartFailed": "启动失败: {error}",
   "@serverStartFailed": {
@@ -597,7 +597,7 @@
   "downloadErrorAlreadyQueued": "相同模型已在下载队列中",
   "downloadCancelDialogTitle": "取消下载",
   "downloadCancelDialogContent": "取消「{modelName}」？已下载的数据将被丢弃。",
-  "downloadForegroundTitle": "ServLlama 正在下载模型",
+  "downloadForegroundTitle": "Vela 正在下载模型",
   "downloadForegroundText": "{count} 个任务 · {percent}%",
   "settingsSectionDownload": "下载",
   "settingsHuggingFaceRoute": "Hugging Face 线路",
