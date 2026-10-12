@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/brand_mark.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/widgets/shell_bits.dart';
 import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
@@ -181,7 +182,7 @@ class _NewChatButton extends StatelessWidget {
       child: OutlinedButton.icon(
         key: const Key('sidebar_new_chat_button'),
         onPressed: onPressed,
-        icon: const Icon(Icons.add_rounded, size: 19),
+        icon: ClaudeIcon(ClaudeIcons.plus, size: 18),
         label: Text(context.l10n.chatNewConversation),
         style: OutlinedButton.styleFrom(
           alignment: Alignment.centerLeft,
@@ -235,20 +236,20 @@ class _SidebarFooter extends StatelessWidget {
             const SizedBox(height: ClaudeSpacing.xs),
             _SidebarNavRow(
               keyValue: 'sidebar_models_row',
-              icon: Icons.dns_outlined,
+              icon: ClaudeIcons.chip,
               label: l10n.modelLibraryTitle,
               badge: activeDownloads == 0 ? null : '$activeDownloads',
               onTap: onOpenModels,
             ),
             _SidebarNavRow(
               keyValue: 'drawer_settings_action',
-              icon: Icons.tune_rounded,
+              icon: ClaudeIcons.sliders,
               label: l10n.drawerSettings,
               onTap: onOpenSettings,
             ),
             _SidebarNavRow(
               keyValue: 'sidebar_about_row',
-              icon: Icons.info_outline_rounded,
+              icon: ClaudeIcons.info,
               label: l10n.settingsAbout,
               onTap: onOpenAbout,
             ),
@@ -374,7 +375,7 @@ class _SidebarNavRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: context.inkSecondary),
+              ClaudeIcons.render(icon, size: 18, color: context.inkSecondary),
               const SizedBox(width: ClaudeSpacing.md),
               Expanded(
                 child: Text(

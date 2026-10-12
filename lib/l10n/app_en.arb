@@ -931,5 +931,19 @@
   "sidebarExpand": "Expand sidebar",
   "sidebarBrowseModels": "Browse models",
   "sidebarEngineIdle": "Not running",
-  "chatThinkingLabel": "Thinking"
+  "chatThinkingLabel": "Thinking",
+  "chatStealthOn": "Stealth on",
+  "chatStealthOff": "Stealth mode",
+  "chatThinkingLive": "Thinking · {duration}",
+  "@chatThinkingLive": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "chatThinkingDone": "Thought for {duration}",
+  "@chatThinkingDone": {
+    "placeholders": {
+      "duration": {}
+    }
+  }
 }

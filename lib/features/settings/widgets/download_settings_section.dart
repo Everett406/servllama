@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/core/utils/format_utils.dart';
 import 'package:servllama/features/downloads/models/model_hub.dart';
@@ -72,7 +73,7 @@ class DownloadSettingsSection extends StatelessWidget {
                   ),
                   SettingsMenuTile(
                     key: const Key('settings_max_concurrent_tile'),
-                    icon: Icons.layers_outlined,
+                    icon: ClaudeIcons.layers,
                     title: l10n.settingsMaxConcurrentDownloads,
                     value: '${settings.maxConcurrentTasks}',
                     onTap: () => _showConcurrencySheet(context, downloads),

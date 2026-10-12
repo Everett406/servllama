@@ -22,6 +22,44 @@ class ChatSessionRepository {
   final Directory? _appSupportDirectory;
   final HiveInterface _hive;
 
+  // Stealth conversations.
+  //
+  // Not "hidden from the list" — genuinely never written. Their records sit
+  // in these two maps for exactly as long as the conversation is open, and
+  // every read path checks them first, so the rest of the app can treat a
+  // stealth session like any other without knowing it exists.
+  final Map<String, ChatSessionRecord> _transientSessions =
+      <String, ChatSessionRecord>{};
+  final Map<String, ChatMessageRecord> _transientMessages =
+      <String, ChatMessageRecord>{};
+  final Set<String> _transientSessionIds = <String>{};
+  bool _transientMode = false;
+
+  bool get isTransientMode => _transientMode;
+
+  /// Turns stealth on or off. Turning it off drops whatever it was holding:
+  /// the point of the mode is that nothing survives it.
+  void setTransientMode(bool value) {
+    if (_transientMode == value) return;
+    _transientMode = value;
+    if (!value) {
+      _transientSessions.clear();
+      _transientMessages.clear();
+      _transientSessionIds.clear();
+    }
+  }
+
+  bool isTransientSession(String sessionId) =>
+      _transientSessionIds.contains(sessionId);
+
+  /// Marks a freshly created session as never-to-be-persisted.
+  void beginTransientSession(String sessionId) {
+    _transientSessions.remove(sessionId);
+    _transientMessages.removeWhere((_, m) => m.sessionId == sessionId);
+    _transientSessionIds.add(sessionId);
+  }
+
+
   Future<Box<ChatSessionRecord>>? _boxFuture;
   Future<Box<ChatMessageRecord>>? _messageBoxFuture;
   Future<Box<ChatMessageVersionRecord>>? _versionBoxFuture;
@@ -39,6 +77,10 @@ class ChatSessionRepository {
   }
 
   Future<void> saveSession(ChatSessionRecord session) async {
+    if (_transientSessionIds.contains(session.id)) {
+      _transientSessions[session.id] = session;
+      return;
+    }
     final box = await _box();
     final cleanSession = await _saveLegacyMessagesIfNeeded(session);
     await box.put(cleanSession.id, _withoutLegacyMessages(cleanSession));
@@ -48,11 +90,17 @@ class ChatSessionRepository {
   /// sibling messages. Used on the streaming hot path where only the draft
   /// assistant message changes per delta.
   Future<void> saveMessage(ChatMessageRecord message) async {
+    if (_transientSessionIds.contains(message.sessionId)) {
+      _transientMessages[message.id] = message;
+      return;
+    }
     final box = await _messageBox();
     await box.put(message.id, message);
   }
 
   Future<ChatMessageRecord?> loadMessage(String messageId) async {
+    final transient = _transientMessages[messageId];
+    if (transient != null) return transient;
     final box = await _messageBox();
     return box.get(messageId);
   }
@@ -80,6 +128,11 @@ class ChatSessionRepository {
     final ids = session.messageIds;
     if (ids.isEmpty) {
       return const <ChatMessageRecord>[];
+    }
+    // A stealth conversation is short by construction — nobody lets one grow
+    // for hours — so the budget search below has nothing to decide.
+    if (_transientSessionIds.contains(session.id)) {
+      return _loadMessagesByIds(ids);
     }
 
     final box = await _messageBox();
@@ -137,6 +190,11 @@ class ChatSessionRepository {
   }
 
   Future<void> deleteSession(String sessionId) async {
+    if (_transientSessionIds.remove(sessionId)) {
+      _transientSessions.remove(sessionId);
+      _transientMessages.removeWhere((_, m) => m.sessionId == sessionId);
+      return;
+    }
     final box = await _box();
     final session = box.get(sessionId);
     if (session != null) {
@@ -153,9 +211,21 @@ class ChatSessionRepository {
     if (messageList.isEmpty) {
       return;
     }
-    await deleteMessageResources(messageList);
+    final transient = messageList
+        .where((m) => _transientSessionIds.contains(m.sessionId))
+        .toList(growable: false);
+    for (final message in transient) {
+      _transientMessages.remove(message.id);
+    }
+    final persisted = messageList
+        .where((m) => !_transientSessionIds.contains(m.sessionId))
+        .toList(growable: false);
+    if (persisted.isEmpty) {
+      return;
+    }
+    await deleteMessageResources(persisted);
     final box = await _messageBox();
-    await box.deleteAll(messageList.map((message) => message.id));
+    await box.deleteAll(persisted.map((message) => message.id));
   }
 
   Future<void> saveMessageVersion(ChatMessageVersionRecord version) async {
@@ -329,7 +399,7 @@ class ChatSessionRepository {
   ) async {
     final box = await _messageBox();
     return messageIds
-        .map(box.get)
+        .map((id) => _transientMessages[id] ?? box.get(id))
         .whereType<ChatMessageRecord>()
         .toList(growable: false);
   }

@@ -1573,4 +1573,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatThinkingLabel => '思考过程';
+
+  @override
+  String get chatStealthOn => '无痕模式已开启';
+
+  @override
+  String get chatStealthOff => '无痕模式';
+
+  @override
+  String chatThinkingLive(Object duration) {
+    return '思考中 · $duration';
+  }
+
+  @override
+  String chatThinkingDone(Object duration) {
+    return '思考了 $duration';
+  }
 }

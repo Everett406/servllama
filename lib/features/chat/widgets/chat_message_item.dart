@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
+import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 
 /// One message in the transcript.
@@ -70,9 +72,10 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
             if (_isUser && hasContent) _UserBubble(content: content, id: message.id),
             if (!_isUser) ...[
               if (reasoning.isNotEmpty)
-                _ReasoningBlock(
+                ThinkingCard(
                   content: reasoning,
                   expanded: _showReasoning,
+                  live: widget.isStreaming,
                   onToggle: () =>
                       setState(() => _showReasoning = !_showReasoning),
                 ),
@@ -164,75 +167,6 @@ class _AssistantBody extends StatelessWidget {
   }
 }
 
-/// Collapsible chain-of-thought. Collapsed by default: most people never read
-/// it, and an expanded block pushes the actual answer off-screen.
-class _ReasoningBlock extends StatelessWidget {
-  const _ReasoningBlock({
-    required this.content,
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  final String content;
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: ClaudeSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: context.borderStrong, width: 2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onToggle,
-            borderRadius: BorderRadius.circular(ClaudeRadius.sm),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 4,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedRotation(
-                    turns: expanded ? 0.5 : 0,
-                    duration: ClaudeMotion.fast,
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: context.inkTertiary,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    context.l10n.chatThinkingLabel,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 4, 0, 0),
-              child: Text(
-                content,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.inkTertiary,
-                  height: 1.6,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MessageImages extends StatelessWidget {
   const _MessageImages({required this.paths, required this.alignEnd});
 
@@ -308,28 +242,28 @@ class _ActionBar extends StatelessWidget {
           children: [
             _ActionButton(
               key: Key('chat_message_copy_button_$messageId'),
-              icon: Icons.copy_rounded,
+              icon: ClaudeIcons.copy,
               tooltip: context.l10n.chatCopyMessage,
               onPressed: onCopy == null ? null : () => onCopy!(),
             ),
             if (onEdit != null)
               _ActionButton(
                 key: Key('chat_message_edit_button_$messageId'),
-                icon: Icons.edit_outlined,
+                icon: ClaudeIcons.edit,
                 tooltip: context.l10n.chatEditMessage,
                 onPressed: onEdit,
               ),
             if (onRegenerate != null && !isStreaming)
               _ActionButton(
                 key: Key('chat_message_regenerate_button_$messageId'),
-                icon: Icons.refresh_rounded,
+                icon: ClaudeIcons.regenerate,
                 tooltip: context.l10n.chatRegenerateMessage,
                 onPressed: onRegenerate,
               ),
             if (onDelete != null)
               _ActionButton(
                 key: Key('chat_message_delete_button_$messageId'),
-                icon: Icons.delete_outline_rounded,
+                icon: ClaudeIcons.trash,
                 tooltip: context.l10n.commonDelete,
                 onPressed: onDelete,
                 destructive: true,
@@ -361,7 +295,7 @@ class _ActionButton extends StatelessWidget {
       message: tooltip,
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icon, size: 17),
+        icon: ClaudeIcons.render(icon, size: 17),
         visualDensity: VisualDensity.compact,
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),
         color: destructive

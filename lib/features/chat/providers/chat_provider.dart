@@ -133,6 +133,26 @@ class ChatProvider extends ChangeNotifier {
     _models.updateChatTimeout(timeout);
   }
 
+  bool get isStealthMode => _isStealthMode;
+  bool _isStealthMode = false;
+
+  /// Stealth on: the next conversation is kept in memory and never written.
+  ///
+  /// Switching it on mid-conversation would have to abandon whatever is
+  /// already on screen without deleting it, which is neither one nor the
+  /// other, so it starts a fresh draft instead. Switching it off discards the
+  /// transient conversation outright.
+  void setStealthMode(bool value) {
+    if (_isStealthMode == value) return;
+    _isStealthMode = value;
+    _repository.setTransientMode(value);
+    // Either way the current conversation is dropped: turning stealth on must
+    // not leave a recorded one on screen, and turning it off must not leave
+    // an ephemeral one behind.
+    _conversation.clearSelection();
+    _notify();
+  }
+
   Future<void> createSession() async {
     if (!canManageSessions || _conversation.selectedSessionId == null) {
       return;

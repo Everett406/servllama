@@ -31,9 +31,16 @@ class ChatScrollCoordinator extends ChangeNotifier {
   Timer? _userScrollActivityTimer;
   Timer? _sessionSwitchScrollTimer;
   String? _pendingSessionSwitchScrollSessionId;
+  String? _lastCommittedConversationKey;
 
   bool get showJumpToLatestButton => _showJumpToLatestButton;
 
+  /// Fires once per conversation, not once per frame.
+  ///
+  /// The transcript calls this from a post-frame callback, which runs on
+  /// every rebuild — and a streaming reply rebuilds constantly. Treating each
+  /// call as "the conversation just changed" re-armed auto-stick every frame,
+  /// so any attempt to scroll back up was undone a few milliseconds later.
   void handleConversationBodyCommitted(String conversationKey) {
     if (_isDisposed) {
       return;
@@ -43,6 +50,10 @@ class ChatScrollCoordinator extends ChangeNotifier {
     if (selectedConversationKey != conversationKey) {
       return;
     }
+    if (_lastCommittedConversationKey == conversationKey) {
+      return;
+    }
+    _lastCommittedConversationKey = conversationKey;
     _pendingSessionSwitchScrollSessionId = null;
     _scheduleSessionSwitchScrollToBottom();
   }
@@ -140,6 +151,9 @@ class ChatScrollCoordinator extends ChangeNotifier {
       _lastMessageCount = provider.visibleMessages.length;
       _isLoadingOlderFromScroll = false;
       _pendingSessionSwitchScrollSessionId = selectedSessionId;
+      // Re-arm the body-committed hook: coming back to a conversation later
+      // should land at its latest message just like the first time.
+      _lastCommittedConversationKey = null;
       enableAutoStickToBottom();
       _setShowJumpToLatestButton(false);
     }

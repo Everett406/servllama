@@ -718,5 +718,19 @@
   "sidebarExpand": "展开侧栏",
   "sidebarBrowseModels": "浏览模型",
   "sidebarEngineIdle": "未运行",
-  "chatThinkingLabel": "思考过程"
+  "chatThinkingLabel": "思考过程",
+  "chatStealthOn": "无痕模式已开启",
+  "chatStealthOff": "无痕模式",
+  "chatThinkingLive": "思考中 · {duration}",
+  "@chatThinkingLive": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "chatThinkingDone": "思考了 {duration}",
+  "@chatThinkingDone": {
+    "placeholders": {
+      "duration": {}
+    }
+  }
 }

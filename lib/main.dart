@@ -11,6 +11,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FlutterForegroundTask.initCommunicationPort();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // edgeToEdge only controls layout: on its own the navigation bar keeps the
+  // platform's opaque background, which on a light app paints a black band
+  // under the gesture pill. The app draws its own canvas there instead, so
+  // the bar has to be transparent and the contrast scrim turned off.
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Color(0x00000000),
+      systemNavigationBarDividerColor: Color(0x00000000),
+      systemNavigationBarContrastEnforced: false,
+    ),
+  );
   await _initLogging();
   runApp(const ServLlamaApp());
 }

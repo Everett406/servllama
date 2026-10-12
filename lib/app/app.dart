@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:provider/provider.dart';
@@ -126,6 +127,30 @@ class ServLlamaApp extends StatelessWidget {
                   GlobalCupertinoLocalizations.delegate,
                 ],
                 supportedLocales: AppLocalizations.supportedLocales,
+                // Keeps the gesture-navigation icons legible against the
+                // canvas at the bottom of the screen. main.dart makes the bar
+                // transparent; this decides which way the icons are tinted,
+                // and it has to follow the theme because the bar sits on top
+                // of whatever page is showing.
+                builder: (context, child) {
+                  final dark = Theme.of(context).brightness == Brightness.dark;
+                  return AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+                      statusBarIconBrightness: dark
+                          ? Brightness.light
+                          : Brightness.dark,
+                      systemNavigationBarColor: Colors.transparent,
+                      systemNavigationBarDividerColor: Colors.transparent,
+                      systemNavigationBarContrastEnforced: false,
+                      systemNavigationBarIconBrightness: dark
+                          ? Brightness.light
+                          : Brightness.dark,
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
                 home: const MainScaffold(),
               ),
         ),

@@ -89,6 +89,10 @@ class ClaudeRadius {
 
   /// Sheets and modal dialogs.
   static const sheet = 24.0;
+
+  /// The composer. Nearly a pill — the composer reads as one object you
+  /// address, not a form you fill in.
+  static const composer = 28.0;
 }
 
 class ClaudeSpacing {

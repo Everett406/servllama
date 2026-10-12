@@ -100,6 +100,11 @@ class ChatGenerationController extends ChangeNotifier {
     var selectedSession = _conversation.selectedSession;
     if (selectedSession == null) {
       selectedSession = _createSessionRecord();
+      // Claim it before the first message is written: stealth has to hold
+      // from the very first record, not from some point later on.
+      if (_repository.isTransientMode) {
+        _repository.beginTransientSession(selectedSession.id);
+      }
       _conversation.startDraftSession(selectedSession.id, notify: false);
     }
     final session = selectedSession;

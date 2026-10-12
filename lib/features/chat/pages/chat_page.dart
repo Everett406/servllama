@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/brand_mark.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/widgets/shell_bits.dart';
 import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/core/models/inference_engine.dart';
@@ -21,6 +22,7 @@ import 'package:servllama/features/chat/widgets/chat_engine_start_sheet.dart';
 import 'package:servllama/features/chat/widgets/chat_message_list.dart';
 import 'package:servllama/features/chat/widgets/chat_model_sheet.dart';
 import 'package:servllama/features/downloads/pages/model_discovery_page.dart';
+import 'package:servllama/features/settings/pages/settings_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
@@ -248,6 +250,14 @@ class _ChatViewState extends State<_ChatView> {
     );
   }
 
+  void _openSettings() {
+    unawaited(
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const SettingsPage())),
+    );
+  }
+
   void _showRuntimeError(EngineRuntimeProvider runtime) {
     final error = runtime.lastError;
     if (error == null) return;
@@ -284,6 +294,8 @@ class _ChatViewState extends State<_ChatView> {
                     onToggleRuntime: _startServer,
                     model: chat.currentModel,
                     onSelectModel: _showModels,
+                    isStealth: chat.isStealthMode,
+                    onStealthChanged: chat.setStealthMode,
                   ),
                   Expanded(
                     child: isEmpty
@@ -298,13 +310,15 @@ class _ChatViewState extends State<_ChatView> {
                         : ChatMessageListView(coordinator: _scroll),
                   ),
                   Padding(
+                    // The transcript runs under the gesture bar on purpose,
+                    // but the composer must not: it is the one control the
+                    // thumb has to reach, so it clears the system inset
+                    // instead of hiding behind it.
                     padding: EdgeInsets.fromLTRB(
                       ClaudeSpacing.lg,
                       0,
                       ClaudeSpacing.lg,
-                      MediaQuery.viewInsetsOf(context).bottom > 0
-                          ? ClaudeSpacing.sm
-                          : ClaudeSpacing.lg,
+                      _composerBottomInset(context),
                     ),
                     child: Center(
                       child: ConstrainedBox(
@@ -318,6 +332,7 @@ class _ChatViewState extends State<_ChatView> {
                           onPickImage: _pickImage,
                           onStartServer: _startServer,
                           onSelectModel: _showModels,
+                          onOpenSettings: _openSettings,
                         ),
                       ),
                     ),
@@ -355,6 +370,66 @@ class _ChatViewState extends State<_ChatView> {
   }
 }
 
+/// Vertical breathing room under the composer.
+///
+/// While the keyboard is up it owns the bottom of the screen, so only a
+/// small gap is needed; with it down the gesture bar does, and the composer
+/// has to clear that too or half of the send control sits under it.
+double _composerBottomInset(BuildContext context) {
+  final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+  if (keyboard > 0) return ClaudeSpacing.sm;
+  return ClaudeSpacing.lg + MediaQuery.viewPaddingOf(context).bottom;
+}
+
+/// Stealth toggle.
+///
+/// Sits at the trailing corner because it is a promise about what will
+/// happen to this conversation, and promises live where the eye already
+/// rests after reading. When it is on the whole bar takes a faint tint, so
+/// the mode is visible for the rest of the conversation rather than only at
+/// the moment it was switched.
+class _StealthToggle extends StatelessWidget {
+  const _StealthToggle({required this.active, required this.onChanged});
+
+  final bool active;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = active
+        ? context.l10n.chatStealthOn
+        : context.l10n.chatStealthOff;
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        toggled: active,
+        button: true,
+        label: tooltip,
+        child: Material(
+          color: active ? context.accentSubtle : Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            key: const Key('chat_stealth_button'),
+            onTap: () => onChanged(!active),
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Center(
+                child: ClaudeIcon(
+                  ClaudeIcons.ghost,
+                  size: 19,
+                  color: active ? context.accent : context.inkTertiary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Thin contextual bar. Everything here is secondary to the conversation —
 /// no title, no tabs, no chrome beyond what the user needs right now.
 class _ChatTopBar extends StatelessWidget {
@@ -368,6 +443,8 @@ class _ChatTopBar extends StatelessWidget {
     required this.onToggleRuntime,
     required this.model,
     required this.onSelectModel,
+    required this.isStealth,
+    required this.onStealthChanged,
   });
 
   final String title;
@@ -379,6 +456,8 @@ class _ChatTopBar extends StatelessWidget {
   final VoidCallback onToggleRuntime;
   final ChatModelOption? model;
   final VoidCallback onSelectModel;
+  final bool isStealth;
+  final ValueChanged<bool> onStealthChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -403,7 +482,7 @@ class _ChatTopBar extends StatelessWidget {
             key: const Key('chat_open_sidebar_button'),
             tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
             onPressed: onOpenSidebar,
-            icon: const Icon(Icons.menu_rounded, size: 22),
+            icon: ClaudeIcon(ClaudeIcons.menu, size: 21),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -442,6 +521,10 @@ class _ChatTopBar extends StatelessWidget {
             tooltip: l10n.drawerAllHistoryTooltip,
             onPressed: onOpenHistory,
             icon: const Icon(Icons.history_rounded, size: 21),
+          ),
+          _StealthToggle(
+            active: isStealth,
+            onChanged: onStealthChanged,
           ),
         ],
       ),

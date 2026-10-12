@@ -1658,4 +1658,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatThinkingLabel => 'Thinking';
+
+  @override
+  String get chatStealthOn => 'Stealth on';
+
+  @override
+  String get chatStealthOff => 'Stealth mode';
+
+  @override
+  String chatThinkingLive(Object duration) {
+    return 'Thinking · $duration';
+  }
+
+  @override
+  String chatThinkingDone(Object duration) {
+    return 'Thought for $duration';
+  }
 }

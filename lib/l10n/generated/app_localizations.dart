@@ -2956,6 +2956,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thinking'**
   String get chatThinkingLabel;
+
+  /// No description provided for @chatStealthOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Stealth on'**
+  String get chatStealthOn;
+
+  /// No description provided for @chatStealthOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Stealth mode'**
+  String get chatStealthOff;
+
+  /// No description provided for @chatThinkingLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking · {duration}'**
+  String chatThinkingLive(Object duration);
+
+  /// No description provided for @chatThinkingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Thought for {duration}'**
+  String chatThinkingDone(Object duration);
 }
 
 class _AppLocalizationsDelegate

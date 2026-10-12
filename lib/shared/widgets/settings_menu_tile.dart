@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 
@@ -58,7 +59,7 @@ class _SettingsMenuTileState extends State<SettingsMenuTile> {
       ),
       child: Row(
         children: [
-          Icon(
+          ClaudeIcons.render(
             widget.icon,
             size: 20,
             color: widget.enabled
@@ -106,8 +107,8 @@ class _SettingsMenuTileState extends State<SettingsMenuTile> {
           ],
           if (widget.trailing == null && effectiveOnTap != null) ...[
             const SizedBox(width: ClaudeSpacing.xs),
-            Icon(
-              Icons.chevron_right_rounded,
+            ClaudeIcon(
+              ClaudeIcons.chevronRight,
               color: context.inkTertiary,
               size: 20,
             ),
