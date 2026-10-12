@@ -1633,4 +1633,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatAnswerFootnote => 'Vela 在你自己的手机上跑，但仍然会犯错。重要的东西，请再看一眼。';
+
+  @override
+  String chatThroughput(Object rate) {
+    return '$rate tok/s';
+  }
+
+  @override
+  String get chatContextTitle => '上下文用量';
+
+  @override
+  String get chatContextUnknown => '引擎没有报告上下文窗口';
+
+  @override
+  String chatContextValue(Object used, Object total) {
+    return '已用 $used / $total';
+  }
 }

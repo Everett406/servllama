@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
@@ -83,14 +84,21 @@ class _ThinkingLineState extends State<ThinkingLine> {
   static const double _markSize = 14;
   static const double _markGap = 9;
 
+  /// How much of the thought the caption shows at once.
+  static const int _window = 34;
+  static const Duration _advance = Duration(milliseconds: 1800);
+
   Timer? _ticker;
+  Timer? _walker;
   Duration _elapsed = Duration.zero;
+  int _offset = 0;
 
   @override
   void initState() {
     super.initState();
     _elapsed = _resolveInitialElapsed();
     _restartTicker();
+    _restartWalker();
   }
 
   @override
@@ -115,7 +123,35 @@ class _ThinkingLineState extends State<ThinkingLine> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _walker?.cancel();
     super.dispose();
+  }
+
+  /// Walks the caption forward through the thought while it streams.
+  ///
+  /// A caption frozen on the first sentence shows the model's opening move
+  /// for the entire reply, which is the least interesting part by the end.
+  /// Advancing a window keeps the newest reasoning on screen and wraps back
+  /// to the top once it runs off the end.
+  void _restartWalker() {
+    _walker?.cancel();
+    if (!widget.live || widget.answerStarted) {
+      _walker = null;
+      _offset = 0;
+      return;
+    }
+    _walker = Timer.periodic(_advance, (_) {
+      if (!mounted) return;
+      final length = widget.content
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim()
+          .length;
+      if (length <= _window) return;
+      setState(() {
+        _offset += 12;
+        if (_offset + _window > length) _offset = 0;
+      });
+    });
   }
 
   Duration _resolveInitialElapsed() {
@@ -196,7 +232,7 @@ class _ThinkingLineState extends State<ThinkingLine> {
                   child: Text(
                     waiting
                         ? context.l10n.chatThinkingWaiting
-                        : _summarise(widget.content),
+                        : _summarise(widget.content, _offset),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     // AnimatedSwitcher centres its child, which is how the
@@ -230,9 +266,11 @@ class _ThinkingLineState extends State<ThinkingLine> {
   ///
   /// Models wrap reasoning wherever the line happens to end, and a caption
   /// that starts with a newline reads as an empty row.
-  static String _summarise(String reasoning) {
+  static String _summarise(String reasoning, int offset) {
     final collapsed = reasoning.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return collapsed;
+    if (collapsed.length <= _window || offset == 0) return collapsed;
+    if (offset + _window > collapsed.length) return collapsed;
+    return '…${collapsed.substring(offset, offset + _window)}';
   }
 }
 
@@ -319,6 +357,8 @@ class _RingPainter extends CustomPainter {
       oldDelegate.track != track || oldDelegate.arc != arc;
 }
 
+const Duration _zero = Duration.zero;
+
 /// The full thought, in a sheet.
 ///
 /// A sheet rather than an inline expansion because the thought is often
@@ -329,6 +369,8 @@ Future<void> showThinkingSheet(
   BuildContext context, {
   required String content,
   required Duration elapsed,
+  ValueListenable<String>? liveContent,
+  ValueListenable<Duration>? liveElapsed,
 }) {
   final chinese = Localizations.localeOf(context).languageCode == 'zh';
   return showModalBottomSheet<void>(
@@ -344,13 +386,17 @@ Future<void> showThinkingSheet(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
-            child: Text(
-              context.l10n.chatThinkingSheetTitle(
-                formatThinkingDuration(elapsed, chinese: chinese),
-              ),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontFamily: 'serif',
-                fontWeight: FontWeight.w600,
+            child: ValueListenableBuilder<Duration>(
+              valueListenable:
+                  liveElapsed ?? const AlwaysStoppedAnimation(_zero),
+              builder: (context, liveValue, _) => Text(
+                context.l10n.chatThinkingSheetTitle(
+                  formatThinkingDuration(liveValue, chinese: chinese),
+                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontFamily: 'serif',
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -359,11 +405,15 @@ Future<void> showThinkingSheet(
               controller: controller,
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
               children: [
-                Text(
-                  content,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.85,
-                    color: context.inkSecondary,
+                ValueListenableBuilder<String>(
+                  valueListenable:
+                      liveContent ?? const AlwaysStoppedAnimation(''),
+                  builder: (context, liveValue, _) => Text(
+                    liveValue.isNotEmpty ? liveValue : content,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.85,
+                      color: context.inkSecondary,
+                    ),
                   ),
                 ),
               ],

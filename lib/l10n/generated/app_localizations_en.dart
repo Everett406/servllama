@@ -1718,4 +1718,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatAnswerFootnote =>
       'Vela runs on your own device and still gets things wrong. Check anything that matters.';
+
+  @override
+  String chatThroughput(Object rate) {
+    return '$rate tok/s';
+  }
+
+  @override
+  String get chatContextTitle => 'Context window';
+
+  @override
+  String get chatContextUnknown => 'The engine did not report a context window';
+
+  @override
+  String chatContextValue(Object used, Object total) {
+    return '$used of $total used';
+  }
 }

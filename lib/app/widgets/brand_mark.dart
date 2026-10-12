@@ -97,9 +97,9 @@ class _BalloonMarkPainter extends CustomPainter {
     // its corner arc: inside the arc, the rounding eats the width and the
     // tail comes out as a spike.
     body
-      ..moveTo(unit * 0.370, unit * 0.575)
-      ..lineTo(unit * 0.545, unit * 0.575)
-      ..lineTo(unit * 0.348, unit * 0.672)
+      ..moveTo(unit * 0.382, unit * 0.575)
+      ..lineTo(unit * 0.548, unit * 0.575)
+      ..lineTo(unit * 0.452, unit * 0.668)
       ..close();
     return body;
   }

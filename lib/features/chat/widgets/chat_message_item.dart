@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/features/chat/controllers/streaming_chat_message_notifier.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
 import 'package:servllama/features/chat/widgets/streaming_fade_text.dart';
+import 'package:servllama/features/chat/widgets/token_stats.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 
@@ -21,6 +24,8 @@ class ChatMessageItem extends StatefulWidget {
     required this.message,
     this.isStreaming = false,
     this.promptedAt,
+    this.stream,
+    this.liveReasoning,
     this.canManage = false,
     this.onCopy,
     this.onRegenerate,
@@ -33,6 +38,13 @@ class ChatMessageItem extends StatefulWidget {
 
   /// When the prompt that produced this message was sent.
   final DateTime? promptedAt;
+
+  /// The live stream, so the thought sheet can follow the model instead of
+  /// showing a snapshot the user has to close and reopen to refresh.
+  final ValueListenable<StreamingChatMessageData>? stream;
+
+  /// Live reasoning text, for the thought sheet to follow.
+  final ValueListenable<String>? liveReasoning;
   final bool canManage;
   final VoidCallback? onCopy;
   final VoidCallback? onRegenerate;
@@ -44,7 +56,6 @@ class ChatMessageItem extends StatefulWidget {
 }
 
 class _ChatMessageItemState extends State<ChatMessageItem> {
-  bool _hovered = false;
   bool _showReasoning = false;
 
   /// Opens the thought in a sheet and drops the inline marker afterwards.
@@ -70,6 +81,10 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
       context,
       content: message.reasoningContent ?? '',
       elapsed: elapsed,
+      liveContent: widget.liveReasoning,
+      liveElapsed: ValueNotifier<Duration>(
+        ThinkingTimings.frozen(message.id) ?? elapsed,
+      ),
     );
     if (mounted) setState(() => _showReasoning = false);
   }
@@ -83,91 +98,98 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
     final content = message.content;
     final hasContent = content.trim().isNotEmpty;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          ClaudeSpacing.lg,
-          _isUser ? ClaudeSpacing.sm : ClaudeSpacing.lg,
-          ClaudeSpacing.lg,
-          _isUser ? ClaudeSpacing.lg : ClaudeSpacing.sm,
-        ),
-        child: Column(
-          crossAxisAlignment: _isUser
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
-          children: [
-            if (message.imageFilePaths.isNotEmpty)
-              _MessageImages(paths: message.imageFilePaths, alignEnd: _isUser),
-            if (_isUser && hasContent)
-              _UserBubble(content: content, id: message.id),
-            if (!_isUser) ...[
-              // Shown while generating even with nothing to quote yet: a
-              // reply that has not appeared needs to say why it has not
-              // appeared, and an empty gap is not a reason.
-              if (reasoning.isNotEmpty || widget.isStreaming)
-                ThinkingLine(
-                  content: reasoning,
-                  expanded: _showReasoning,
-                  live: widget.isStreaming,
-                  answerStarted: hasContent,
-                  messageId: message.id,
-                  promptedAt: widget.promptedAt,
-                  answeredAt: message.createdAt,
-                  onToggle: _openThinking,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        ClaudeSpacing.lg,
+        _isUser ? ClaudeSpacing.sm : ClaudeSpacing.lg,
+        ClaudeSpacing.lg,
+        _isUser ? ClaudeSpacing.lg : ClaudeSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: _isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          if (message.imageFilePaths.isNotEmpty)
+            _MessageImages(paths: message.imageFilePaths, alignEnd: _isUser),
+          if (_isUser && hasContent)
+            _UserBubble(content: content, id: message.id),
+          if (!_isUser) ...[
+            // Shown while generating even with nothing to quote yet: a
+            // reply that has not appeared needs to say why it has not
+            // appeared, and an empty gap is not a reason.
+            if (reasoning.isNotEmpty || widget.isStreaming)
+              ThinkingLine(
+                content: reasoning,
+                expanded: _showReasoning,
+                live: widget.isStreaming,
+                answerStarted: hasContent,
+                messageId: message.id,
+                promptedAt: widget.promptedAt,
+                answeredAt: message.createdAt,
+                onToggle: _openThinking,
+              ),
+            if (hasContent || widget.isStreaming)
+              _AssistantBody(
+                content: content,
+                id: message.id,
+                isStreaming: widget.isStreaming,
+              ),
+            if (!hasContent && !widget.isStreaming && reasoning.isNotEmpty)
+              _AssistantBody(
+                content: context.l10n.chatModelRequestFailed(
+                  message.modelName ?? '',
                 ),
-              if (hasContent || widget.isStreaming)
-                _AssistantBody(
-                  content: content,
-                  id: message.id,
-                  isStreaming: widget.isStreaming,
-                ),
-              if (!hasContent && !widget.isStreaming && reasoning.isNotEmpty)
-                _AssistantBody(
-                  content: context.l10n.chatModelRequestFailed(
-                    message.modelName ?? '',
-                  ),
-                  id: message.id,
-                  isStreaming: false,
-                ),
-            ],
-            // Actions live in the row's own vertical rhythm and simply fade
-            // out, so an assistant turn doesn't shift the transcript when the
-            // pointer leaves.
-            _ActionBar(
-              visible: widget.canManage && _hovered,
-              isStreaming: widget.isStreaming,
-              messageId: message.id,
-              onCopy: hasContent ? widget.onCopy : null,
-              onRegenerate: _isUser ? null : widget.onRegenerate,
-              onEdit: _isUser ? widget.onEdit : null,
-              onDelete: widget.onDelete,
-            ),
-            // Always on, unlike the action row: a standing footnote on every
-            // assistant turn. It says the one thing a reader should hold
-            // onto while skimming a machine's answer, and it sits right
-            // where a footnote belongs — under the last line.
-            if (!_isUser && hasContent && !widget.isStreaming)
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    context.l10n.chatAnswerFootnote,
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: context.inkTertiary.withAlpha(190),
-                      height: 1.45,
-                    ),
-                  ),
-                ),
+                id: message.id,
+                isStreaming: false,
               ),
           ],
-        ),
+          // Actions live in the row's own vertical rhythm and simply fade
+          // out, so an assistant turn doesn't shift the transcript when the
+          // pointer leaves.
+          _ActionBar(
+            // Was gated on hover, which is a pointer concept. On a
+            // phone there is no hover, so the row simply never appeared.
+            visible: widget.canManage,
+            isStreaming: widget.isStreaming,
+            messageId: message.id,
+            onCopy: hasContent ? widget.onCopy : null,
+            onRegenerate: _isUser ? null : widget.onRegenerate,
+            onEdit: _isUser ? widget.onEdit : null,
+            onDelete: widget.onDelete,
+            timestamp: !_isUser && !widget.isStreaming
+                ? _formatTimestamp(context, message.createdAt)
+                : null,
+            throughput: !_isUser && !widget.isStreaming
+                ? _formatThroughput(context, message.id)
+                : null,
+          ),
+        ],
       ),
     );
   }
+}
+
+/// HH:mm, and a date once the reply is no longer from today.
+///
+/// A bare time is what makes a scrollback readable; a bare date is not
+/// enough on its own, so the two are combined rather than chosen between.
+String _formatTimestamp(BuildContext context, DateTime at) {
+  final now = DateTime.now();
+  final time =
+      '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+  final sameDay =
+      at.year == now.year && at.month == now.month && at.day == now.day;
+  if (sameDay) return time;
+  return '${at.month}/${at.day} $time';
+}
+
+/// Grey, quiet, and only when there is something to say: too short a stream
+/// and the number is noise, and a rate nobody can act on is decoration.
+String? _formatThroughput(BuildContext context, String messageId) {
+  final rate = TokenStats.tokensPerSecond(messageId);
+  if (rate == null || rate <= 0 || rate.isInfinite) return null;
+  return context.l10n.chatThroughput(rate.toStringAsFixed(1));
 }
 
 class _UserBubble extends StatelessWidget {
@@ -280,6 +302,8 @@ class _ActionBar extends StatelessWidget {
     required this.onRegenerate,
     required this.onEdit,
     required this.onDelete,
+    this.timestamp,
+    this.throughput,
   });
 
   final bool visible;
@@ -289,6 +313,14 @@ class _ActionBar extends StatelessWidget {
   final VoidCallback? onRegenerate;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+
+  /// Rendered at the row's leading edge, opposite the controls. When it was
+  /// absent the row started with a button and no idea of when anything was
+  /// said, which is the one thing a scrollback reader wants first.
+  final String? timestamp;
+
+  /// Tokens per second, when the stream was long enough to measure.
+  final String? throughput;
 
   @override
   Widget build(BuildContext context) {

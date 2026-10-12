@@ -29,7 +29,7 @@ class ChatComposer extends StatefulWidget {
     required this.onPickImage,
     required this.onStartServer,
     required this.onSelectModel,
-    required this.onOpenSettings,
+    required this.onOpenEngineSettings,
   });
 
   final TextEditingController controller;
@@ -38,7 +38,7 @@ class ChatComposer extends StatefulWidget {
   final VoidCallback onPickImage;
   final VoidCallback onStartServer;
   final VoidCallback onSelectModel;
-  final VoidCallback onOpenSettings;
+  final VoidCallback onOpenEngineSettings;
 
   @override
   State<ChatComposer> createState() => ChatComposerState();
@@ -171,7 +171,7 @@ class ChatComposerState extends State<ChatComposer> {
                 _EngineButton(
                   running: isRunning,
                   onTap: isRunning
-                      ? widget.onOpenSettings
+                      ? widget.onOpenEngineSettings
                       : widget.onStartServer,
                 ),
                 const SizedBox(width: 6),

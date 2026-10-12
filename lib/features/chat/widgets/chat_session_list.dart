@@ -234,7 +234,9 @@ class _SessionRowState extends State<_SessionRow> {
           onLongPress: widget.enabled ? widget.onMore : null,
           borderRadius: radius,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+            // Was 8 vertical on both sides, which put a dozen rows out of
+            // reach. Half that, and the list reads as a list.
+            padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
             child: Row(
               children: [
                 Expanded(

@@ -3052,6 +3052,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vela runs on your own device and still gets things wrong. Check anything that matters.'**
   String get chatAnswerFootnote;
+
+  /// No description provided for @chatThroughput.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} tok/s'**
+  String chatThroughput(Object rate);
+
+  /// No description provided for @chatContextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Context window'**
+  String get chatContextTitle;
+
+  /// No description provided for @chatContextUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The engine did not report a context window'**
+  String get chatContextUnknown;
+
+  /// No description provided for @chatContextValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total} used'**
+  String chatContextValue(Object used, Object total);
 }
 
 class _AppLocalizationsDelegate

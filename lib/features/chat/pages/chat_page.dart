@@ -14,13 +14,13 @@ import 'package:servllama/features/chat/controllers/chat_scroll_coordinator.dart
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/services/image_attachment_service.dart';
 import 'package:servllama/features/chat/widgets/chat_composer.dart';
+import 'package:servllama/features/chat/widgets/context_usage_bar.dart';
 import 'package:servllama/features/chat/widgets/chat_empty_state.dart';
 import 'package:servllama/features/chat/widgets/chat_engine_start_sheet.dart';
 import 'package:servllama/features/chat/widgets/chat_message_list.dart';
 import 'package:servllama/features/chat/widgets/chat_model_sheet.dart';
-import 'package:servllama/features/chat/widgets/context_usage_bar.dart';
 import 'package:servllama/features/downloads/pages/model_discovery_page.dart';
-import 'package:servllama/features/settings/pages/settings_page.dart';
+import 'package:servllama/features/server/pages/server_config_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
@@ -251,11 +251,14 @@ class _ChatViewState extends State<_ChatView> {
     );
   }
 
-  void _openSettings() {
+  /// The composer sits next to send, so its button should open the engine
+  /// and not the whole app's settings. A global preferences page is a
+  /// plausible-sounding answer and a wrong one.
+  void _openEngineSettings() {
     unawaited(
       Navigator.of(
         context,
-      ).push(MaterialPageRoute<void>(builder: (_) => const SettingsPage())),
+      ).push(MaterialPageRoute<void>(builder: (_) => const ServerConfigPage())),
     );
   }
 
@@ -310,7 +313,15 @@ class _ChatViewState extends State<_ChatView> {
                             onSelectModel: _showModels,
                             onBrowseModels: () => _openDiscovery(),
                           )
-                        : ChatMessageListView(coordinator: _scroll),
+                        : ChatMessageListView(
+                            coordinator: _scroll,
+                            // Enough runway that the first and last lines
+                            // can always clear the floating surfaces.
+                            topInset: _headerExtent(context),
+                            bottomInset:
+                                _composerExtent(context) +
+                                _composerBottomInset(context),
+                          ),
                   ),
                   Padding(
                     // The transcript runs under the gesture bar on purpose,
@@ -335,41 +346,46 @@ class _ChatViewState extends State<_ChatView> {
                           onPickImage: _pickImage,
                           onStartServer: _startServer,
                           onSelectModel: _showModels,
-                          onOpenSettings: _openSettings,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Sits in the strip the gesture bar would otherwise own.
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      ClaudeSpacing.lg,
-                      10,
-                      ClaudeSpacing.lg,
-                      MediaQuery.viewInsetsOf(context).bottom > 0
-                          ? 0
-                          : ClaudeSpacing.sm,
-                    ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: ClaudeSpacing.readingWidth,
-                        ),
-                        child: ContextUsageBar(
-                          messages: chat.visibleMessages,
-                          contextWindow: runtime?.contextWindow,
+                          onOpenEngineSettings: _openEngineSettings,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
+              // Dissolve, not cut. Without these the toolbar and composer
+              // slice whatever line happens to be passing behind them.
+              if (!isEmpty) ...[
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: _headerExtent(context),
+                  child: IgnorePointer(
+                    child: _EdgeFade(alignment: Alignment.topCenter),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height:
+                      _composerExtent(context) + _composerBottomInset(context),
+                  child: IgnorePointer(
+                    child: _EdgeFade(alignment: Alignment.bottomCenter),
+                  ),
+                ),
+              ],
               if (!isEmpty)
+                // Above the composer, not on it. It used to sit bottom-
+                // right, which is precisely where the send button lives,
+                // and the two fought over the same corner.
                 Positioned(
                   right: ClaudeSpacing.lg,
                   bottom:
                       MediaQuery.viewInsetsOf(context).bottom +
-                      ClaudeSpacing.xxl * 2,
+                      MediaQuery.viewPaddingOf(context).bottom +
+                      112,
                   child: AnimatedSlide(
                     offset: _scroll.showJumpToLatestButton
                         ? Offset.zero
@@ -396,6 +412,45 @@ class _ChatViewState extends State<_ChatView> {
   }
 }
 
+/// The header's own height, so the transcript can be padded clear of it and
+/// the fade above it can end exactly where the pills begin.
+double _headerExtent(BuildContext context) =>
+    ClaudeSpacing.sm + 42 + ClaudeSpacing.xs;
+
+/// The composer's height with the keyboard down, excluding the system inset.
+double _composerExtent(BuildContext context) =>
+    MediaQuery.viewInsetsOf(context).bottom > 0 ? 150 : 112;
+
+/// A gradient that hands the canvas over to whatever is behind it.
+///
+/// Opaque at the edge it guards, transparent at the inner end. A line
+/// crossing it loses contrast as it goes rather than losing half its glyphs,
+/// which is the difference between a surface and a curtain.
+class _EdgeFade extends StatelessWidget {
+  const _EdgeFade({required this.alignment});
+
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = alignment == Alignment.topCenter;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: top ? Alignment.topCenter : Alignment.bottomCenter,
+          end: top ? Alignment.bottomCenter : Alignment.topCenter,
+          colors: [
+            context.canvas,
+            context.canvas.withAlpha(178),
+            context.canvas.withAlpha(0),
+          ],
+          stops: const [0, 0.55, 1],
+        ),
+      ),
+    );
+  }
+}
+
 /// Vertical breathing room under the composer.
 ///
 /// While the keyboard is up it owns the bottom of the screen, so only a
@@ -404,7 +459,10 @@ class _ChatViewState extends State<_ChatView> {
 double _composerBottomInset(BuildContext context) {
   final keyboard = MediaQuery.viewInsetsOf(context).bottom;
   if (keyboard > 0) return ClaudeSpacing.sm;
-  return ClaudeSpacing.lg + MediaQuery.viewPaddingOf(context).bottom;
+  // Only the home indicator has to be cleared. Padding out to a full `lg`
+  // on top of it left the composer floating in the middle of the lower
+  // third with dead canvas beneath it.
+  return 4 + MediaQuery.viewPaddingOf(context).bottom;
 }
 
 /// Stealth toggle.
@@ -525,6 +583,20 @@ class _ChatTopBar extends StatelessWidget {
               onTap: () => _closeThen(sheetContext, onSelectModel),
             ),
             ListTile(
+              key: const Key('chat_context_tile'),
+              leading: ClaudeIcon(
+                ClaudeIcons.layers,
+                size: 20,
+                color: context.inkSecondary,
+              ),
+              title: Text(context.l10n.chatContextTitle),
+              subtitle: Text(
+                _contextLine(context, chat),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            ListTile(
               key: const Key('chat_history_tile'),
               leading: ClaudeIcon(
                 ClaudeIcons.archive,
@@ -545,6 +617,18 @@ class _ChatTopBar extends StatelessWidget {
   /// Deferred rather than immediate: the sheet owns the navigator until its
   /// own pop animation finishes, and pushing a second route on top of a
   /// sheet still animating out puts two surfaces in one transition.
+  /// "12.4k / 128k" when the engine told us its window, and an honest
+  /// "unknown" when it did not.
+  static String _contextLine(BuildContext context, ChatProvider chat) {
+    final window = context.read<EngineRuntimeProvider?>()?.contextWindow;
+    if (window == null || window <= 0) return context.l10n.chatContextUnknown;
+    final used = estimateTokens(chat.visibleMessages);
+    return context.l10n.chatContextValue(
+      formatTokenCount(used),
+      formatTokenCount(window),
+    );
+  }
+
   static void _closeThen(BuildContext sheetContext, VoidCallback action) {
     Navigator.of(sheetContext).pop();
     Future<void>.delayed(const Duration(milliseconds: 200), action);

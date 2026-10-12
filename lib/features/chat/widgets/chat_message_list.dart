@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'package:servllama/features/chat/widgets/chat_message_sheets.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/widgets/chat_message_item.dart';
+import 'package:servllama/features/chat/widgets/token_stats.dart';
 
 /// The transcript.
 ///
@@ -17,15 +19,36 @@ import 'package:servllama/features/chat/widgets/chat_message_item.dart';
 /// blocks and short replies share the same optical left edge instead of the
 /// user bubble and the answer fighting for the same column.
 class ChatMessageListView extends StatefulWidget {
-  const ChatMessageListView({super.key, required this.coordinator});
+  const ChatMessageListView({
+    super.key,
+    required this.coordinator,
+    this.topInset = 0,
+    this.bottomInset = 0,
+  });
 
   final ChatScrollCoordinator coordinator;
+
+  /// Clearance for the surfaces that float over the transcript. Without it
+  /// the first and last lines can never scroll fully into the open area.
+  final double topInset;
+  final double bottomInset;
 
   @override
   State<ChatMessageListView> createState() => _ChatMessageListViewState();
 }
 
 class _ChatMessageListViewState extends State<ChatMessageListView> {
+  /// One notifier reused across rows; its value is replaced at the top of
+  /// each streaming rebuild. Only one sheet can be open at a time, so a
+  /// shared handle is enough and avoids allocating one per row.
+  final ValueNotifier<String> _liveReasoning = ValueNotifier<String>('');
+
+  @override
+  void dispose() {
+    _liveReasoning.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
@@ -50,7 +73,10 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
         child: ListView.builder(
           key: const ValueKey('chat_message_list'),
           controller: widget.coordinator.scrollController,
-          padding: const EdgeInsets.only(bottom: ClaudeSpacing.lg),
+          padding: EdgeInsets.only(
+            top: widget.topInset,
+            bottom: widget.bottomInset + ClaudeSpacing.sm,
+          ),
           itemCount: messages.length,
           itemBuilder: (context, index) {
             final message = messages[index];
@@ -62,13 +88,26 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
             if (stream != null) {
               return ValueListenableBuilder<StreamingChatMessageData>(
                 valueListenable: stream,
-                builder: (context, data, _) => _buildItem(
-                  provider,
-                  data.message,
-                  revision,
-                  isStreaming: data.isStreaming,
-                  promptedAt: promptedAt,
-                ),
+                builder: (context, data, _) {
+                  TokenStats.observe(
+                    data.message.id,
+                    data.message.content,
+                    isStreaming: data.isStreaming,
+                  );
+                  // A projection of the stream, so the thought sheet can
+                  // rebuild on reasoning without knowing about the message
+                  // record wrapper.
+                  _liveReasoning.value = data.message.reasoningContent ?? '';
+                  return _buildItem(
+                    provider,
+                    data.message,
+                    revision,
+                    isStreaming: data.isStreaming,
+                    promptedAt: promptedAt,
+                    stream: stream,
+                    liveReasoning: _liveReasoning,
+                  );
+                },
               );
             }
             return _buildItem(
@@ -116,6 +155,8 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
     int revision, {
     bool isStreaming = false,
     DateTime? promptedAt,
+    ValueListenable<StreamingChatMessageData>? stream,
+    ValueListenable<String>? liveReasoning,
   }) {
     return Center(
       child: ConstrainedBox(

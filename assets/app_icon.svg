@@ -4,9 +4,6 @@
       <stop offset="0" stop-color="#DD7D5C"/>
       <stop offset="1" stop-color="#B8523D"/>
     </linearGradient>
-    <clipPath id="tile">
-      <rect x="0" y="0" width="512" height="512" rx="114" ry="114"/>
-    </clipPath>
     <mask id="balloon">
       <rect x="0" y="0" width="512" height="512" fill="#fff"/>
       <path fill="#000" d="
@@ -16,18 +13,13 @@
         a 36.86 36.86 0 0 1 36.86 36.86
         v 119.8
         a 36.86 36.86 0 0 1 -36.86 36.86
-        h -127.9
-        l -84.9 83.4
-        v -83.4
-        a 36.86 36.86 0 0 1 -36.06 -36.86
+        h -70.5
+        l -39.2 47.6
+        l -39.2 -47.6
+        h -36.06
+        a 36.86 36.86 0 0 1 -36.86 -36.86
         z"/>
     </mask>
   </defs>
-  <!-- A speech balloon cut out of a clay tile. The cut is a mask rather than
-       a second fill, so the mark stays one flat shape in whatever surface
-       it is placed on. -->
-  <rect x="0" y="0" width="512" height="512" rx="114" ry="114"
-        fill="url(#clay)" mask="url(#balloon)"/>
-  <rect x="0" y="0" width="512" height="512" rx="114" ry="114"
-        fill="none" clip-path="url(#tile)"/>
+  <rect x="0" y="0" width="512" height="512" rx="114" ry="114" fill="url(#clay)" mask="url(#balloon)"/>
 </svg>

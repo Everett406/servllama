@@ -974,5 +974,20 @@
       "duration": {}
     }
   },
-  "chatAnswerFootnote": "Vela runs on your own device and still gets things wrong. Check anything that matters."
+  "chatAnswerFootnote": "Vela runs on your own device and still gets things wrong. Check anything that matters.",
+  "chatThroughput": "{rate} tok/s",
+  "@chatThroughput": {
+    "placeholders": {
+      "rate": {}
+    }
+  },
+  "chatContextTitle": "Context window",
+  "chatContextUnknown": "The engine did not report a context window",
+  "chatContextValue": "{used} of {total} used",
+  "@chatContextValue": {
+    "placeholders": {
+      "used": {},
+      "total": {}
+    }
+  }
 }

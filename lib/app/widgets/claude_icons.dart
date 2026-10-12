@@ -461,24 +461,38 @@ class ClaudeIconPainter extends CustomPainter {
     }
   }
 
-  /// Elapsed time, not a stopwatch.
+  /// Elapsed time.
   ///
-  /// The first version was a 13px circle with hairline hands and it read as
-  /// a smudge next to body text. Bigger, one hand only, and no bezel
-  /// detail: at this size anything more than a ring and two strokes is
-  /// noise.
+  /// A ring with a gap at the upper left and two hands — a clock face that
+  /// has been interrupted rather than a stopwatch. The gap is what makes it
+  /// read as "time that ran" instead of "a badge"; a closed circle with hands
+  /// is a timer, and a timer on a row that used to show a number makes the
+  /// number the point.
+  ///
+  /// Hands read roughly 12:20. Any fixed pair would be arbitrary, so this
+  /// picks the one that looks balanced rather than pretending a time.
   void _clock(Canvas canvas, Paint paint) {
+    const gapStart = 4.3197; // 247.5deg, just past the upper left
+    const sweep = 5.4105; // 310deg, leaving a 50deg gap
+    final centre = const Offset(12, 12);
+    canvas.drawArc(
+      Rect.fromCircle(center: centre, radius: 8.2),
+      gapStart,
+      sweep,
+      false,
+      paint,
+    );
+
+    final hand = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = ClaudeIcons.strokeFor(size)
+      ..strokeCap = StrokeCap.round;
+    // 12 o'clock, then 4 o'clock. Long enough to clear the centre, short
+    // enough that they do not meet the ring and make a wheel.
     canvas
-      ..drawCircle(const Offset(12, 12), 8.4, paint)
-      // Hour hand, straight up; minute hand, a third of the way round.
-      ..drawPath(
-        Path()
-          ..moveTo(12, 12)
-          ..lineTo(12, 6.6)
-          ..moveTo(12, 12)
-          ..lineTo(16.2, 14.1),
-        paint,
-      );
+      ..drawLine(centre, centre + const Offset(0, -5.4), hand)
+      ..drawLine(centre, centre + const Offset(4.4, 2.8), hand);
   }
 
   // A rounded square with a plus inside: "start something", not "open a

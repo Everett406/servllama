@@ -150,13 +150,13 @@ class _SidebarHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         ClaudeSpacing.lg,
+        ClaudeSpacing.xl,
         ClaudeSpacing.lg,
-        ClaudeSpacing.lg,
-        ClaudeSpacing.sm,
+        ClaudeSpacing.md,
       ),
       child: Row(
         children: [
-          const Expanded(child: BrandLockup(size: 20)),
+          const Expanded(child: BrandLockup(size: 30)),
           // No close control. On a phone the drawer is dismissed by
           // swiping, tapping the scrim, or picking something — a lone
           // chevron in the corner adds a third way to do one thing and

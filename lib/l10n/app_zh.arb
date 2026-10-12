@@ -761,5 +761,20 @@
       "duration": {}
     }
   },
-  "chatAnswerFootnote": "Vela 在你自己的手机上跑，但仍然会犯错。重要的东西，请再看一眼。"
+  "chatAnswerFootnote": "Vela 在你自己的手机上跑，但仍然会犯错。重要的东西，请再看一眼。",
+  "chatThroughput": "{rate} tok/s",
+  "@chatThroughput": {
+    "placeholders": {
+      "rate": {}
+    }
+  },
+  "chatContextTitle": "上下文用量",
+  "chatContextUnknown": "引擎没有报告上下文窗口",
+  "chatContextValue": "已用 {used} / {total}",
+  "@chatContextValue": {
+    "placeholders": {
+      "used": {},
+      "total": {}
+    }
+  }
 }
