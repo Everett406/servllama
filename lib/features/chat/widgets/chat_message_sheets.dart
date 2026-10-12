@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 enum ChatMessageAction { copy, edit, regenerate, delete }
 
@@ -65,10 +66,9 @@ Future<String?> showEditMessageSheet({
   required BuildContext context,
   required String initialValue,
 }) {
-  return showModalBottomSheet<String>(
+  return showVelaSheet<String>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (sheetContext) => _EditMessageSheet(initialValue: initialValue),
   );
 }

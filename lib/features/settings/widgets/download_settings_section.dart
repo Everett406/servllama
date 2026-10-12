@@ -9,6 +9,7 @@ import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// Download route, credentials and storage cleanup. Tokens live here rather
 /// than on the discovery page because they are account settings, not part of
@@ -123,10 +124,10 @@ class DownloadSettingsSection extends StatelessWidget {
     DownloadProvider downloads,
   ) async {
     final l10n = context.l10n;
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
+        bottom: false,
         child: RadioGroup<HuggingFaceRoute>(
           groupValue: downloads.settings.huggingFaceRoute,
           onChanged: (value) {
@@ -167,10 +168,9 @@ class DownloadSettingsSection extends StatelessWidget {
   ) async {
     final controller = TextEditingController(text: current);
     final l10n = context.l10n;
-    final token = await showModalBottomSheet<String>(
+    final token = await showVelaSheet<String>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
@@ -227,10 +227,10 @@ class DownloadSettingsSection extends StatelessWidget {
     BuildContext context,
     DownloadProvider downloads,
   ) async {
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
+        bottom: false,
         child: RadioGroup<int>(
           groupValue: downloads.settings.maxConcurrentTasks,
           onChanged: (selected) {

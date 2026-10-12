@@ -33,6 +33,11 @@ class AnswerMarkdown extends StatelessWidget {
       animation: isStreaming
           ? GptMarkdownAnimation.blurIn
           : GptMarkdownAnimation.none,
+      // blurIn is a *block* effect. `animatesPerCharacter` is true for `wave`
+      // alone, so there is no per-character blur to ask for — a line arrives
+      // as a line, resolving out of focus and fading up together. Which means
+      // the entrance has to be long enough to actually watch, since it is the
+      // only one on screen.
       // Per block, not per character: this is what makes lines arrive one at
       // a time. growIn was too quick to read as a line arriving — a
       // three-line paragraph resolved as one gesture.
@@ -43,13 +48,21 @@ class AnswerMarkdown extends StatelessWidget {
       // instant dump with no typewriter at all. Slow enough that a
       // paragraph assembles; still comfortably above a local model's typical
       // output rate, so the trail still leads rather than lags.
-      charactersPerSecond: 180,
+      // Block pacing, not per-character: how fast a line becomes eligible to
+      // render. Well above a model's output rate so the trail leads rather
+      // than lags behind.
+      charactersPerSecond: 150,
       // How long one character keeps resolving after the head passes. A long
       // trail reads as the sentence assembling itself; a short one reads as
       // a stutter.
-      revealFadeSeconds: 0.38,
+      // How long a block spends resolving. The curves are alpha = t and
+      // sigma = 3 * (1 - easeOut(t)), so at t = 0.4 a line is 40% opaque and
+      // already down to sigma 0.48 — past the point where blur reads. A long
+      // window keeps the blurred part of the entrance on screen long enough
+      // to notice; a short one just looks like a fade.
+      revealFadeSeconds: 0.62,
       // Lines arrive a beat apart rather than all at once.
-      blockAnimationDuration: const Duration(milliseconds: 340),
+      blockAnimationDuration: const Duration(milliseconds: 520),
       blockAnimationCurve: Curves.easeOutCubic,
       // The package gives every heading level the same padding, so a second
       // level sitting under a first one opens as much space as a section

@@ -25,6 +25,7 @@ import 'package:servllama/features/server/pages/server_config_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// The chat canvas: a thin contextual bar, then either an empty-state hero
 /// with the composer centred beneath it, or the transcript with the composer
@@ -154,7 +155,7 @@ class _ChatViewState extends State<_ChatView>
 
     final library = context.read<ModelManagementProvider>();
     unawaited(library.load());
-    final engine = await showModalBottomSheet<InferenceEngine>(
+    final engine = await showVelaSheet<InferenceEngine>(
       context: context,
       builder: (sheetContext) => Consumer<EngineRuntimeProvider>(
         builder: (_, runtime, __) => ChatEngineStartSheet(
@@ -207,7 +208,7 @@ class _ChatViewState extends State<_ChatView>
     final library = context.read<ModelManagementProvider>();
     unawaited(library.load());
 
-    final picked = await showModalBottomSheet<LibraryModel>(
+    final picked = await showVelaSheet<LibraryModel>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) =>
@@ -577,10 +578,10 @@ class _ChatTopBar extends StatelessWidget {
 
   Future<void> _showOverflow(BuildContext context) async {
     final chat = context.read<ChatProvider>();
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
+        bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

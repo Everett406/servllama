@@ -19,6 +19,7 @@ import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// Runtime control center: pick an engine, pick a model, start or stop. The
 /// two engines' native startup details are absorbed by [EngineRuntimeProvider];
@@ -182,7 +183,7 @@ class _ServerPageState extends State<ServerPage> {
     ModelManagementProvider library,
   ) async {
     final engine = runtime.activeEngine;
-    final selection = await showModalBottomSheet<_ModelPick>(
+    final selection = await showVelaSheet<_ModelPick>(
       context: context,
       isScrollControlled: true,
       builder: (_) => _ModelPickerSheet(

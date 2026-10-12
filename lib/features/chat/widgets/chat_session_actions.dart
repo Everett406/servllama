@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:servllama/features/chat/models/chat_session_record.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 enum ChatSessionAction { rename, delete }
 
@@ -24,7 +25,7 @@ class ChatSessionActions {
       return;
     }
 
-    final action = await showModalBottomSheet<ChatSessionAction>(
+    final action = await showVelaSheet<ChatSessionAction>(
       context: presentationContext,
       builder: (context) {
         final l10n = context.l10n;

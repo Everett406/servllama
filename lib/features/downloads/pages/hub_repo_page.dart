@@ -16,6 +16,7 @@ import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// Quant file plus the currently selected projector when vision is on.
 List<HubRepoFile> ggufDownloadFiles({
@@ -270,10 +271,9 @@ class _HubRepoPageState extends State<HubRepoPage> {
     if (files.isEmpty) {
       return;
     }
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) {
         return MmprojPickerSheet(
           files: files,

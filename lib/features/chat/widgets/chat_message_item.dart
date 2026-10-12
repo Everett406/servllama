@@ -11,6 +11,7 @@ import 'package:servllama/features/chat/widgets/token_stats.dart';
 import 'package:servllama/features/chat/widgets/answer_markdown.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// One message in the transcript.
 ///
@@ -103,9 +104,8 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
   /// space on every message in the transcript to advertise two buttons.
   Future<void> _openUserActions(String content) async {
     final l10n = context.l10n;
-    final choice = await showModalBottomSheet<String>(
+    final choice = await showVelaSheet<String>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (sheetContext) => Padding(
         padding: const EdgeInsets.all(12),
         child: Container(

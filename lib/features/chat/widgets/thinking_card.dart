@@ -7,6 +7,7 @@ import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/features/chat/widgets/thinking_indicator.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 /// When each message spent thinking.
 ///
@@ -372,10 +373,9 @@ Future<void> showThinkingSheet(
   bool answerStarted = false,
 }) {
   final chinese = Localizations.localeOf(context).languageCode == 'zh';
-  return showModalBottomSheet<void>(
+  return showVelaSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (sheetContext) => DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.62,

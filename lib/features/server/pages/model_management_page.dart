@@ -18,6 +18,7 @@ import 'package:servllama/features/server/widgets/gguf_model_settings_sheet.dart
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 class ModelManagementPage extends StatelessWidget {
   const ModelManagementPage({super.key, this.provider});
@@ -70,9 +71,8 @@ class _ModelManagementViewState extends State<_ModelManagementView> {
   }
 
   Future<void> _openAddSheet(BuildContext context) async {
-    final choice = await showModalBottomSheet<_AddModelChoice>(
+    final choice = await showVelaSheet<_AddModelChoice>(
       context: context,
-      showDragHandle: true,
       builder: (_) => const _AddModelSheet(),
     );
     if (choice == null || !context.mounted) {
@@ -115,10 +115,9 @@ class _ModelManagementViewState extends State<_ModelManagementView> {
   }
 
   void _showModelSettings(BuildContext context, ModelDescriptor descriptor) {
-    showModalBottomSheet<void>(
+    showVelaSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) {
         return ChangeNotifierProvider<ModelManagementProvider>.value(
           value: context.read<ModelManagementProvider>(),
@@ -129,10 +128,9 @@ class _ModelManagementViewState extends State<_ModelManagementView> {
   }
 
   void _showMnnModelSettings(BuildContext context, LibraryModel model) {
-    showModalBottomSheet<void>(
+    showVelaSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) {
         return ChangeNotifierProvider<ModelManagementProvider>.value(
           value: context.read<ModelManagementProvider>(),

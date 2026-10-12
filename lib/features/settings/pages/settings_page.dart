@@ -16,6 +16,7 @@ import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -150,10 +151,10 @@ class SettingsPage extends StatelessWidget {
     AppThemeModeProvider provider,
   ) async {
     final l10n = context.l10n;
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
           child: Column(
@@ -193,10 +194,10 @@ class SettingsPage extends StatelessWidget {
     AppLocaleProvider provider,
   ) async {
     final l10n = context.l10n;
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
           child: Column(
@@ -235,9 +236,8 @@ class SettingsPage extends StatelessWidget {
     BuildContext context,
     ChatTimeoutProvider provider,
   ) async {
-    await showModalBottomSheet<void>(
+    await showVelaSheet<void>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
       builder: (sheetContext) => _ChatTimeoutSheet(provider: provider),
     );

@@ -111,6 +111,16 @@ class ClaudeSpacing {
   /// Chat content never runs wider than this — long lines are unreadable.
   static const readingWidth = 768.0;
 
+  /// Air on the sides and below a sheet.
+  ///
+  /// The default bottom sheet runs to both edges, which reads as a drawer.
+  /// Twelve is what makes it a card sitting on the page instead.
+  static const sheetGutter = 12.0;
+
+  /// Vertical room a sheet reserves so it clears the gesture bar, added on
+  /// top of [sheetGutter] rather than replacing it.
+  static const sheetBottomAir = 12.0;
+
   /// Horizontal gutter for page content, scaled down on phones so the
   /// measure stays readable.
   static double gutter(double width) {
