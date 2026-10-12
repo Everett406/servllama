@@ -137,8 +137,18 @@ class ChatComposerState extends State<ChatComposer> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+            // Attach first, send last, engine under the thumb: the order
+            // matches how the row is read — build the message, then commit
+            // it, then deal with the machine.
             child: Row(
               children: [
+                _RoundIconButton(
+                  keyValue: 'chat_attach_button',
+                  icon: ClaudeIcons.plus,
+                  tooltip: l10n.chatAttachImage,
+                  onPressed: isSending || !isRunning ? null : widget.onPickImage,
+                ),
+                const Spacer(),
                 _EngineButton(
                   running: isRunning,
                   modelReady: modelReady,
@@ -146,14 +156,7 @@ class ChatComposerState extends State<ChatComposer> {
                   onSelectModel: widget.onSelectModel,
                   model: model,
                 ),
-                const Spacer(),
-                _RoundIconButton(
-                  keyValue: 'chat_attach_button',
-                  icon: ClaudeIcons.plus,
-                  tooltip: l10n.chatAttachImage,
-                  onPressed: isSending || !isRunning ? null : widget.onPickImage,
-                ),
-                const SizedBox(width: 2),
+                const SizedBox(width: 6),
                 _SendStopButton(
                   isSending: isSending,
                   canSend: canSend,

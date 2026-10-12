@@ -4,16 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
-import 'package:servllama/app/widgets/brand_mark.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
-import 'package:servllama/app/widgets/shell_bits.dart';
 import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/core/models/inference_engine.dart';
 import 'package:servllama/core/models/library_model.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
 import 'package:servllama/features/chat/controllers/chat_scroll_coordinator.dart';
-import 'package:servllama/features/chat/models/chat_model_option.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/services/image_attachment_service.dart';
 import 'package:servllama/features/chat/widgets/chat_composer.dart';
@@ -21,6 +18,7 @@ import 'package:servllama/features/chat/widgets/chat_empty_state.dart';
 import 'package:servllama/features/chat/widgets/chat_engine_start_sheet.dart';
 import 'package:servllama/features/chat/widgets/chat_message_list.dart';
 import 'package:servllama/features/chat/widgets/chat_model_sheet.dart';
+import 'package:servllama/features/chat/widgets/context_usage_bar.dart';
 import 'package:servllama/features/downloads/pages/model_discovery_page.dart';
 import 'package:servllama/features/settings/pages/settings_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
@@ -285,15 +283,7 @@ class _ChatViewState extends State<_ChatView> {
               Column(
                 children: [
                   _ChatTopBar(
-                    title: chat.currentSessionTitle,
-                    isDraft: chat.isShowingDraftSession,
                     onOpenSidebar: widget.onOpenSidebar,
-                    onOpenHistory: widget.onOpenHistory,
-                    status: runtime?.status ?? EngineRuntimeStatus.idle,
-                    isBusy: runtime?.isBusy ?? false,
-                    onToggleRuntime: _startServer,
-                    model: chat.currentModel,
-                    onSelectModel: _showModels,
                     isStealth: chat.isStealthMode,
                     onStealthChanged: chat.setStealthMode,
                   ),
@@ -333,6 +323,28 @@ class _ChatViewState extends State<_ChatView> {
                           onStartServer: _startServer,
                           onSelectModel: _showModels,
                           onOpenSettings: _openSettings,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Sits in the strip the gesture bar would otherwise own.
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      ClaudeSpacing.lg,
+                      10,
+                      ClaudeSpacing.lg,
+                      MediaQuery.viewInsetsOf(context).bottom > 0
+                          ? 0
+                          : ClaudeSpacing.sm,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: ClaudeSpacing.readingWidth,
+                        ),
+                        child: ContextUsageBar(
+                          messages: chat.visibleMessages,
+                          contextWindow: runtime?.contextWindow,
                         ),
                       ),
                     ),
@@ -432,146 +444,92 @@ class _StealthToggle extends StatelessWidget {
 
 /// Thin contextual bar. Everything here is secondary to the conversation —
 /// no title, no tabs, no chrome beyond what the user needs right now.
+/// The top strip.
+///
+/// Two round buttons and nothing else. An earlier version carried the
+/// conversation title, a model pill, a server status dot and a history
+/// entry — four things competing for a row that has no room to spare, and
+/// none of them needed to be there: the model belongs with the model, the
+/// engine belongs in the sidebar, and the title is the one piece of text
+/// everybody already knows. The rule underneath it went too, since a
+/// hairline across a canvas that already separates the sidebar from the
+/// canvas just draws the boundary twice.
 class _ChatTopBar extends StatelessWidget {
   const _ChatTopBar({
-    required this.title,
-    required this.isDraft,
-    required this.onOpenSidebar,
-    required this.onOpenHistory,
-    required this.status,
-    required this.isBusy,
-    required this.onToggleRuntime,
-    required this.model,
-    required this.onSelectModel,
     required this.isStealth,
     required this.onStealthChanged,
+    this.onOpenSidebar,
   });
 
-  final String title;
-  final bool isDraft;
-  final VoidCallback? onOpenSidebar;
-  final VoidCallback? onOpenHistory;
-  final EngineRuntimeStatus status;
-  final bool isBusy;
-  final VoidCallback onToggleRuntime;
-  final ChatModelOption? model;
-  final VoidCallback onSelectModel;
   final bool isStealth;
   final ValueChanged<bool> onStealthChanged;
+  final VoidCallback? onOpenSidebar;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final (dotColor, label) = switch (status) {
-      EngineRuntimeStatus.ready => (context.okText, l10n.serverStatusRunning),
-      EngineRuntimeStatus.preparing => (context.accent, l10n.serverStatusPreparing),
-      EngineRuntimeStatus.stopping => (context.accent, l10n.serverStatusStopping),
-      EngineRuntimeStatus.error => (context.dangerText, l10n.serverStatusError),
-      EngineRuntimeStatus.idle => (context.inkTertiary, l10n.serverStatusIdle),
-    };
-
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.sm),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.border)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            key: const Key('chat_open_sidebar_button'),
-            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-            onPressed: onOpenSidebar,
-            icon: ClaudeIcon(ClaudeIcons.menu, size: 21),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: isDraft ? context.inkTertiary : context.ink,
-              ),
+    return SizedBox(
+      height: 56,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.sm),
+        child: Row(
+          children: [
+            _CircleButton(
+              keyValue: 'chat_open_sidebar_button',
+              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              onPressed: onOpenSidebar,
+              icon: ClaudeIcons.menu,
             ),
-          ),
-          _ModelPill(
-            model: model,
-            isBusy: isBusy,
-            onTap: onSelectModel,
-          ),
-          IconButton(
-            key: const Key('chat_server_toggle_button'),
-            tooltip: isBusy
-                ? l10n.serverCancelPreparation
-                : status == EngineRuntimeStatus.ready
-                ? l10n.serverStop
-                : l10n.chatStartServer,
-            onPressed: onToggleRuntime,
-            icon: StatusDot(
-              key: const Key('chat_server_status_badge'),
-              color: dotColor,
-              size: 9,
-              pulsing: isBusy,
+            const Spacer(),
+            _StealthToggle(
+              active: isStealth,
+              onChanged: onStealthChanged,
             ),
-          ),
-          IconButton(
-            key: const Key('chat_open_history_button'),
-            tooltip: l10n.drawerAllHistoryTooltip,
-            onPressed: onOpenHistory,
-            icon: const Icon(Icons.history_rounded, size: 21),
-          ),
-          _StealthToggle(
-            active: isStealth,
-            onChanged: onStealthChanged,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ModelPill extends StatelessWidget {
-  const _ModelPill({
-    required this.model,
-    required this.isBusy,
-    required this.onTap,
+/// A bare round control. No label, no background until it is pressed.
+class _CircleButton extends StatelessWidget {
+  const _CircleButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    required this.keyValue,
   });
 
-  final ChatModelOption? model;
-  final bool isBusy;
-  final VoidCallback onTap;
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final String keyValue;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(ClaudeRadius.pill),
-      child: InkWell(
-        key: const Key('chat_model_selector_button'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(ClaudeRadius.pill),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const BrandMark(size: 14),
-              const SizedBox(width: 6),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 120),
-                child: Text(
-                  model?.displayName ?? context.l10n.chatSelectModel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: context.inkSecondary,
-                  ),
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            key: Key(keyValue),
+            onTap: onPressed,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Center(
+                child: ClaudeIcon(
+                  icon,
+                  size: 20,
+                  color: context.inkSecondary,
                 ),
               ),
-              Icon(Icons.expand_more_rounded, size: 15, color: context.inkTertiary),
-            ],
+            ),
           ),
         ),
       ),

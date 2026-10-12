@@ -100,16 +100,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get chatHeroTitle => '开始对话';
+  String get chatHeroTitle => '模型准备好了';
 
   @override
   String get chatHeroDescriptionReady => '输入一条消息，开始与你的本地模型对话。';
 
   @override
-  String get chatHeroDescriptionStartServer => '请先启动服务器，然后加载一个模型，马上开始你的AI对话~';
+  String get chatHeroDescriptionStartServer =>
+      '还差最后一步——启动它，之后所有对话都只在这台手机上跑，不联网。';
 
   @override
-  String get chatHeroDescriptionSelectModel => '服务器已启动，请加载一个模型，马上开始你的 AI 对话~';
+  String get chatHeroDescriptionSelectModel => '挑一个模型，我们就可以开始了。';
 
   @override
   String get chatStartServer => '启动服务器';
@@ -1380,7 +1381,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get chatEmptyTitle => '选一个模型开始';
+  String get chatEmptyTitle => '想聊点什么？';
 
   @override
   String get chatEmptyDescription => '选定模型后服务会自动启动。';
@@ -1406,7 +1407,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatPreparingModel => '模型准备中';
 
   @override
-  String get chatEmptyNoModelsDescription => '先下载一个模型，之后全程在本机运行。';
+  String get chatEmptyNoModelsDescription => '先挑一个下载下来，之后全程在本机运行。';
 
   @override
   String get mnnBackendTitle => 'MNN 推理后端';
@@ -1587,6 +1588,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String chatThinkingDone(Object duration) {
-    return '思考了 $duration';
+    return '已思考 $duration';
+  }
+
+  @override
+  String get systemPromptTitle => '系统提示词';
+
+  @override
+  String get systemPromptHint =>
+      '这段内容会作为 system 角色加在每次对话的最前面，用来设定它的身份、语气和输出格式。修改只影响之后发出的请求，不会改动已有的对话记录。';
+
+  @override
+  String get systemPromptPlaceholder => '例如：你是一个简洁的助手，默认用中文回答。';
+
+  @override
+  String get settingsSectionModel => '模型';
+
+  @override
+  String get commonClear => '清空';
+
+  @override
+  String get systemPromptEmpty => '未设置';
+
+  @override
+  String chatThinkingLiveShort(Object duration) {
+    return '思考中 · $duration';
+  }
+
+  @override
+  String contextUsageLabel(Object percent, Object used, Object total) {
+    return '已用 $percent% 上下文 · $used / $total';
   }
 }

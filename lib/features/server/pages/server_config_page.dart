@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/core/models/inference_engine.dart';
 import 'package:servllama/core/models/server_launch_settings.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import 'package:servllama/features/server/widgets/llama_cpp_backend_settings.dar
 import 'package:servllama/features/server/widgets/mnn_backend_settings.dart';
 import 'package:servllama/shared/widgets/outlined_text_setting.dart';
 import 'package:servllama/shared/widgets/segmented_setting.dart';
+import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
 import 'package:servllama/shared/widgets/slider_number_setting.dart';
@@ -75,286 +77,345 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
               (runtime) => runtime.activeEngine,
             );
         return Scaffold(
-          appBar: AppBar(title: Text(l10n.serverConfigTitle, style: _pageTitle(context))),
+          appBar: AppBar(
+            title: Text(l10n.serverConfigTitle, style: _pageTitle(context)),
+          ),
           body: !provider.hasCompletedInitialLoad
               ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: EngineBadge(engine: activeEngine),
-                                ),
-                                if (provider.listenMode ==
-                                        ServerListenMode.allInterfaces &&
-                                    provider.apiKey.trim().isEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  NoticeBanner(
-                                    key: const Key(
-                                      'server_config_open_access_warning',
-                                    ),
-                                    tone: StatusTone.warning,
-                                    icon: Icons.security_rounded,
-                                    message: l10n.serverOpenAccessWarning,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          if (activeEngine == InferenceEngine.mnn) ...[
-                            const MnnBackendSettings(),
-                            const SizedBox(height: 18),
-                          ],
-                          if (activeEngine == InferenceEngine.llamaCpp) ...[
-                            const LlamaCppBackendSettings(),
-                            const SizedBox(height: 18),
-                          ],
-                          SettingsSection(
-                            title: l10n.serverConfigSectionNetwork,
-                            child: SettingsTileList(
-                              children: [
-                                SegmentedSetting<ServerListenMode>(
-                                  label: l10n.serverConfigListenMode,
-                                  description:
-                                      l10n.serverConfigListenModeDescription,
-                                  value: provider.listenMode,
-                                  options: [
-                                    SegmentedSettingOption(
-                                      value: ServerListenMode.localhost,
-                                      label: l10n.serverConfigListenLocalhost,
-                                    ),
-                                    SegmentedSettingOption(
-                                      value: ServerListenMode.allInterfaces,
-                                      label:
-                                          l10n.serverConfigListenAllInterfaces,
-                                    ),
-                                  ],
-                                  onChanged: (value) async {
-                                    await provider.updateListenMode(value);
-                                    if (!context.mounted) {
-                                      return;
-                                    }
-                                    _syncEndpoint(context);
-                                  },
-                                ),
-                                OutlinedTextSetting(
-                                  label: l10n.serverConfigPort,
-                                  description: l10n.serverConfigPortDescription,
-                                  hintText: '8080',
-                                  value: '${provider.port}',
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  onChanged: (value) async {
-                                    final parsedValue = int.tryParse(value);
-                                    if (parsedValue != null) {
-                                      await provider.updatePort(parsedValue);
-                                      if (!context.mounted) {
-                                        return;
-                                      }
-                                      _syncEndpoint(context);
-                                    }
-                                  },
-                                ),
-                                OutlinedTextSetting(
-                                  label: l10n.serverConfigApiKey,
-                                  description:
-                                      l10n.serverConfigApiKeyDescription,
-                                  hintText: l10n.commonOptional,
-                                  value: provider.apiKey,
-                                  onChanged: (value) async {
-                                    await provider.updateApiKey(value);
-                                    if (context.mounted) {
-                                      _syncEndpoint(context);
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (activeEngine == InferenceEngine.mnn) ...[
-                            const SizedBox(height: 18),
-                            const MnnRuntimeSettings(),
-                          ],
-                          if (activeEngine == InferenceEngine.llamaCpp) ...[
-                            const SizedBox(height: 18),
-                            SettingsSection(
-                              title: l10n.serverConfigSectionInference,
-                              child: SettingsTileList(
-                                children: [
-                                  SliderNumberSetting(
-                                    label: l10n.serverConfigContextSize,
-                                    description:
-                                        l10n.serverConfigContextSizeDescription,
-                                    value: provider.contextSize,
-                                    min: ServerLaunchSettings.minContextSize,
-                                    max: ServerLaunchSettings.maxContextSize,
-                                    divisions: _contextSizeDivisions,
-                                    onChanged: (value) =>
-                                        provider.updateContextSize(
-                                          _roundToStep(value, _contextSizeStep),
-                                        ),
-                                  ),
-                                  SliderNumberSetting(
-                                    label: l10n.serverConfigBatchSize,
-                                    description:
-                                        l10n.serverConfigBatchSizeDescription,
-                                    value: provider.batchSize,
-                                    min: 32,
-                                    max: 4096,
-                                    divisions: 127,
-                                    onChanged: (value) =>
-                                        provider.updateBatchSize(
-                                          _roundToStep(value, 32),
-                                        ),
-                                  ),
-                                  SliderNumberSetting(
-                                    label: l10n.serverConfigImageMaxTokens,
-                                    description: l10n
-                                        .serverConfigImageMaxTokensDescription,
-                                    value: provider.imageMaxTokens,
-                                    min: 128,
-                                    max: 4096,
-                                    divisions: 31,
-                                    onChanged: (value) =>
-                                        provider.updateImageMaxTokens(
-                                          _roundToStep(value, 128),
-                                        ),
-                                  ),
-                                ],
+              // Two things this page was missing. The bottom safe area, so the
+              // last control is not sitting under the gesture bar; and a reading
+              // measure, so on a tablet the labels are not a screen away from
+              // the fields they describe.
+              : SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 720),
+                            child: ListView(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                12,
+                                20,
+                                28,
                               ),
-                            ),
-                            const SizedBox(height: 18),
-                            SettingsSection(
-                              title: l10n.serverConfigSectionPerformance,
-                              child: SettingsTileList(
-                                children: [
-                                  SliderNumberSetting(
-                                    label: l10n.serverConfigCpuThreads,
-                                    description:
-                                        l10n.serverConfigCpuThreadsDescription,
-                                    value: provider.cpuThreads,
-                                    min: 1,
-                                    max: 8,
-                                    divisions: 7,
-                                    onChanged: provider.updateCpuThreads,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: EngineBadge(
+                                          engine: activeEngine,
+                                        ),
+                                      ),
+                                      if (provider.listenMode ==
+                                              ServerListenMode.allInterfaces &&
+                                          provider.apiKey.trim().isEmpty) ...[
+                                        const SizedBox(height: 10),
+                                        NoticeBanner(
+                                          key: const Key(
+                                            'server_config_open_access_warning',
+                                          ),
+                                          tone: StatusTone.warning,
+                                          icon: Icons.security_rounded,
+                                          message: l10n.serverOpenAccessWarning,
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                  SliderNumberSetting(
-                                    label: l10n.serverConfigParallelSlots,
-                                    description: l10n
-                                        .serverConfigParallelSlotsDescription,
-                                    value: provider.parallelSlots,
-                                    min: 1,
-                                    max: 8,
-                                    divisions: 7,
-                                    onChanged: provider.updateParallelSlots,
-                                  ),
+                                ),
+                                if (activeEngine == InferenceEngine.mnn) ...[
+                                  const MnnBackendSettings(),
+                                  const SizedBox(height: 18),
                                 ],
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            SettingsSection(
-                              title: l10n.serverConfigSectionAdvanced,
-                              child: SettingsTileList(
-                                children: [
-                                  SegmentedSetting<FlashAttentionMode>(
-                                    label: l10n.serverConfigFlashAttention,
-                                    description: l10n
-                                        .serverConfigFlashAttentionDescription,
-                                    value: provider.flashAttentionMode,
-                                    options: [
-                                      SegmentedSettingOption(
-                                        value: FlashAttentionMode.auto,
-                                        label: l10n.commonAuto,
+                                if (activeEngine ==
+                                    InferenceEngine.llamaCpp) ...[
+                                  const LlamaCppBackendSettings(),
+                                  const SizedBox(height: 18),
+                                ],
+                                SettingsSection(
+                                  title: l10n.serverConfigSectionNetwork,
+                                  child: SettingsTileList(
+                                    children: [
+                                      SegmentedSetting<ServerListenMode>(
+                                        label: l10n.serverConfigListenMode,
+                                        description: l10n
+                                            .serverConfigListenModeDescription,
+                                        value: provider.listenMode,
+                                        options: [
+                                          SegmentedSettingOption(
+                                            value: ServerListenMode.localhost,
+                                            label: l10n
+                                                .serverConfigListenLocalhost,
+                                          ),
+                                          SegmentedSettingOption(
+                                            value:
+                                                ServerListenMode.allInterfaces,
+                                            label: l10n
+                                                .serverConfigListenAllInterfaces,
+                                          ),
+                                        ],
+                                        onChanged: (value) async {
+                                          await provider.updateListenMode(
+                                            value,
+                                          );
+                                          if (!context.mounted) {
+                                            return;
+                                          }
+                                          _syncEndpoint(context);
+                                        },
                                       ),
-                                      SegmentedSettingOption(
-                                        value: FlashAttentionMode.enabled,
-                                        label: l10n.commonEnable,
+                                      OutlinedTextSetting(
+                                        label: l10n.serverConfigPort,
+                                        description:
+                                            l10n.serverConfigPortDescription,
+                                        hintText: '8080',
+                                        value: '${provider.port}',
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                        onChanged: (value) async {
+                                          final parsedValue = int.tryParse(
+                                            value,
+                                          );
+                                          if (parsedValue != null) {
+                                            await provider.updatePort(
+                                              parsedValue,
+                                            );
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+                                            _syncEndpoint(context);
+                                          }
+                                        },
                                       ),
-                                      SegmentedSettingOption(
-                                        value: FlashAttentionMode.disabled,
-                                        label: l10n.commonDisable,
+                                      OutlinedTextSetting(
+                                        label: l10n.serverConfigApiKey,
+                                        description:
+                                            l10n.serverConfigApiKeyDescription,
+                                        hintText: l10n.commonOptional,
+                                        value: provider.apiKey,
+                                        onChanged: (value) async {
+                                          await provider.updateApiKey(value);
+                                          if (context.mounted) {
+                                            _syncEndpoint(context);
+                                          }
+                                        },
                                       ),
                                     ],
-                                    onChanged:
-                                        provider.updateFlashAttentionMode,
                                   ),
-                                  SwitchSettingTile(
-                                    title: l10n.serverConfigUseMmap,
-                                    subtitle: l10n.serverConfigUseMmapSubtitle,
-                                    value: provider.useMmap,
-                                    onChanged: provider.updateUseMmap,
+                                ),
+                                if (activeEngine == InferenceEngine.mnn) ...[
+                                  const SizedBox(height: 18),
+                                  const MnnRuntimeSettings(),
+                                ],
+                                if (activeEngine ==
+                                    InferenceEngine.llamaCpp) ...[
+                                  const SizedBox(height: 18),
+                                  SettingsSection(
+                                    title: l10n.serverConfigSectionInference,
+                                    child: SettingsTileList(
+                                      children: [
+                                        SliderNumberSetting(
+                                          label: l10n.serverConfigContextSize,
+                                          description: l10n
+                                              .serverConfigContextSizeDescription,
+                                          value: provider.contextSize,
+                                          min: ServerLaunchSettings
+                                              .minContextSize,
+                                          max: ServerLaunchSettings
+                                              .maxContextSize,
+                                          divisions: _contextSizeDivisions,
+                                          onChanged: (value) =>
+                                              provider.updateContextSize(
+                                                _roundToStep(
+                                                  value,
+                                                  _contextSizeStep,
+                                                ),
+                                              ),
+                                        ),
+                                        SliderNumberSetting(
+                                          label: l10n.serverConfigBatchSize,
+                                          description: l10n
+                                              .serverConfigBatchSizeDescription,
+                                          value: provider.batchSize,
+                                          min: 32,
+                                          max: 4096,
+                                          divisions: 127,
+                                          onChanged: (value) =>
+                                              provider.updateBatchSize(
+                                                _roundToStep(value, 32),
+                                              ),
+                                        ),
+                                        SliderNumberSetting(
+                                          label:
+                                              l10n.serverConfigImageMaxTokens,
+                                          description: l10n
+                                              .serverConfigImageMaxTokensDescription,
+                                          value: provider.imageMaxTokens,
+                                          min: 128,
+                                          max: 4096,
+                                          divisions: 31,
+                                          onChanged: (value) =>
+                                              provider.updateImageMaxTokens(
+                                                _roundToStep(value, 128),
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  SettingsSection(
+                                    title: l10n.serverConfigSectionPerformance,
+                                    child: SettingsTileList(
+                                      children: [
+                                        SliderNumberSetting(
+                                          label: l10n.serverConfigCpuThreads,
+                                          description: l10n
+                                              .serverConfigCpuThreadsDescription,
+                                          value: provider.cpuThreads,
+                                          min: 1,
+                                          max: 8,
+                                          divisions: 7,
+                                          onChanged: provider.updateCpuThreads,
+                                        ),
+                                        SliderNumberSetting(
+                                          label: l10n.serverConfigParallelSlots,
+                                          description: l10n
+                                              .serverConfigParallelSlotsDescription,
+                                          value: provider.parallelSlots,
+                                          min: 1,
+                                          max: 8,
+                                          divisions: 7,
+                                          onChanged:
+                                              provider.updateParallelSlots,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  SettingsSection(
+                                    title: l10n.serverConfigSectionAdvanced,
+                                    child: SettingsTileList(
+                                      children: [
+                                        SegmentedSetting<FlashAttentionMode>(
+                                          label:
+                                              l10n.serverConfigFlashAttention,
+                                          description: l10n
+                                              .serverConfigFlashAttentionDescription,
+                                          value: provider.flashAttentionMode,
+                                          options: [
+                                            SegmentedSettingOption(
+                                              value: FlashAttentionMode.auto,
+                                              label: l10n.commonAuto,
+                                            ),
+                                            SegmentedSettingOption(
+                                              value: FlashAttentionMode.enabled,
+                                              label: l10n.commonEnable,
+                                            ),
+                                            SegmentedSettingOption(
+                                              value:
+                                                  FlashAttentionMode.disabled,
+                                              label: l10n.commonDisable,
+                                            ),
+                                          ],
+                                          onChanged:
+                                              provider.updateFlashAttentionMode,
+                                        ),
+                                        SwitchSettingTile(
+                                          title: l10n.serverConfigUseMmap,
+                                          subtitle:
+                                              l10n.serverConfigUseMmapSubtitle,
+                                          value: provider.useMmap,
+                                          onChanged: provider.updateUseMmap,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 18),
-                          SettingsSection(
-                            title: l10n.serverConfigSectionLogging,
-                            child: SettingsTileList(
-                              children: [
-                                SwitchSettingTile(
-                                  title: l10n.serverConfigLogEnabled,
-                                  subtitle: l10n.serverConfigLogEnabledSubtitle,
-                                  value: provider.logEnabled,
-                                  onChanged: provider.updateLogEnabled,
+                                const SizedBox(height: 18),
+                                SettingsSection(
+                                  title: l10n.serverConfigSectionLogging,
+                                  child: SettingsTileList(
+                                    children: [
+                                      SwitchSettingTile(
+                                        title: l10n.serverConfigLogEnabled,
+                                        subtitle:
+                                            l10n.serverConfigLogEnabledSubtitle,
+                                        value: provider.logEnabled,
+                                        onChanged: provider.updateLogEnabled,
+                                      ),
+                                      SegmentedSetting<ServerLogLevel>(
+                                        label: l10n.serverConfigLogLevel,
+                                        description: l10n
+                                            .serverConfigLogLevelDescription,
+                                        value: provider.logLevel,
+                                        options: [
+                                          SegmentedSettingOption(
+                                            value: ServerLogLevel.error,
+                                            label:
+                                                l10n.serverConfigLogLevelError,
+                                          ),
+                                          SegmentedSettingOption(
+                                            value: ServerLogLevel.warning,
+                                            label: l10n
+                                                .serverConfigLogLevelWarning,
+                                          ),
+                                          SegmentedSettingOption(
+                                            value: ServerLogLevel.info,
+                                            label:
+                                                l10n.serverConfigLogLevelInfo,
+                                          ),
+                                          SegmentedSettingOption(
+                                            value: ServerLogLevel.debug,
+                                            label:
+                                                l10n.serverConfigLogLevelDebug,
+                                          ),
+                                        ],
+                                        onChanged: provider.updateLogLevel,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                SegmentedSetting<ServerLogLevel>(
-                                  label: l10n.serverConfigLogLevel,
-                                  description:
-                                      l10n.serverConfigLogLevelDescription,
-                                  value: provider.logLevel,
-                                  options: [
-                                    SegmentedSettingOption(
-                                      value: ServerLogLevel.error,
-                                      label: l10n.serverConfigLogLevelError,
-                                    ),
-                                    SegmentedSettingOption(
-                                      value: ServerLogLevel.warning,
-                                      label: l10n.serverConfigLogLevelWarning,
-                                    ),
-                                    SegmentedSettingOption(
-                                      value: ServerLogLevel.info,
-                                      label: l10n.serverConfigLogLevelInfo,
-                                    ),
-                                    SegmentedSettingOption(
-                                      value: ServerLogLevel.debug,
-                                      label: l10n.serverConfigLogLevelDebug,
-                                    ),
-                                  ],
-                                  onChanged: provider.updateLogLevel,
+                                const SizedBox(height: 18),
+                                // Was a bare ListTile wedged into a list of
+                                // SettingsMenuTiles: different padding, different
+                                // chevron, different icon weight. Everything in a
+                                // SettingsTileList has to look like it came from the
+                                // same drawer.
+                                SettingsSection(
+                                  title: l10n.serverConfigSectionReset,
+                                  child: SettingsTileList(
+                                    children: [
+                                      SettingsMenuTile(
+                                        icon: ClaudeIcons.regenerate,
+                                        title: l10n.serverConfigResetTitle,
+                                        subtitle:
+                                            l10n.serverConfigResetSubtitle,
+                                        onTap: provider.isLoading
+                                            ? null
+                                            : () => _confirmResetToDefaults(
+                                                context,
+                                              ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 18),
-                          SettingsSection(
-                            title: l10n.serverConfigSectionReset,
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(Icons.restore_outlined),
-                              title: Text(l10n.serverConfigResetTitle),
-                              subtitle: Text(l10n.serverConfigResetSubtitle),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: provider.isLoading
-                                  ? null
-                                  : () => _confirmResetToDefaults(context),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
         );
       },
@@ -419,9 +480,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
   }
 }
 
-
 /// Page titles use the display serif to match [PageScaffold]; the app bar
 /// itself stays unstyled so pushed pages and the shell header agree.
-TextStyle? _pageTitle(BuildContext context) => Theme.of(
-  context,
-).textTheme.titleLarge?.copyWith(fontFamily: 'serif', fontWeight: FontWeight.w600);
+TextStyle? _pageTitle(BuildContext context) => Theme.of(context)
+    .textTheme
+    .titleLarge
+    ?.copyWith(fontFamily: 'serif', fontWeight: FontWeight.w600);

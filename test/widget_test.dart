@@ -16,6 +16,7 @@ import 'package:servllama/core/providers/model_management_provider.dart';
 import 'package:servllama/core/repositories/local_model_repository.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
+import 'package:servllama/app/providers/system_prompt_provider.dart';
 import 'package:servllama/core/services/engines/llama_cpp_engine_adapter.dart';
 
 import 'support/stub_engine_adapter.dart';
@@ -92,11 +93,14 @@ void main() {
     expect(find.text('聊天'), findsNothing);
     expect(find.text('模型库'), findsOneWidget);
     expect(find.text('设置'), findsOneWidget);
-    expect(find.text('关于'), findsOneWidget);
+    // About is a settings row now, not a drawer entry.
+    expect(find.text('关于'), findsNothing);
     expect(find.byKey(const Key('drawer_search_box')), findsOneWidget);
     expect(find.byKey(const Key('drawer_server_action')), findsOneWidget);
     expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
-    expect(find.byKey(const Key('chat_server_status_badge')), findsOneWidget);
+    // The status dot moved to the sidebar's engine strip when the chat
+    // header was cut down to two buttons.
+    expect(find.byKey(const Key('sidebar_engine_status_badge')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s1')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s2')), findsOneWidget);
 
@@ -132,10 +136,14 @@ void main() {
     await tester.tap(find.byKey(const Key('chat_session_item_s2')));
     await tester.pumpAndSettle();
 
-    expect(find.text('会话二'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
-    await tester.pumpAndSettle();
+    // Wide surfaces keep the sidebar embedded and the same button collapses
+    // it; narrow ones close it on selection. Only tap when it is actually
+    // closed, the same guard the setup above uses.
+    if (find.byKey(const Key('drawer_search_box')).evaluate().isEmpty) {
+      await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
+      await tester.pumpAndSettle();
+    }
     await tester.longPress(find.byKey(const Key('chat_session_item_s2')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
@@ -243,7 +251,9 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const Key('chat_open_history_button')));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('drawer_open_history_button')));
     await tester.pumpAndSettle();
 
     expect(
@@ -343,15 +353,23 @@ void main() {
 
     // History lives in the chat context bar, so there is no need to open the
     // sidebar first — and the drawer scrim would swallow the tap anyway.
-    await tester.tap(find.byKey(const Key('chat_open_history_button')));
+    await tester.tap(find.byKey(const Key('chat_open_sidebar_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('drawer_open_history_button')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('history_session_item_s2')));
     await tester.pumpAndSettle();
 
-    // Back on the chat canvas: the session title shows in the context bar
-    // and the sidebar is not left hanging open.
-    expect(find.text('会话二'), findsWidgets);
+    // Back on the chat canvas. The header no longer shows the session
+    // title, so the closed drawer is the signal that the row was taken.
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('会话二'),
+      ),
+      findsNothing,
+    );
     expect(find.byKey(const Key('drawer_search_box')), findsNothing);
     expect(find.text('服务器'), findsNothing);
     expect(find.text('设置'), findsNothing);
@@ -387,6 +405,9 @@ class _TestApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<ChatTimeoutProvider>(
           create: (_) => ChatTimeoutProvider(),
+        ),
+        ChangeNotifierProvider<SystemPromptProvider>(
+          create: (_) => SystemPromptProvider(),
         ),
         ChangeNotifierProvider<ChatProvider>.value(value: chatProvider),
       ],

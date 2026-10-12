@@ -20,6 +20,7 @@ class ChatMessageItem extends StatefulWidget {
     super.key,
     required this.message,
     this.isStreaming = false,
+    this.promptedAt,
     this.canManage = false,
     this.onCopy,
     this.onRegenerate,
@@ -29,6 +30,9 @@ class ChatMessageItem extends StatefulWidget {
 
   final ChatMessageRecord message;
   final bool isStreaming;
+
+  /// When the prompt that produced this message was sent.
+  final DateTime? promptedAt;
   final bool canManage;
   final VoidCallback? onCopy;
   final VoidCallback? onRegenerate;
@@ -72,10 +76,13 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
             if (_isUser && hasContent) _UserBubble(content: content, id: message.id),
             if (!_isUser) ...[
               if (reasoning.isNotEmpty)
-                ThinkingCard(
+                ThinkingLine(
                   content: reasoning,
                   expanded: _showReasoning,
                   live: widget.isStreaming,
+                  messageId: message.id,
+                  promptedAt: widget.promptedAt,
+                  answeredAt: message.createdAt,
                   onToggle: () =>
                       setState(() => _showReasoning = !_showReasoning),
                 ),

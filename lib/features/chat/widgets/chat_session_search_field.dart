@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/l10n/l10n.dart';
 
@@ -9,11 +10,18 @@ class ChatSessionSearchField extends StatefulWidget {
     this.fieldKey,
     this.hintText,
     this.autofocus = false,
+    this.onOpenHistory,
   });
 
   final Key? fieldKey;
   final String? hintText;
   final bool autofocus;
+
+  /// Reached from the trailing glyph. The full history page used to be a
+  /// button in the chat header, but that header is two buttons and nothing
+  /// else now — and a search box you cannot escape into the unfiltered list
+  /// is a dead end for anyone who forgot a word.
+  final VoidCallback? onOpenHistory;
 
   @override
   State<ChatSessionSearchField> createState() => _ChatSessionSearchFieldState();
@@ -73,12 +81,26 @@ class _ChatSessionSearchFieldState extends State<ChatSessionSearchField> {
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            size: 18,
+          prefixIcon: ClaudeIcon(
+            ClaudeIcons.search,
+            size: 17,
             color: colorScheme.onSurfaceVariant,
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 26),
+          suffixIcon: widget.onOpenHistory == null
+              ? null
+              : IconButton(
+                  key: const Key('drawer_open_history_button'),
+                  tooltip: context.l10n.drawerAllHistoryTooltip,
+                  onPressed: widget.onOpenHistory,
+                  icon: ClaudeIcon(
+                    ClaudeIcons.chevronRight,
+                    size: 15,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: 18,
+                ),
         ),
       ),
     );

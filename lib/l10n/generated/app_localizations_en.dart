@@ -100,7 +100,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chatHeroTitle => 'Start chatting';
+  String get chatHeroTitle => 'The model is ready';
 
   @override
   String get chatHeroDescriptionReady =>
@@ -108,11 +108,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatHeroDescriptionStartServer =>
-      'Start the server first, then load a model to begin your AI conversation.';
+      'One last step — start it. After that everything runs on this phone and never touches the network.';
 
   @override
-  String get chatHeroDescriptionSelectModel =>
-      'The server is running. Load a model to begin your AI conversation.';
+  String get chatHeroDescriptionSelectModel => 'Pick a model and we\'re off.';
 
   @override
   String get chatStartServer => 'Start server';
@@ -1451,11 +1450,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chatEmptyTitle => 'Pick a model to start';
+  String get chatEmptyTitle => 'What are we talking about?';
 
   @override
   String get chatEmptyDescription =>
-      'The service starts on its own once a model is chosen.';
+      'Choosing a model starts the server for you.';
 
   @override
   String get chatEmptyAction => 'Choose a model';
@@ -1479,7 +1478,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatEmptyNoModelsDescription =>
-      'Download a model first. Everything runs on this device afterwards.';
+      'Download one to begin — everything runs on this device.';
 
   @override
   String get mnnBackendTitle => 'MNN inference backend';
@@ -1673,5 +1672,35 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String chatThinkingDone(Object duration) {
     return 'Thought for $duration';
+  }
+
+  @override
+  String get systemPromptTitle => 'System prompt';
+
+  @override
+  String get systemPromptHint =>
+      'Sent as a system turn ahead of every request to set identity, tone and output shape. Editing it affects later requests only; it never rewrites the transcript.';
+
+  @override
+  String get systemPromptPlaceholder =>
+      'For example: You are a terse assistant. Answer in Chinese.';
+
+  @override
+  String get settingsSectionModel => 'Models';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get systemPromptEmpty => 'Not set';
+
+  @override
+  String chatThinkingLiveShort(Object duration) {
+    return 'Thinking · $duration';
+  }
+
+  @override
+  String contextUsageLabel(Object percent, Object used, Object total) {
+    return 'Context $percent% used · $used / $total';
   }
 }

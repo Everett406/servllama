@@ -43,10 +43,10 @@
       }
     }
   },
-  "chatHeroTitle": "开始对话",
+  "chatHeroTitle": "模型准备好了",
   "chatHeroDescriptionReady": "输入一条消息，开始与你的本地模型对话。",
-  "chatHeroDescriptionStartServer": "请先启动服务器，然后加载一个模型，马上开始你的AI对话~",
-  "chatHeroDescriptionSelectModel": "服务器已启动，请加载一个模型，马上开始你的 AI 对话~",
+  "chatHeroDescriptionStartServer": "还差最后一步——启动它，之后所有对话都只在这台手机上跑，不联网。",
+  "chatHeroDescriptionSelectModel": "挑一个模型，我们就可以开始了。",
   "chatStartServer": "启动服务器",
   "chatStartingServer": "启动中...",
   "chatLoadingModel": "加载模型中...",
@@ -624,7 +624,7 @@
   "settingsClearStagingDone": "已清理未完成的下载",
   "aboutMnnVersion": "MNN 版本",
   "aboutMnnVersionDetail": "MNN 版本：{value}",
-  "chatEmptyTitle": "选一个模型开始",
+  "chatEmptyTitle": "想聊点什么？",
   "chatEmptyDescription": "选定模型后服务会自动启动。",
   "chatEmptyAction": "选择模型",
   "chatChooseEngineToStart": "选择要启动的推理引擎",
@@ -639,7 +639,7 @@
   "chatCurrentRunning": "当前运行",
   "chatLoadModelAction": "加载",
   "chatPreparingModel": "模型准备中",
-  "chatEmptyNoModelsDescription": "先下载一个模型，之后全程在本机运行。",
+  "chatEmptyNoModelsDescription": "先挑一个下载下来，之后全程在本机运行。",
   "mnnBackendTitle": "MNN 推理后端",
   "mnnBackendNextStart": "下次加载模型时生效。",
   "mnnBackendActive": "已加载的后端：{backend}",
@@ -727,10 +727,30 @@
       "duration": {}
     }
   },
-  "chatThinkingDone": "思考了 {duration}",
+  "chatThinkingDone": "已思考 {duration}",
   "@chatThinkingDone": {
     "placeholders": {
       "duration": {}
+    }
+  },
+  "systemPromptTitle": "系统提示词",
+  "systemPromptHint": "这段内容会作为 system 角色加在每次对话的最前面，用来设定它的身份、语气和输出格式。修改只影响之后发出的请求，不会改动已有的对话记录。",
+  "systemPromptPlaceholder": "例如：你是一个简洁的助手，默认用中文回答。",
+  "settingsSectionModel": "模型",
+  "commonClear": "清空",
+  "systemPromptEmpty": "未设置",
+  "chatThinkingLiveShort": "思考中 · {duration}",
+  "@chatThinkingLiveShort": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "contextUsageLabel": "已用 {percent}% 上下文 · {used} / {total}",
+  "@contextUsageLabel": {
+    "placeholders": {
+      "percent": {},
+      "used": {},
+      "total": {}
     }
   }
 }

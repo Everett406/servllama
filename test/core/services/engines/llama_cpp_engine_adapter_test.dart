@@ -225,6 +225,9 @@ class _FakeControlClient implements LlamaServerControlClient {
   String? baseUrl;
 
   @override
+  Future<int?> fetchContextWindow() async => null;
+
+  @override
   void updateBaseUrl(String value) {
     baseUrl = value;
   }

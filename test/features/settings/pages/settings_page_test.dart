@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
+import 'package:servllama/app/providers/system_prompt_provider.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/features/settings/pages/settings_page.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
@@ -25,6 +26,7 @@ void main() {
       final themeProvider = AppThemeModeProvider(kvStorage: KvStorage());
       final localeProvider = AppLocaleProvider(kvStorage: KvStorage());
       final chatTimeoutProvider = ChatTimeoutProvider(kvStorage: KvStorage());
+      final systemPromptProvider = SystemPromptProvider(kvStorage: KvStorage());
 
       _useTallSurface(tester);
 
@@ -33,30 +35,35 @@ void main() {
           themeProvider: themeProvider,
           localeProvider: localeProvider,
           chatTimeoutProvider: chatTimeoutProvider,
+          systemPromptProvider: systemPromptProvider,
         ),
       );
       await tester.pump();
 
       expect(find.text('通用'), findsOneWidget);
+      // Section title plus the About tile itself.
       expect(find.text('关于'), findsNWidgets(2));
       expect(find.text('主题模式'), findsOneWidget);
       expect(find.text('跟随系统'), findsNWidgets(2));
       expect(find.text('应用语言'), findsOneWidget);
       expect(find.text('聊天超时时间'), findsOneWidget);
       expect(find.text('180 秒'), findsOneWidget);
-      expect(find.text('关于'), findsWidgets);
+      expect(find.text('模型'), findsOneWidget);
+      expect(find.text('系统提示词'), findsOneWidget);
     });
 
     testWidgets('updates MaterialApp themeMode from bottom sheet', (tester) async {
       final themeProvider = AppThemeModeProvider(kvStorage: KvStorage());
       final localeProvider = AppLocaleProvider(kvStorage: KvStorage());
       final chatTimeoutProvider = ChatTimeoutProvider(kvStorage: KvStorage());
+      final systemPromptProvider = SystemPromptProvider(kvStorage: KvStorage());
 
       await tester.pumpWidget(
         _TestHost(
           themeProvider: themeProvider,
           localeProvider: localeProvider,
           chatTimeoutProvider: chatTimeoutProvider,
+          systemPromptProvider: systemPromptProvider,
         ),
       );
       await tester.pump();
@@ -83,12 +90,14 @@ void main() {
       final themeProvider = AppThemeModeProvider(kvStorage: KvStorage());
       final localeProvider = AppLocaleProvider(kvStorage: KvStorage());
       final chatTimeoutProvider = ChatTimeoutProvider(kvStorage: KvStorage());
+      final systemPromptProvider = SystemPromptProvider(kvStorage: KvStorage());
 
       await tester.pumpWidget(
         _TestHost(
           themeProvider: themeProvider,
           localeProvider: localeProvider,
           chatTimeoutProvider: chatTimeoutProvider,
+          systemPromptProvider: systemPromptProvider,
         ),
       );
       await tester.pump();
@@ -116,12 +125,14 @@ void main() {
       final themeProvider = AppThemeModeProvider(kvStorage: KvStorage());
       final localeProvider = AppLocaleProvider(kvStorage: KvStorage());
       final chatTimeoutProvider = ChatTimeoutProvider(kvStorage: KvStorage());
+      final systemPromptProvider = SystemPromptProvider(kvStorage: KvStorage());
 
       await tester.pumpWidget(
         _TestHost(
           themeProvider: themeProvider,
           localeProvider: localeProvider,
           chatTimeoutProvider: chatTimeoutProvider,
+          systemPromptProvider: systemPromptProvider,
         ),
       );
       await tester.pump();
@@ -146,12 +157,14 @@ void main() {
       final themeProvider = AppThemeModeProvider(kvStorage: KvStorage());
       final localeProvider = AppLocaleProvider(kvStorage: KvStorage());
       final chatTimeoutProvider = ChatTimeoutProvider(kvStorage: KvStorage());
+      final systemPromptProvider = SystemPromptProvider(kvStorage: KvStorage());
 
       await tester.pumpWidget(
         _TestHost(
           themeProvider: themeProvider,
           localeProvider: localeProvider,
           chatTimeoutProvider: chatTimeoutProvider,
+          systemPromptProvider: systemPromptProvider,
         ),
       );
       await tester.pump();
@@ -181,11 +194,13 @@ class _TestHost extends StatelessWidget {
     required this.themeProvider,
     required this.localeProvider,
     required this.chatTimeoutProvider,
+    required this.systemPromptProvider,
   });
 
   final AppThemeModeProvider themeProvider;
   final AppLocaleProvider localeProvider;
   final ChatTimeoutProvider chatTimeoutProvider;
+  final SystemPromptProvider systemPromptProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +210,9 @@ class _TestHost extends StatelessWidget {
         ChangeNotifierProvider<AppLocaleProvider>.value(value: localeProvider),
         ChangeNotifierProvider<ChatTimeoutProvider>.value(
           value: chatTimeoutProvider,
+        ),
+        ChangeNotifierProvider<SystemPromptProvider>.value(
+          value: systemPromptProvider,
         ),
         // The download settings group lives on this page now (FR-X1).
         ChangeNotifierProvider<DownloadProvider>(

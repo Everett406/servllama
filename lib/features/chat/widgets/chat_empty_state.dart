@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/brand_mark.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/core/models/engine_runtime_state.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
@@ -91,7 +92,11 @@ class ChatEmptyState extends StatelessWidget {
                   child: FilledButton.icon(
                     key: const Key('chat_empty_state_action_button'),
                     onPressed: isBusy ? null : layout.action,
-                    icon: Icon(layout.actionIcon, size: 18),
+                    icon: ClaudeIcons.render(
+                      layout.actionIcon,
+                      size: 18,
+                      color: ClaudeColors.onAccent,
+                    ),
                     label: Text(layout.actionLabel),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 44),
@@ -147,7 +152,7 @@ class _EmptyLayout {
         title: l10n.chatEmptyTitle,
         subtitle: l10n.chatEmptyNoModelsDescription,
         actionLabel: l10n.sidebarBrowseModels,
-        actionIcon: Icons.download_outlined,
+        actionIcon: ClaudeIcons.download,
         action: onBrowseModels,
       );
     }
@@ -160,7 +165,7 @@ class _EmptyLayout {
         title: l10n.chatHeroTitle,
         subtitle: l10n.chatHeroDescriptionStartServer,
         actionLabel: l10n.chatStartServer,
-        actionIcon: Icons.play_arrow_rounded,
+        actionIcon: ClaudeIcons.play,
         action: onStartServer,
       );
     }
@@ -169,7 +174,7 @@ class _EmptyLayout {
       title: l10n.chatEmptyTitle,
       subtitle: l10n.chatHeroDescriptionSelectModel,
       actionLabel: l10n.chatSelectModel,
-      actionIcon: Icons.memory_rounded,
+      actionIcon: ClaudeIcons.chip,
       action: onSelectModel,
     );
   }

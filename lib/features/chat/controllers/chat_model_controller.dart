@@ -81,6 +81,10 @@ class ChatModelController extends ChangeNotifier {
     _apiClient.updateReceiveTimeout(timeout);
   }
 
+  void updateSystemPrompt(String prompt) {
+    _apiClient.updateSystemPrompt(prompt);
+  }
+
   bool _sameModels(List<ChatModelOption> left, List<ChatModelOption> right) {
     if (left.length != right.length) {
       return false;

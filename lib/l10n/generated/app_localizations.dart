@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatHeroTitle.
   ///
   /// In en, this message translates to:
-  /// **'Start chatting'**
+  /// **'The model is ready'**
   String get chatHeroTitle;
 
   /// No description provided for @chatHeroDescriptionReady.
@@ -287,13 +287,13 @@ abstract class AppLocalizations {
   /// No description provided for @chatHeroDescriptionStartServer.
   ///
   /// In en, this message translates to:
-  /// **'Start the server first, then load a model to begin your AI conversation.'**
+  /// **'One last step — start it. After that everything runs on this phone and never touches the network.'**
   String get chatHeroDescriptionStartServer;
 
   /// No description provided for @chatHeroDescriptionSelectModel.
   ///
   /// In en, this message translates to:
-  /// **'The server is running. Load a model to begin your AI conversation.'**
+  /// **'Pick a model and we\'re off.'**
   String get chatHeroDescriptionSelectModel;
 
   /// No description provided for @chatStartServer.
@@ -2600,13 +2600,13 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pick a model to start'**
+  /// **'What are we talking about?'**
   String get chatEmptyTitle;
 
   /// No description provided for @chatEmptyDescription.
   ///
   /// In en, this message translates to:
-  /// **'The service starts on its own once a model is chosen.'**
+  /// **'Choosing a model starts the server for you.'**
   String get chatEmptyDescription;
 
   /// No description provided for @chatEmptyAction.
@@ -2648,7 +2648,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyNoModelsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Download a model first. Everything runs on this device afterwards.'**
+  /// **'Download one to begin — everything runs on this device.'**
   String get chatEmptyNoModelsDescription;
 
   /// No description provided for @mnnBackendTitle.
@@ -2980,6 +2980,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thought for {duration}'**
   String chatThinkingDone(Object duration);
+
+  /// No description provided for @systemPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'System prompt'**
+  String get systemPromptTitle;
+
+  /// No description provided for @systemPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent as a system turn ahead of every request to set identity, tone and output shape. Editing it affects later requests only; it never rewrites the transcript.'**
+  String get systemPromptHint;
+
+  /// No description provided for @systemPromptPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: You are a terse assistant. Answer in Chinese.'**
+  String get systemPromptPlaceholder;
+
+  /// No description provided for @settingsSectionModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Models'**
+  String get settingsSectionModel;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @systemPromptEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get systemPromptEmpty;
+
+  /// No description provided for @chatThinkingLiveShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking · {duration}'**
+  String chatThinkingLiveShort(Object duration);
+
+  /// No description provided for @contextUsageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Context {percent}% used · {used} / {total}'**
+  String contextUsageLabel(Object percent, Object used, Object total);
 }
 
 class _AppLocalizationsDelegate

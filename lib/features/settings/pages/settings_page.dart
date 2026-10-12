@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/providers/system_prompt_provider.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/widgets/page_scaffold.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/features/about/pages/about_page.dart';
+import 'package:servllama/features/server/pages/model_management_page.dart';
+import 'package:servllama/features/settings/pages/system_prompt_page.dart';
 import 'package:servllama/features/settings/widgets/download_settings_section.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
@@ -20,12 +24,13 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Consumer3<
+    return Consumer4<
       AppThemeModeProvider,
       AppLocaleProvider,
-      ChatTimeoutProvider
+      ChatTimeoutProvider,
+      SystemPromptProvider
     >(
-      builder: (context, themeProvider, localeProvider, chatTimeoutProvider, _) => PageScaffold(
+      builder: (context, themeProvider, localeProvider, chatTimeoutProvider, systemPromptProvider, _) => PageScaffold(
         title: l10n.settingsTitle,
         maxWidth: 620,
         padding: const EdgeInsets.fromLTRB(
@@ -85,11 +90,34 @@ class SettingsPage extends StatelessWidget {
               const DownloadSettingsSection(),
               const SizedBox(height: 18),
               SettingsSection(
+                title: l10n.settingsSectionModel,
+                child: SettingsTileList(
+                  children: [
+                    SettingsMenuTile(
+                      key: const Key('settings_model_library_tile'),
+                      icon: ClaudeIcons.layers,
+                      title: l10n.modelLibraryTitle,
+                      onTap: () => _push(context, const ModelManagementPage()),
+                    ),
+                    SettingsMenuTile(
+                      key: const Key('settings_system_prompt_tile'),
+                      icon: ClaudeIcons.edit,
+                      title: l10n.systemPromptTitle,
+                      subtitle: systemPromptProvider.isEmpty
+                          ? l10n.systemPromptEmpty
+                          : systemPromptProvider.prompt,
+                      onTap: () => _push(context, const SystemPromptPage()),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              SettingsSection(
                 title: l10n.settingsSectionAbout,
                 child: SettingsTileList(
                   children: [
                     SettingsMenuTile(
-                      icon: Icons.info_outline_rounded,
+                      icon: ClaudeIcons.info,
                       title: l10n.settingsAbout,
                       onTap: () => _push(context, const AboutPage()),
                     ),

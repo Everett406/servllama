@@ -176,13 +176,23 @@ class _ArcPainter extends CustomPainter {
 }
 
 /// Formats an elapsed span the way a person would say it out loud.
-String formatThinkingDuration(Duration elapsed) {
+///
+/// Chinese reads "12 秒" where English reads "12s", and mixing the two —
+/// "已思考 1m 5s" — is the kind of thing that makes an otherwise finished
+/// screen look unlocalised.
+String formatThinkingDuration(Duration elapsed, {required bool chinese}) {
   final s = elapsed.inSeconds;
-  if (s < 60) return '${s}s';
+  if (s < 60) return chinese ? '$s 秒' : '${s}s';
   final m = s ~/ 60;
   final rs = s % 60;
-  if (m < 60) return rs == 0 ? '${m}m' : '${m}m ${rs}s';
+  if (m < 60) {
+    return chinese
+        ? (rs == 0 ? '$m 分' : '$m 分 $rs 秒')
+        : (rs == 0 ? '${m}m' : '${m}m ${rs}s');
+  }
   final h = m ~/ 60;
   final rm = m % 60;
-  return rm == 0 ? '${h}h' : '${h}h ${rm}m';
+  return chinese
+      ? (rm == 0 ? '$h 时' : '$h 时 $rm 分')
+      : (rm == 0 ? '${h}h' : '${h}h ${rm}m');
 }

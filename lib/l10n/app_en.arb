@@ -43,10 +43,10 @@
       }
     }
   },
-  "chatHeroTitle": "Start chatting",
+  "chatHeroTitle": "The model is ready",
   "chatHeroDescriptionReady": "Send a message to start chatting with your local model.",
-  "chatHeroDescriptionStartServer": "Start the server first, then load a model to begin your AI conversation.",
-  "chatHeroDescriptionSelectModel": "The server is running. Load a model to begin your AI conversation.",
+  "chatHeroDescriptionStartServer": "One last step — start it. After that everything runs on this phone and never touches the network.",
+  "chatHeroDescriptionSelectModel": "Pick a model and we're off.",
   "chatStartServer": "Start server",
   "chatStartingServer": "Starting...",
   "chatLoadingModel": "Loading model...",
@@ -830,8 +830,8 @@
       }
     }
   },
-  "chatEmptyTitle": "Pick a model to start",
-  "chatEmptyDescription": "The service starts on its own once a model is chosen.",
+  "chatEmptyTitle": "What are we talking about?",
+  "chatEmptyDescription": "Choosing a model starts the server for you.",
   "chatEmptyAction": "Choose a model",
   "chatChooseEngineToStart": "Choose the inference engine to start",
   "chatEngineDefaultModel": "Default model: {model}",
@@ -845,7 +845,7 @@
   "chatCurrentRunning": "Running now",
   "chatLoadModelAction": "Load",
   "chatPreparingModel": "Preparing model",
-  "chatEmptyNoModelsDescription": "Download a model first. Everything runs on this device afterwards.",
+  "chatEmptyNoModelsDescription": "Download one to begin — everything runs on this device.",
   "mnnBackendTitle": "MNN inference backend",
   "mnnBackendNextStart": "Changes apply the next time a model is loaded.",
   "mnnBackendActive": "Loaded backend: {backend}",
@@ -944,6 +944,26 @@
   "@chatThinkingDone": {
     "placeholders": {
       "duration": {}
+    }
+  },
+  "systemPromptTitle": "System prompt",
+  "systemPromptHint": "Sent as a system turn ahead of every request to set identity, tone and output shape. Editing it affects later requests only; it never rewrites the transcript.",
+  "systemPromptPlaceholder": "For example: You are a terse assistant. Answer in Chinese.",
+  "settingsSectionModel": "Models",
+  "commonClear": "Clear",
+  "systemPromptEmpty": "Not set",
+  "chatThinkingLiveShort": "Thinking · {duration}",
+  "@chatThinkingLiveShort": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "contextUsageLabel": "Context {percent}% used · {used} / {total}",
+  "@contextUsageLabel": {
+    "placeholders": {
+      "percent": {},
+      "used": {},
+      "total": {}
     }
   }
 }

@@ -49,6 +49,38 @@ class LlamaServerControlClient {
     return false;
   }
 
+  /// The context window the server actually loaded with.
+  ///
+  /// Read from the server rather than assumed: it comes from whatever the
+  /// model file and the launch flags agree on, and a usage meter built on a
+  /// guessed number is worse than no meter at all. Returns null when the
+  /// server does not report it, which the caller treats as "unknown".
+  Future<int?> fetchContextWindow() async {
+    try {
+      final response = await _dio.get<Object?>(
+        '$_baseUrl/props',
+        options: Options(
+          headers: await _headers(),
+          receiveTimeout: const Duration(seconds: 3),
+        ),
+      );
+      final body = response.data;
+      if (response.statusCode != 200 || body is! Map) return null;
+      final settings = body['default_generation_settings'];
+      if (settings is Map) {
+        final nCtx = settings['n_ctx'];
+        if (nCtx is num && nCtx > 0) return nCtx.toInt();
+      }
+      final top = body['n_ctx'];
+      if (top is num && top > 0) return top.toInt();
+    } on DioException {
+      return null;
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
   Future<bool> _ping() async {
     try {
       final response = await _dio.get<Object?>(

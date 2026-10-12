@@ -48,6 +48,11 @@ class LlamaChatApiClient {
            ),
        _settingsLoader = settingsLoader ?? ServerLaunchSettingsLoader();
 
+  /// Prepended to every request as a system turn. Held here rather than
+  /// injected per call so the chat pipeline does not have to thread it
+  /// through every layer that happens to start a completion.
+  String _systemPrompt = '';
+
   final Dio _dio;
   final ServerLaunchSettingsLoader _settingsLoader;
 
@@ -62,6 +67,10 @@ class LlamaChatApiClient {
 
   void updateReceiveTimeout(Duration timeout) {
     _dio.options.receiveTimeout = timeout;
+  }
+
+  void updateSystemPrompt(String prompt) {
+    _systemPrompt = prompt;
   }
 
   Stream<ChatStreamDelta> streamChatCompletion({
@@ -230,6 +239,12 @@ class LlamaChatApiClient {
     List<ChatMessageRecord> messages,
   ) async {
     final serialized = <Map<String, dynamic>>[];
+    // Prepended here rather than stored as the first message, so it stays
+    // out of the transcript: changing it should never rewrite history.
+    final trimmed = _systemPrompt.trim();
+    if (trimmed.isNotEmpty) {
+      serialized.add({'role': 'system', 'content': trimmed});
+    }
     for (final message in messages) {
       final content = await _buildMessageContent(message);
       serialized.add({'role': message.role.name, 'content': content});

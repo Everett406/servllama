@@ -112,6 +112,9 @@ class ChatSessionList extends StatelessWidget {
                 _BucketHeader(label: _bucketLabel(context, entry.bucket)),
                 for (final session in entry.sessions)
                   _SessionRow(
+                    // Keyed by id only. Folding the selection into the key
+                    // would tear down and rebuild the row on every switch,
+                    // which a lazily built list turns into dropped items.
                     key: Key('${itemKeyPrefix}_${session.id}'),
                     session: session,
                     selected: provider.selectedSession?.id == session.id,

@@ -133,6 +133,10 @@ class ChatProvider extends ChangeNotifier {
     _models.updateChatTimeout(timeout);
   }
 
+  void updateSystemPrompt(String prompt) {
+    _models.updateSystemPrompt(prompt);
+  }
+
   bool get isStealthMode => _isStealthMode;
   bool _isStealthMode = false;
 

@@ -30,12 +30,16 @@ class EngineStartResult {
     required this.port,
     this.activeModelId,
     this.activeModelName,
+    this.contextWindow,
   });
 
   final String host;
   final int port;
   final String? activeModelId;
   final String? activeModelName;
+
+  /// What the engine reported it loaded with, or null when it does not say.
+  final int? contextWindow;
 }
 
 /// Hides the engine-specific process and model-loading details behind one

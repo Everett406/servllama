@@ -82,6 +82,14 @@ class EngineRuntimeProvider extends ChangeNotifier {
   String? get activeModelId => _state.activeModelId;
   String? get activeModelName => _state.activeModelName;
 
+  /// The context window the running engine reported at startup.
+  ///
+  /// Null means "not known" — either nothing is running, or the engine does
+  /// not report it. The usage meter stays hidden rather than inventing a
+  /// number, because a meter that guesses is worse than no meter.
+  int? get contextWindow => _contextWindow;
+  int? _contextWindow;
+
   /// Model the user has picked for [activeEngine], whether or not it is
   /// loaded yet. Null means the engine cannot be started yet.
   String? get selectedModelId => selectedModelIdFor(_state.engine);
@@ -424,6 +432,7 @@ class EngineRuntimeProvider extends ChangeNotifier {
       }
       _host = result.host;
       _port = result.port;
+      _contextWindow = result.contextWindow;
       _scheduleDisplayHostRefresh();
       _state = _state.copyWith(
         status: EngineRuntimeStatus.ready,

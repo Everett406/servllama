@@ -20,6 +20,7 @@ import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/core/storage/kv_storage.dart';
 import 'package:servllama/core/storage/server_prefs_keys.dart';
 import 'package:servllama/features/server/pages/server_config_page.dart';
+import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -396,7 +397,7 @@ void main() {
       expect(configProvider.port, 9000);
       expect(serverProvider.displayAddress, '0.0.0.0:9000');
 
-      final restoreDefaultTile = find.widgetWithText(ListTile, '恢复默认配置');
+      final restoreDefaultTile = find.widgetWithText(SettingsMenuTile, '恢复默认配置');
       await tester.scrollUntilVisible(
         restoreDefaultTile,
         300,

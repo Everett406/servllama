@@ -14,7 +14,6 @@ import 'package:servllama/features/chat/pages/chat_page.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/widgets/chat_session_list.dart';
 import 'package:servllama/features/chat/widgets/chat_session_search_field.dart';
-import 'package:servllama/features/about/pages/about_page.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/features/server/pages/model_management_page.dart';
 import 'package:servllama/features/server/pages/server_page.dart';
@@ -110,6 +109,10 @@ class _MainScaffoldState extends State<MainScaffold> {
                       key: const Key('drawer_search_box'),
                       fieldKey: const Key('drawer_search_input'),
                       hintText: context.l10n.chatSearchHint,
+                      onOpenHistory: () {
+                        _closeSidebarIfOverlay();
+                        _pushHistory();
+                      },
                     ),
                   ),
                   Expanded(
@@ -123,7 +126,6 @@ class _MainScaffoldState extends State<MainScaffold> {
                     onOpenServer: () => _push(const ServerPage()),
                     onOpenModels: () => _push(const ModelManagementPage()),
                     onOpenSettings: () => _push(const SettingsPage()),
-                    onOpenAbout: () => _push(const AboutPage()),
                   ),
                 ],
               ),
@@ -205,7 +207,6 @@ class _SidebarFooter extends StatelessWidget {
     required this.onOpenServer,
     required this.onOpenModels,
     required this.onOpenSettings,
-    required this.onOpenAbout,
   });
 
   final EngineRuntimeProvider? runtime;
@@ -213,7 +214,6 @@ class _SidebarFooter extends StatelessWidget {
   final VoidCallback onOpenServer;
   final VoidCallback onOpenModels;
   final VoidCallback onOpenSettings;
-  final VoidCallback onOpenAbout;
 
   @override
   Widget build(BuildContext context) {
@@ -232,6 +232,10 @@ class _SidebarFooter extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // The engine, then settings. Model library and About moved into
+            // settings: they are configuration, and a sidebar that only ever
+            // answers "is it running and where do I change things" is a
+            // sidebar anyone can hold in their head.
             _EngineStrip(runtime: runtime, onTap: onOpenServer),
             const SizedBox(height: ClaudeSpacing.xs),
             _SidebarNavRow(
@@ -246,12 +250,6 @@ class _SidebarFooter extends StatelessWidget {
               icon: ClaudeIcons.sliders,
               label: l10n.drawerSettings,
               onTap: onOpenSettings,
-            ),
-            _SidebarNavRow(
-              keyValue: 'sidebar_about_row',
-              icon: ClaudeIcons.info,
-              label: l10n.settingsAbout,
-              onTap: onOpenAbout,
             ),
           ],
         ),
@@ -309,6 +307,7 @@ class _EngineStrip extends StatelessWidget {
           child: Row(
             children: [
               StatusDot(
+                key: const Key('sidebar_engine_status_badge'),
                 color: dotColor,
                 size: 7,
                 pulsing: status == EngineRuntimeStatus.preparing ||

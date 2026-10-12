@@ -54,6 +54,10 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
           itemCount: messages.length,
           itemBuilder: (context, index) {
             final message = messages[index];
+            // Thinking ran between the prompt going out and the answer
+            // landing. Both are stamped on the stored message, so a
+            // conversation reopened tomorrow still reports a real span.
+            final promptedAt = _promptedBefore(messages, index);
             final stream = provider.streamingMessages.listenableFor(
               message.id,
             );
@@ -65,10 +69,16 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
                   data.message,
                   revision,
                   isStreaming: data.isStreaming,
+                  promptedAt: promptedAt,
                 ),
               );
             }
-            return _buildItem(provider, message, revision);
+            return _buildItem(
+              provider,
+              message,
+              revision,
+              promptedAt: promptedAt,
+            );
           },
         ),
       ),
@@ -91,11 +101,23 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
     );
   }
 
+  /// The most recent prompt before [index], or null if there isn't one.
+  static DateTime? _promptedBefore(
+    List<ChatMessageRecord> messages,
+    int index,
+  ) {
+    for (var i = index - 1; i >= 0; i -= 1) {
+      if (messages[i].role == ChatRole.user) return messages[i].createdAt;
+    }
+    return null;
+  }
+
   Widget _buildItem(
     ChatProvider provider,
     ChatMessageRecord message,
     int revision, {
     bool isStreaming = false,
+    DateTime? promptedAt,
   }) {
     return Center(
       child: ConstrainedBox(
@@ -103,6 +125,7 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
         child: ChatMessageItem(
           message: message,
           isStreaming: isStreaming,
+          promptedAt: promptedAt,
           canManage: provider.canManageMessages,
           onCopy: () async {
             await Clipboard.setData(ClipboardData(text: message.content));

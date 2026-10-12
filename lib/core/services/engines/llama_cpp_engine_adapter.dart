@@ -117,6 +117,7 @@ class LlamaCppEngineAdapter implements InferenceEngineAdapter {
       return EngineStartResult(
         host: settings.host,
         port: settings.port,
+        contextWindow: await _controlClient.fetchContextWindow(),
         activeModelId: modelId,
         activeModelName: model.modelName,
       );

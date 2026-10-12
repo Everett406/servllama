@@ -55,6 +55,7 @@ class ClaudeIcons {
   static IconData get layers => const _ClaudeLayers();
   static IconData get download => const _ClaudeDownload();
   static IconData get play => const _ClaudePlay();
+  static IconData get clock => const _ClaudeClock();
   static IconData get chevronDown => const _ClaudeChevronDown();
 
   /// Stroke weight scales with the rendered size so a 16px icon keeps the
@@ -107,6 +108,10 @@ class _ClaudeTrash extends IconData {
 
 class _ClaudeChip extends IconData {
   const _ClaudeChip() : super(0xe90c, fontFamily: 'ClaudeIcons');
+}
+
+class _ClaudeClock extends IconData {
+  const _ClaudeClock() : super(0xe915, fontFamily: 'ClaudeIcons');
 }
 
 class _ClaudeSearch extends IconData {
@@ -221,6 +226,8 @@ class ClaudeIconPainter extends CustomPainter {
         _download(canvas, paint);
       case 0xe914:
         _play(canvas, paint);
+      case 0xe915:
+        _clock(canvas, paint);
     }
 
     canvas.restore();
@@ -411,6 +418,20 @@ class ClaudeIconPainter extends CustomPainter {
         ..drawLine(Offset(4.6, y), Offset(7.4, y), paint)
         ..drawLine(Offset(16.6, y), Offset(19.4, y), paint);
     }
+  }
+
+  void _clock(Canvas canvas, Paint paint) {
+    canvas
+      ..drawCircle(const Offset(12, 12), 8, paint)
+      // Hands, at ten past — a clock face reads as time, a full circle does not.
+      ..drawPath(
+        Path()
+          ..moveTo(12, 12)
+          ..lineTo(12, 7.2)
+          ..moveTo(12, 12)
+          ..lineTo(15.6, 13.6),
+        paint,
+      );
   }
 
   void _search(Canvas canvas, Paint paint) {

@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
+import 'package:servllama/app/providers/system_prompt_provider.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/app/app_theme.dart';
@@ -42,6 +43,13 @@ class ServLlamaApp extends StatelessWidget {
           ChangeNotifierProvider(
             create: (_) {
               final provider = ChatTimeoutProvider();
+              unawaited(provider.load());
+              return provider;
+            },
+          ),
+          ChangeNotifierProvider(
+            create: (_) {
+              final provider = SystemPromptProvider();
               unawaited(provider.load());
               return provider;
             },
@@ -90,13 +98,14 @@ class ServLlamaApp extends StatelessWidget {
               return provider;
             },
           ),
-          ChangeNotifierProxyProvider2<
+          ChangeNotifierProxyProvider3<
             EngineRuntimeProvider,
             ChatTimeoutProvider,
+            SystemPromptProvider,
             ChatProvider
           >(
             create: (_) => ChatProvider(),
-            update: (_, runtimeProvider, chatTimeoutProvider, chatProvider) {
+            update: (_, runtimeProvider, chatTimeoutProvider, systemPromptProvider, chatProvider) {
               final provider = chatProvider ?? ChatProvider();
               provider.updateServerState(
                 baseUrl: runtimeProvider.baseUrl,
@@ -106,6 +115,7 @@ class ServLlamaApp extends StatelessWidget {
                 activeModelName: runtimeProvider.activeModelName,
               );
               provider.updateChatTimeout(chatTimeoutProvider.timeout);
+              provider.updateSystemPrompt(systemPromptProvider.prompt);
               return provider;
             },
           ),
