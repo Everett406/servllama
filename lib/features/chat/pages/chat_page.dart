@@ -318,10 +318,22 @@ class _ChatViewState extends State<_ChatView> {
                                 bottomInset: _bottomRunway,
                               ),
                               // Only at the composer. There is no fade at the
-                              // top: the pills are solid, so a gradient under
-                              // them would dim the transcript for no reason.
-                              // What is wanted there is the text arriving, not
-                              // the text fading before it gets there.
+                              // The pills are opaque and painted after this
+                              // band, so they stay crisp. The fade is here so
+                              // text dissolves on its way up to them instead
+                              // of being sliced by the top of the screen,
+                              // which is exactly what happened without it.
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: _topFade,
+                                child: IgnorePointer(
+                                  child: _EdgeFade(
+                                    alignment: Alignment.topCenter,
+                                  ),
+                                ),
+                              ),
                               Positioned(
                                 bottom: 0,
                                 left: 0,
@@ -423,6 +435,10 @@ Positioned(
 /// free to run up behind them and between them.
 const double _topRunway = 54;
 
+/// The dissolve above the transcript. The pills overlap this band but are
+/// drawn after it and are opaque, so they are unaffected.
+const double _topFade = 54;
+
 /// The composer is an opaque panel, so text genuinely has to leave the way
 /// it came in. Runway and fade share a length: a line starts dissolving
 /// exactly where the panel's shadow begins.
@@ -517,7 +533,7 @@ class _ChatTopBar extends StatelessWidget {
             keyValue: 'chat_open_sidebar_button',
             tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
             onPressed: onOpenSidebar,
-            child: ClaudeIcon(ClaudeIcons.menu, size: 19, color: context.ink),
+            child: ClaudeIcon(ClaudeIcons.menu, size: 23, color: context.ink),
           ),
           const Spacer(),
           _FloatPill(
@@ -535,7 +551,7 @@ class _ChatTopBar extends StatelessWidget {
             keyValue: 'chat_more_button',
             tooltip: context.l10n.chatMore,
             onPressed: () => _showOverflow(context),
-            child: ClaudeIcon(ClaudeIcons.more, size: 19, color: context.ink),
+            child: ClaudeIcon(ClaudeIcons.more, size: 23, color: context.ink),
           ),
         ],
       ),
@@ -583,11 +599,17 @@ class _ChatTopBar extends StatelessWidget {
                 color: context.inkSecondary,
               ),
               title: Text(context.l10n.chatSelectModel),
-              subtitle: Text(
-                chat.currentModel?.displayName ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Null rather than an empty Text. A ListTile only collapses to
+              // one line when the subtitle is absent; an empty string still
+              // counts as present, so the row kept two lines of reserved
+              // height and the title rode high above the centre.
+              subtitle: (chat.currentModel?.displayName ?? '').trim().isEmpty
+                  ? null
+                  : Text(
+                      chat.currentModel!.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
               onTap: () => _closeThen(sheetContext, onSelectModel),
             ),
             ListTile(
@@ -649,6 +671,10 @@ class _ChatTopBar extends StatelessWidget {
 /// underneath; without the fill, a pill reads as a floating outline with no
 /// material, and with it the header stops competing with the messages for
 /// attention.
+/// The header pills are a touch target, not decoration: 42 was below the
+/// 48dp guideline and felt cramped against the icons inside them.
+const double _pillSize = 50;
+
 class _FloatPill extends StatelessWidget {
   const _FloatPill({
     required this.tooltip,
@@ -677,8 +703,8 @@ class _FloatPill extends StatelessWidget {
             onTap: onPressed,
             customBorder: const StadiumBorder(),
             child: Container(
-              width: 42,
-              height: 42,
+              width: _pillSize,
+              height: _pillSize,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(ClaudeRadius.pill),
                 border: Border.all(color: context.border),

@@ -32,14 +32,14 @@ class DownloadSettingsSection extends StatelessWidget {
                 children: [
                   SettingsMenuTile(
                     key: const Key('settings_hf_route_tile'),
-                    icon: Icons.alt_route_rounded,
+                    icon: ClaudeIcons.route,
                     title: l10n.settingsHuggingFaceRoute,
                     value: _routeLabel(context, settings.huggingFaceRoute),
                     onTap: () => _showRouteSheet(context, downloads),
                   ),
                   SettingsMenuTile(
                     key: const Key('settings_hf_token_tile'),
-                    icon: Icons.key_outlined,
+                    icon: ClaudeIcons.key,
                     title: l10n.settingsHuggingFaceToken,
                     value: _maskToken(context, settings.huggingFaceToken),
                     onTap: () => _showTokenSheet(
@@ -51,7 +51,7 @@ class DownloadSettingsSection extends StatelessWidget {
                   ),
                   SettingsMenuTile(
                     key: const Key('settings_ms_token_tile'),
-                    icon: Icons.key_outlined,
+                    icon: ClaudeIcons.key,
                     title: l10n.settingsModelScopeToken,
                     value: _maskToken(context, settings.modelScopeToken),
                     onTap: () => _showTokenSheet(
@@ -63,7 +63,7 @@ class DownloadSettingsSection extends StatelessWidget {
                   ),
                   SettingsMenuTile(
                     key: const Key('settings_wifi_only_tile'),
-                    icon: Icons.wifi_rounded,
+                    icon: ClaudeIcons.wifi,
                     title: l10n.settingsWifiOnly,
                     trailing: Switch.adaptive(
                       value: settings.wifiOnly,
@@ -300,7 +300,7 @@ class _StorageTileState extends State<_StorageTile> {
 
     return SettingsMenuTile(
       key: const Key('settings_clear_staging_tile'),
-      icon: Icons.cleaning_services_outlined,
+      icon: ClaudeIcons.broom,
       title: l10n.settingsClearStaging,
       value: bytes == null ? '' : FormatUtils.bytes(bytes),
       enabled: hasOrphans,

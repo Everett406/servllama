@@ -12,6 +12,7 @@ import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
 import 'package:servllama/shared/widgets/slider_number_setting.dart';
 import 'package:servllama/shared/widgets/switch_setting_tile.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 class MnnBackendSettings extends StatefulWidget {
   const MnnBackendSettings({super.key});
@@ -137,9 +138,9 @@ class _MnnBackendSettingsState extends State<MnnBackendSettings> {
         contentPadding: EdgeInsets.zero,
         enabled: selectable,
         leading: Icon(switch (backend) {
-          MnnBackend.cpu => Icons.memory_outlined,
+          MnnBackend.cpu => ClaudeIcons.chip,
           MnnBackend.opencl ||
-          MnnBackend.vulkan => Icons.developer_board_outlined,
+          MnnBackend.vulkan => ClaudeIcons.chip,
           MnnBackend.hexagon => Icons.bolt_outlined,
         }),
         title: Text(_name(l10n, backend)),
@@ -248,7 +249,7 @@ class _MnnRuntimeSettingsState extends State<MnnRuntimeSettings> {
                 !provider.clearingMnnMmapCache &&
                 !provider.loadingMnnMmapCache &&
                 provider.mnnMmapCacheBytes > 0,
-            leading: const Icon(Icons.cleaning_services_outlined),
+            leading: Icon(ClaudeIcons.broom),
             title: Text(l10n.mnnMmapCache),
             subtitle: Text(_cacheSubtitle(l10n, provider, cacheBusy)),
             trailing: provider.clearingMnnMmapCache

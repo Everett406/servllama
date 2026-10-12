@@ -56,7 +56,7 @@ class SettingsPage extends StatelessWidget {
                     children: [
                       SettingsMenuTile(
                         key: const Key('settings_theme_mode_tile'),
-                        icon: Icons.palette_outlined,
+                        icon: ClaudeIcons.palette,
                         title: l10n.settingsThemeMode,
                         value: _themeModeLabel(l10n, themeProvider.themeMode),
                         onTap: () =>
@@ -64,7 +64,7 @@ class SettingsPage extends StatelessWidget {
                       ),
                       SettingsMenuTile(
                         key: const Key('settings_language_tile'),
-                        icon: Icons.language_rounded,
+                        icon: ClaudeIcons.language,
                         title: l10n.settingsLanguage,
                         value: _localeModeLabel(
                           l10n,
@@ -83,7 +83,7 @@ class SettingsPage extends StatelessWidget {
                     children: [
                       SettingsMenuTile(
                         key: const Key('settings_chat_timeout_tile'),
-                        icon: Icons.timer_outlined,
+                        icon: ClaudeIcons.timer,
                         title: l10n.settingsChatTimeout,
                         value: l10n.settingsChatTimeoutValue(
                           chatTimeoutProvider.timeoutSeconds,

@@ -14,6 +14,7 @@ class SettingsMenuTile extends StatefulWidget {
     required this.icon,
     required this.title,
     this.subtitle,
+    this.subtitleMaxLines = 2,
     this.value,
     this.onTap,
     this.trailing,
@@ -25,6 +26,14 @@ class SettingsMenuTile extends StatefulWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
+
+  /// Clamps the subtitle so one long value cannot stretch the row.
+  ///
+  /// The system prompt was the reason: it printed in full and the row grew to
+  /// nearly a screen, which dragged the icon off-centre and threw the whole
+  /// card's proportions out. Defaults to two lines with an ellipsis; callers
+  /// that only ever pass a short value can leave it alone.
+  final int subtitleMaxLines;
   final String? value;
 
   /// When non-null, replaces the value + chevron. Use for in-row controls.
@@ -84,6 +93,8 @@ class _SettingsMenuTileState extends State<SettingsMenuTile> {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       widget.subtitle!,
+                      maxLines: widget.subtitleMaxLines,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(
                         context,
                       ).textTheme.labelSmall?.copyWith(height: 1.4),

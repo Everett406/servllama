@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servllama/app/app_palette.dart';
 import 'package:servllama/core/models/inference_engine.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Small colored chip identifying which engine a model or runtime belongs to.
 /// The label is always present — color alone never carries the meaning.
@@ -164,7 +165,7 @@ class NoticeBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon ?? Icons.info_outline_rounded, size: 18, color: mark),
+          Icon(icon ?? ClaudeIcons.info, size: 18, color: mark),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -15,6 +15,7 @@ import 'package:servllama/features/downloads/widgets/model_repository_link.dart'
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Quant file plus the currently selected projector when vision is on.
 List<HubRepoFile> ggufDownloadFiles({
@@ -185,7 +186,7 @@ class _HubRepoPageState extends State<HubRepoPage> {
               padding: const EdgeInsets.all(20),
               child: NoticeBanner(
                 tone: StatusTone.danger,
-                icon: Icons.error_outline_rounded,
+                icon: ClaudeIcons.error,
                 message: RuntimeLabels.hubError(l10n, discovery.lastError!),
               ),
             );
@@ -402,7 +403,7 @@ class _MnnBody extends StatelessWidget {
         const SizedBox(height: 16),
         NoticeBanner(
           tone: StatusTone.idle,
-          icon: Icons.folder_open_rounded,
+          icon: ClaudeIcons.folderOpen,
           message: l10n.repoMnnWholeDirectory(detail.files.length),
         ),
         const SizedBox(height: 16),

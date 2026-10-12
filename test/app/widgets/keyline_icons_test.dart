@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
@@ -95,6 +97,44 @@ void main() {
           expect(bounds.bottom, lessThan(25.5));
         }
       }
+    });
+
+    test('every icon name the app uses resolves to a drawing', () {
+      // The regression this guards: 31 call sites handed Material IconData to
+      // this painter, the codepoints did not match anything in the table, and
+      // the whole settings page rendered with no icons and nothing in the log.
+      //
+      // Walking the source is blunt on purpose. It catches a name that exists
+      // as a getter but has no entry in `paths`, which is the failure mode a
+      // widget test rendering one screen at a time would not.
+      const names = <String>[
+        'send', 'stop', 'plus', 'image', 'ghost', 'menu', 'copy', 'edit',
+        'regenerate', 'trash', 'chip', 'search', 'chevronRight', 'close',
+        'info', 'sliders', 'layers', 'download', 'play', 'clock', 'newChat',
+        'more', 'slash', 'penSquare', 'archive', 'chevronDown',
+        'error', 'security', 'key', 'folderOpen', 'wifi', 'route', 'timer',
+        'star', 'smartphone', 'receipt', 'palette', 'language', 'package',
+        'file', 'fileText', 'cloudDownload', 'broom',
+      ];
+      expect(names.toSet(), hasLength(ClaudeIcons.paths.length));
+
+      final source = Directory('lib');
+      var referenced = <String>{};
+      for (final entity in source.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        for (final m in RegExp(r'ClaudeIcons\.(\w+)').allMatches(entity.readAsStringSync())) {
+          final name = m.group(1)!;
+          // Methods and the private constructor are not icon names.
+          if (name == 'render' || name == 'draw' || name == '_') continue;
+          referenced.add(name);
+        }
+      }
+      expect(referenced, isNotEmpty);
+      expect(
+        referenced.difference(names.toSet()),
+        isEmpty,
+        reason: 'these names are used in lib/ but have no drawing',
+      );
     });
 
     test('codepoints are unique', () {

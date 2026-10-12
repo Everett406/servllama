@@ -17,6 +17,7 @@ import 'package:servllama/features/downloads/widgets/download_wifi_only_gate.dar
 import 'package:servllama/features/server/widgets/gguf_model_settings_sheet.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 class ModelManagementPage extends StatelessWidget {
   const ModelManagementPage({super.key, this.provider});
@@ -523,19 +524,19 @@ class _AddModelSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _AddOption(
-              icon: Icons.cloud_download_outlined,
+              icon: ClaudeIcons.cloudDownload,
               title: l10n.modelAddDownload,
               subtitle: l10n.modelAddDownloadDesc,
               onTap: () => Navigator.of(context).pop(_AddModelChoice.download),
             ),
             _AddOption(
-              icon: Icons.insert_drive_file_outlined,
+              icon: ClaudeIcons.file,
               title: l10n.modelAddGguf,
               subtitle: l10n.modelAddGgufDesc,
               onTap: () => Navigator.of(context).pop(_AddModelChoice.ggufFile),
             ),
             _AddOption(
-              icon: Icons.folder_open_rounded,
+              icon: ClaudeIcons.folderOpen,
               title: l10n.modelAddMnnDir,
               subtitle: l10n.modelAddMnnDirDesc,
               onTap: () =>
@@ -901,7 +902,7 @@ class _LibraryModelCard extends StatelessWidget {
                 IconButton(
                   tooltip: l10n.modelManagementSettingsTooltip,
                   onPressed: isActive || isRuntimeBusy ? null : onSettings,
-                  icon: const Icon(Icons.tune_rounded, size: 20),
+                  icon: Icon(ClaudeIcons.sliders, size: 20),
                 ),
                 IconButton(
                   tooltip: isActive

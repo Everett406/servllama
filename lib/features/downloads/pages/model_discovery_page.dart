@@ -10,6 +10,7 @@ import 'package:servllama/features/downloads/services/model_catalog_service.dart
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Two ways to find a model (design decision D3): a curated list that has
 /// been run on real devices, and raw hub search for everything else.
@@ -355,7 +356,7 @@ class _SearchTab extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: NoticeBanner(
           tone: StatusTone.danger,
-          icon: Icons.wifi_off_rounded,
+          icon: ClaudeIcons.wifi,
           message: RuntimeLabels.hubError(l10n, discovery.lastError!),
         ),
       );
@@ -398,7 +399,7 @@ class _SearchTab extends StatelessWidget {
                 children: [
                   NoticeBanner(
                     tone: StatusTone.danger,
-                    icon: Icons.wifi_off_rounded,
+                    icon: ClaudeIcons.wifi,
                     message: RuntimeLabels.hubError(
                       l10n,
                       discovery.loadMoreError!,

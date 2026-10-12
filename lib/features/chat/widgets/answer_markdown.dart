@@ -94,7 +94,10 @@ class AnswerMarkdown extends StatelessWidget {
         barWidth: 3,
         barColor: context.borderStrong,
         backgroundColor: Colors.transparent,
-        padding: EdgeInsets.zero,
+        // The gap between the bar and the text. Zeroing this is what made the
+        // bar sit flush against the first character; backgroundColor above is
+        // the thing that controls the panel fill, not the indent.
+        padding: const EdgeInsets.only(left: 14),
         margin: const EdgeInsets.symmetric(vertical: 4),
         textStyle: TextStyle(
           fontSize: 15,

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:servllama/core/services/llama_server_service.dart';
 import 'package:servllama/core/services/model_storage_paths.dart';
 import 'package:servllama/core/services/native_library_dir_service.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Developer-only page for launching llama-server with custom arguments.
 /// Only reachable from the sidebar in debug builds; strings are
@@ -313,7 +314,7 @@ class _PathRow extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             iconSize: 16,
             onPressed: () => onCopy(label, path),
-            icon: const Icon(Icons.copy_rounded),
+            icon: Icon(ClaudeIcons.copy),
           ),
       ],
     );

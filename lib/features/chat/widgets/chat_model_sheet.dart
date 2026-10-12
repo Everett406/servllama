@@ -6,6 +6,7 @@ import 'package:servllama/core/utils/format_utils.dart';
 import 'package:servllama/features/downloads/models/download_task_view.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Model picker for the chat page.
 ///
@@ -78,7 +79,7 @@ class ChatModelSheet extends StatelessWidget {
               NoticeBanner(
                 key: const Key('chat_model_sheet_error'),
                 tone: StatusTone.danger,
-                icon: Icons.error_outline_rounded,
+                icon: ClaudeIcons.error,
                 message: errorText!,
               ),
             ],
@@ -125,7 +126,7 @@ class ChatModelSheet extends StatelessWidget {
                           TextButton.icon(
                             key: const Key('chat_model_sheet_discover'),
                             onPressed: onDiscover,
-                            icon: const Icon(Icons.travel_explore_rounded),
+                            icon: Icon(ClaudeIcons.route),
                             label: Text(l10n.discoverTitle),
                           ),
                         ],

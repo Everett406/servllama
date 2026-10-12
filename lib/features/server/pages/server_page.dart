@@ -18,6 +18,7 @@ import 'package:servllama/features/server/widgets/runtime_hero_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// Runtime control center: pick an engine, pick a model, start or stop. The
 /// two engines' native startup details are absorbed by [EngineRuntimeProvider];
@@ -111,7 +112,7 @@ class _ServerPageState extends State<ServerPage> {
               NoticeBanner(
                 key: const Key('server_open_access_warning'),
                 tone: StatusTone.warning,
-                icon: Icons.security_rounded,
+                icon: ClaudeIcons.security,
                 message: l10n.serverOpenAccessWarning,
               ),
             ],
@@ -119,7 +120,7 @@ class _ServerPageState extends State<ServerPage> {
               const SizedBox(height: 16),
               NoticeBanner(
                 tone: StatusTone.danger,
-                icon: Icons.error_outline_rounded,
+                icon: ClaudeIcons.error,
                 message: RuntimeLabels.runtimeError(
                   l10n,
                   state.error!,
@@ -131,23 +132,23 @@ class _ServerPageState extends State<ServerPage> {
             _MenuGroupCard(
               items: [
                 _MenuItemData(
-                  icon: Icons.tune_rounded,
+                  icon: ClaudeIcons.sliders,
                   title: l10n.serverMenuConfig,
                   onTap: () => _push(context, const ServerConfigPage()),
                 ),
                 _MenuItemData(
-                  icon: Icons.receipt_long_rounded,
+                  icon: ClaudeIcons.receipt,
                   title: l10n.serverMenuLogs,
                   onTap: () => _push(context, const ServerLogsPage()),
                 ),
                 _MenuItemData(
-                  icon: Icons.inventory_2_outlined,
+                  icon: ClaudeIcons.package,
                   title: l10n.serverMenuModels,
                   trailing: '${library.libraryModels.length}',
                   onTap: () => _push(context, const ModelManagementPage()),
                 ),
                 _MenuItemData(
-                  icon: Icons.travel_explore_rounded,
+                  icon: ClaudeIcons.route,
                   title: l10n.discoverTitle,
                   onTap: () => _push(context, const ModelDiscoveryPage()),
                 ),

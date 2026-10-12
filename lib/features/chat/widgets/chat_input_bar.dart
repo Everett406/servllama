@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servllama/features/chat/widgets/chat_image_widgets.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 class ChatInputBar extends StatelessWidget {
   const ChatInputBar({
@@ -257,7 +258,7 @@ class ChatInputBar extends StatelessWidget {
                                   ),
                                 )
                               : Icon(
-                                  Icons.memory_outlined,
+                                  ClaudeIcons.chip,
                                   size: 22,
                                   color: canOpenModels
                                       ? actionButtonIconColor

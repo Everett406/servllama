@@ -8,13 +8,19 @@ import 'package:servllama/app/widgets/svg_path_data.dart';
 /// React Native, Iconify, Figma and an MCP server, but there is no Flutter
 /// package — and turning stroked artwork into a font means flattening every
 /// stroke to an outline first, which is a lot of tooling to carry for
-/// twenty-six glyphs.
+/// forty-odd glyphs.
 ///
 /// So the drawings stay as path data and are stroked onto the canvas at
 /// paint time. The set's weight and terminals survive exactly as drawn, the
 /// dependency list and the APK size do not move, and this file remains the
 /// one place an icon is defined — which is what the app already assumed by
 /// routing everything through here.
+///
+/// **Every icon that reaches [draw] must have an entry in [paths].** An
+/// earlier version fell back to silently drawing nothing for an unknown
+/// codepoint, which is how a whole settings page ended up with no icons at
+/// all and nothing in the log. [debugAssert] turns that into a crash in
+/// debug instead of a blank space in release.
 ///
 /// Source: github.com/keyline-icons/keyline-icons (MIT).
 class ClaudeIcons {
@@ -73,7 +79,7 @@ class ClaudeIcons {
   /// Engine settings.
   static IconData get sliders => const IconData(0xe90f, fontFamily: family);
 
-  /// Context window.
+  /// Context window and stacks.
   static IconData get layers => const IconData(0xe910, fontFamily: family);
 
   /// Fetch a model.
@@ -103,11 +109,59 @@ class ClaudeIcons {
   /// Expand the thought sheet.
   static IconData get chevronDown => const IconData(0xe919, fontFamily: family);
 
+  /// Something went wrong.
+  static IconData get error => const IconData(0xe91a, fontFamily: family);
+
+  /// Security notice.
+  static IconData get security => const IconData(0xe91b, fontFamily: family);
+
+  /// Token or key.
+  static IconData get key => const IconData(0xe91c, fontFamily: family);
+
+  /// A folder or library.
+  static IconData get folderOpen => const IconData(0xe91d, fontFamily: family);
+
+  /// Wi-Fi only.
+  static IconData get wifi => const IconData(0xe91e, fontFamily: family);
+
+  /// Line or mirror.
+  static IconData get route => const IconData(0xe91f, fontFamily: family);
+
+  /// Timeout.
+  static IconData get timer => const IconData(0xe920, fontFamily: family);
+
+  /// Favourite or pin.
+  static IconData get star => const IconData(0xe921, fontFamily: family);
+
+  /// This device.
+  static IconData get smartphone => const IconData(0xe922, fontFamily: family);
+
+  /// Stored records.
+  static IconData get receipt => const IconData(0xe923, fontFamily: family);
+
+  /// Appearance.
+  static IconData get palette => const IconData(0xe924, fontFamily: family);
+
+  /// Language.
+  static IconData get language => const IconData(0xe925, fontFamily: family);
+
+  /// Model library.
+  static IconData get package => const IconData(0xe926, fontFamily: family);
+
+  /// A file.
+  static IconData get file => const IconData(0xe927, fontFamily: family);
+
+  /// A text document.
+  static IconData get fileText => const IconData(0xe928, fontFamily: family);
+
+  /// Download from the network.
+  static IconData get cloudDownload =>
+      const IconData(0xe929, fontFamily: family);
+
+  /// Clean up.
+  static IconData get broom => const IconData(0xe92a, fontFamily: family);
+
   /// A plain [Icon] that still resolves through this set.
-  ///
-  /// Three call sites build an [IconData] inline rather than naming a
-  /// constant, and handing one to [Icon] would draw nothing at all — which
-  /// is the exact failure this painter exists to prevent.
   static Widget render(
     IconData icon, {
     double size = 20,
@@ -124,10 +178,10 @@ class ClaudeIcons {
 
   /// Strokes the drawing at [codePoint] onto [canvas] at [size] pixels.
   ///
-  /// Takes the codepoint rather than an [IconData] on purpose. Rebuilding an
-  /// IconData here from a value only known at runtime is non-constant, and
-  /// the release tree shaker refuses to build a binary that contains one —
-  /// so the painter below passes its own int straight through.
+  /// Takes the codepoint rather than an [IconData] on purpose. Rebuilding
+  /// an IconData here from a value only known at runtime is non-constant by
+  /// construction, and the release tree shaker refuses to emit a binary
+  /// containing one.
   static void draw(
     Canvas canvas,
     int codePoint, {
@@ -135,15 +189,20 @@ class ClaudeIcons {
     required double size,
   }) {
     final shapes = paths[codePoint];
+    assert(
+      shapes != null,
+      'No Keyline drawing for codepoint 0x\${codePoint.toRadixString(16)}. '
+      'Every IconData passed to ClaudeIcons must have a ClaudeIcons entry.',
+    );
     if (shapes == null || shapes.isEmpty) return;
 
     final scale = size / 24.0;
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      // The set is drawn at 2 on a 24 grid. Scaling it with the icon is the
-      // point of that choice: a small icon gets a proportionally lighter
-      // line rather than a hairline the rasteriser cannot render honestly.
+      // Drawn at 2 on a 24 grid. Scaling it with the icon is the point of
+      // that choice: a small icon gets a proportionally lighter line
+      // rather than a hairline the rasteriser cannot render honestly.
       ..strokeWidth = 2.0 * scale
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
@@ -272,6 +331,98 @@ class ClaudeIcons {
       ),
     ],
     0xe919: <SvgPathData>[SvgPathData('M6 9L12 15L18 9')],
+    0xe91a: <SvgPathData>[
+      SvgPathData(
+        'M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2Z',
+      ),
+      SvgPathData('M9 9L15 15M15 9L9 15'),
+    ],
+    0xe91b: <SvgPathData>[
+      SvgPathData(
+        'M5.18251 5.16845C7.83034 4.85425 9.82952 3.53222 11.0242 2.37315C11.537 1.87562 12.463 1.87562 12.9758 2.37315C14.1705 3.53222 16.1697 4.85425 18.8175 5.16845C19.4672 5.24554 20 5.75056 20 6.38285V12.5708C20 14.3452 19.7111 16.1513 18.612 17.5729C17.4097 19.1277 15.5033 20.8703 12.8298 21.8525C12.2945 22.0492 11.7055 22.0492 11.1702 21.8525C8.49668 20.8703 6.59026 19.1277 5.38804 17.5729C4.28885 16.1513 4 14.3452 4 12.5708V6.38285C4 5.75056 4.53284 5.24554 5.18251 5.16845ZM8 12L10.6667 15L16 9',
+      ),
+    ],
+    0xe91c: <SvgPathData>[
+      SvgPathData(
+        'M10 12C10 14.2091 8.2091 16 6 16C3.7909 16 2 14.2091 2 12C2 9.7909 3.7909 8 6 8C8.2091 8 10 9.7909 10 12ZM10 12L22 12M17 12L17 16M21 12L21 16',
+      ),
+    ],
+    0xe91d: <SvgPathData>[
+      SvgPathData(
+        'M6 15L7.4472 12.1056C7.786 11.428 8.4785 11 9.2361 11L19.9978 11C21.4451 11 22.4132 12.4897 21.8254 13.8123L19.6032 18.8123C19.2822 19.5345 18.5659 20 17.7756 20L4 20C2.8954 20 2 19.1046 2 18L2 6C2 4.8954 2.8954 4 4 4L7.3787 4C7.7765 4 8.158 4.158 8.4393 4.4393L9.5607 5.5607C9.842 5.842 10.2235 6 10.6213 6L17 6C18.1046 6 19 6.8954 19 8L19 11',
+      ),
+    ],
+    0xe91e: <SvgPathData>[
+      SvgPathData(
+        'M9.3333 15.0186C10.0667 14.3626 11.0161 14 12 14C12.9839 14 13.9333 14.3626 14.6667 15.0186M6.6667 12.0372C8.1334 10.7253 10.0322 10 12 10C13.9678 10 15.8666 10.7253 17.3333 12.0372M4 9.0557C6.2001 7.0879 9.0483 6 12 6C14.9517 6 17.7999 7.0879 20 9.0557',
+      ),
+      SvgPathData(
+        'M13 18C13 18.5523 12.5523 19 12 19C11.4477 19 11 18.5523 11 18C11 17.4477 11.4477 17 12 17C12.5523 17 13 17.4477 13 18Z',
+      ),
+    ],
+    0xe91f: <SvgPathData>[
+      SvgPathData(
+        'M9 18C9 19.6569 7.6569 21 6 21C4.3431 21 3 19.6569 3 18C3 16.3431 4.3431 15 6 15C7.6569 15 9 16.3431 9 18ZM9 18H14C16.2091 18 18 16.2091 18 14V3M15 6L18 3L21 6',
+      ),
+    ],
+    0xe920: <SvgPathData>[
+      SvgPathData(
+        'M12 6C16.4183 6 20 9.5817 20 14C20 18.4183 16.4183 22 12 22C7.5817 22 4 18.4183 4 14C4 9.5817 7.5817 6 12 6ZM9 2L15 2M12 2L12 6M12 14L12 10M17.6569 8.3431L19 7',
+      ),
+    ],
+    0xe921: <SvgPathData>[
+      SvgPathData(
+        'M11.5386 2.8073C11.6164 2.6212 11.7983 2.5 12 2.5C12.2017 2.5 12.3836 2.6212 12.4614 2.8073L14.87 8.5744C14.9422 8.7473 15.1049 8.8653 15.2916 8.8802L21.5398 9.379C21.7413 9.3951 21.9133 9.531 21.9756 9.7233C22.0379 9.9157 21.9783 10.1266 21.8245 10.2578L17.0671 14.3162C16.924 14.4383 16.8615 14.6302 16.9053 14.8131L18.3593 20.8835C18.4064 21.0798 18.3307 21.2851 18.1675 21.404C18.0044 21.5229 17.7857 21.532 17.6132 21.4271L12.2598 18.1708C12.1002 18.0737 11.8998 18.0737 11.7402 18.1708L6.3868 21.4271C6.2143 21.532 5.9956 21.5229 5.8325 21.404C5.6693 21.2851 5.5936 21.0798 5.6407 20.8835L7.0947 14.8131C7.1385 14.6302 7.076 14.4383 6.9329 14.3162L2.1755 10.2578C2.0217 10.1266 1.962 9.9157 2.0244 9.7233C2.0867 9.531 2.2587 9.3951 2.4602 9.379L8.7084 8.8802C8.8951 8.8653 9.0578 8.7473 9.13 8.5744Z',
+      ),
+    ],
+    0xe922: <SvgPathData>[
+      SvgPathData(
+        'M10.5 6H13.5M19 18V6C19 3.79086 17.2091 2 15 2H9C6.79086 2 5 3.79086 5 6V18C5 20.2091 6.79086 22 9 22H15C17.2091 22 19 20.2091 19 18Z',
+      ),
+    ],
+    0xe923: <SvgPathData>[
+      SvgPathData(
+        'M8 9H12M8 13H16M4 5C4 3.34315 5.34315 2 7 2H17C18.6569 2 20 3.34315 20 5V20L16 22L12 20L8 22L4 20V5Z',
+      ),
+    ],
+    0xe924: <SvgPathData>[
+      SvgPathData(
+        'M15.2184 21.4679C14.1819 21.8203 13.0947 22 12 22C6.4772 22 2 17.5228 2 12C2 6.4772 6.4772 2 12 2C17.5228 2 22 6.4772 22 12C22 13.7005 20.6215 15.079 18.921 15.079C18.7666 15.079 18.6124 15.0674 18.4598 15.0443C18.3111 15.0217 18.1608 15.0104 18.0104 15.0104C16.3536 15.0104 15.0104 16.3536 15.0104 18.0104C15.0104 18.6956 15.2449 19.3601 15.675 19.8935C15.8184 20.0713 15.8965 20.2928 15.8965 20.5212C15.8965 20.9494 15.6238 21.3301 15.2184 21.4679Z',
+      ),
+      SvgPathData(
+        'M11.6189 17.1683C11.6189 17.9967 10.9473 18.6683 10.1189 18.6683C9.2905 18.6683 8.6189 17.9967 8.6189 17.1683C8.6189 16.3399 9.2905 15.6683 10.1189 15.6683C10.9473 15.6683 11.6189 16.3399 11.6189 17.1683ZM8.1304 13.1904C8.1304 14.0188 7.4588 14.6904 6.6304 14.6904C5.8019 14.6904 5.1304 14.0188 5.1304 13.1904C5.1304 12.362 5.8019 11.6904 6.6304 11.6904C7.4588 11.6904 8.1304 12.362 8.1304 13.1904ZM9.6109 8.1109C9.6109 8.9393 8.9393 9.6109 8.1109 9.6109C7.2825 9.6109 6.6109 8.9393 6.6109 8.1109C6.6109 7.2825 7.2825 6.6109 8.1109 6.6109C8.9393 6.6109 9.6109 7.2825 9.6109 8.1109ZM14.6904 6.6304C14.6904 7.4588 14.0188 8.1304 13.1904 8.1304C12.362 8.1304 11.6904 7.4588 11.6904 6.6304C11.6904 5.8019 12.362 5.1304 13.1904 5.1304C14.0188 5.1304 14.6904 5.8019 14.6904 6.6304ZM18.6683 10.1189C18.6683 10.9473 17.9967 11.6189 17.1683 11.6189C16.3399 11.6189 15.6683 10.9473 15.6683 10.1189C15.6683 9.2905 16.3399 8.6189 17.1683 8.6189C17.9967 8.6189 18.6683 9.2905 18.6683 10.1189Z',
+      ),
+    ],
+    0xe925: <SvgPathData>[
+      SvgPathData(
+        'M2 11L6 2L10 11M3.3333 8L8.6667 8M16 11L18 11M12 15L22 15M14 15C14.4767 16.1439 15.5203 18.0076 17 19.543C18.1074 20.6922 19.459 21.6576 21 22M20 15C19.5234 16.1439 18.4797 18.0076 17 19.543C15.8926 20.6922 14.541 21.6576 13 22',
+      ),
+    ],
+    0xe926: <SvgPathData>[
+      SvgPathData(
+        'M2.3084 7.0066L12 12M12 12L21.6916 7.0066M12 12L12 22M7 4.3017L17 9.4239M12.9075 2.2178L20.9075 6.2914C21.5779 6.6328 22 7.3214 22 8.0737L22 15.9263C22 16.6786 21.5779 17.3672 20.9075 17.7086L12.9075 21.7822C12.3373 22.0726 11.6627 22.0726 11.0925 21.7822L3.0925 17.7086C2.4221 17.3672 2 16.6786 2 15.9263L2 8.0737C2 7.3214 2.4221 6.6328 3.0925 6.2914L11.0925 2.2178C11.6627 1.9274 12.3373 1.9274 12.9075 2.2178Z',
+      ),
+    ],
+    0xe927: <SvgPathData>[
+      SvgPathData(
+        'M14 2H8C5.79086 2 4 3.79086 4 6V18C4 20.2091 5.79086 22 8 22H16C18.2091 22 20 20.2091 20 18V8L14 2ZM14 2V5C14 6.65685 15.3431 8 17 8H20',
+      ),
+    ],
+    0xe928: <SvgPathData>[
+      SvgPathData(
+        'M14 2H8C5.79086 2 4 3.79086 4 6V18C4 20.2091 5.79086 22 8 22H16C18.2091 22 20 20.2091 20 18V8L14 2ZM14 2V5C14 6.65685 15.3431 8 17 8H20M8 13H12M8 17H16',
+      ),
+    ],
+    0xe929: <SvgPathData>[
+      SvgPathData(
+        'M12 13L12 21M8 17L12 21L16 17M4 16.4641C2.7624 15.7496 2 14.4291 2 13C2 10.7909 3.7909 9 6 9C6 5.6863 8.6863 3 12 3C15.3137 3 18 5.6863 18 9C20.2091 9 22 10.7909 22 13C22 14.4291 21.2376 15.7496 20 16.4641',
+      ),
+    ],
+    0xe92a: <SvgPathData>[
+      SvgPathData(
+        'M11.6106 13.5362C10.257 14.466 6.6399 16.1295 3 15.3456C5.8769 18.8355 12.2148 24.7603 14.5521 20.5399C15.1662 19.4704 16.3379 17.1141 16.1118 16.2453ZM11.6106 13.5362C12.0558 12.2895 13.5424 10.069 15.9271 11.1603M16.1118 16.2453C16.9171 15.0561 18.0077 12.3742 15.9271 11.1603M15.9271 11.1603L21 2',
+      ),
+    ],
   };
 }
 
@@ -324,8 +475,6 @@ class ClaudeIconPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ClaudeIconPainter oldDelegate) =>
-      oldDelegate.codePoint != codePoint ||
-      oldDelegate.color != color ||
-      oldDelegate.size != size;
+  bool shouldRepaint(ClaudeIconPainter old) =>
+      old.codePoint != codePoint || old.color != color || old.size != size;
 }

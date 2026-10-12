@@ -5,6 +5,7 @@ import 'package:servllama/features/downloads/models/download_task_view.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 /// One download task. MNN models are whole directories, so a single card can
 /// represent many files — the file counter makes that visible instead of
@@ -184,7 +185,7 @@ class DownloadTaskCard extends StatelessWidget {
               const SizedBox(height: 10),
               NoticeBanner(
                 tone: StatusTone.danger,
-                icon: Icons.error_outline_rounded,
+                icon: ClaudeIcons.error,
                 message: RuntimeLabels.downloadError(l10n, task.errorDetail!),
               ),
             ],

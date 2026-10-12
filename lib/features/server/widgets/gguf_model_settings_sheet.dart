@@ -15,6 +15,7 @@ import 'package:servllama/features/downloads/widgets/model_repository_link.dart'
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/l10n/runtime_labels.dart';
 import 'package:servllama/shared/widgets/engine_badge.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 class GgufModelSettingsSheet extends StatefulWidget {
   const GgufModelSettingsSheet({super.key, required this.descriptor});
@@ -442,7 +443,7 @@ class _GgufModelSettingsSheetState extends State<GgufModelSettingsSheet> {
                   if (model.mmprojFilePath case final path?)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.description_outlined),
+                      leading: Icon(ClaudeIcons.fileText),
                       title: Text(
                         path.split(RegExp(r'[\\/]')).last,
                         maxLines: 2,

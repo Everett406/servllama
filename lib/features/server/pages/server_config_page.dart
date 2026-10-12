@@ -123,7 +123,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                                             'server_config_open_access_warning',
                                           ),
                                           tone: StatusTone.warning,
-                                          icon: Icons.security_rounded,
+                                          icon: ClaudeIcons.security,
                                           message: l10n.serverOpenAccessWarning,
                                         ),
                                       ],

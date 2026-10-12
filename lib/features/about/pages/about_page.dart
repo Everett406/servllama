@@ -15,6 +15,7 @@ import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
 
 const _kGitHubUrl = 'https://github.com/ArkaneFans/servllama';
 const _kPendingValue = '\u2014';
@@ -191,29 +192,29 @@ class _AboutPageState extends State<AboutPage> {
               children: [
                 SettingsMenuTile(
                   key: const Key('about_version_tile'),
-                  icon: Icons.info_outline_rounded,
+                  icon: ClaudeIcons.info,
                   title: l10n.aboutVersionLabel,
                   onTap: _copyAppVersion,
                   trailing: _trailingValue(
                     _appVersion,
-                    icon: Icons.copy_rounded,
+                    icon: ClaudeIcons.copy,
                   ),
                 ),
                 SettingsMenuTile(
                   key: const Key('about_system_tile'),
-                  icon: Icons.smartphone_outlined,
+                  icon: ClaudeIcons.smartphone,
                   title: l10n.aboutSystem,
                   value: _systemLabel(),
                 ),
                 SettingsMenuTile(
                   key: const Key('about_llamacpp_tile'),
-                  icon: Icons.memory_outlined,
+                  icon: ClaudeIcons.chip,
                   title: l10n.aboutLlamaCppLabel,
                   value: _llamaCppVersion,
                 ),
                 SettingsMenuTile(
                   key: const Key('about_mnn_tile'),
-                  icon: Icons.developer_board_outlined,
+                  icon: ClaudeIcons.chip,
                   title: l10n.aboutMnnVersion,
                   value: _mnnVersion,
                 ),
@@ -226,7 +227,7 @@ class _AboutPageState extends State<AboutPage> {
               children: [
                 SettingsMenuTile(
                   key: const Key('about_github_tile'),
-                  icon: Icons.star_outline_rounded,
+                  icon: ClaudeIcons.star,
                   title: l10n.aboutStarOnGitHub,
                   onTap: () => unawaited(_openGitHub()),
                   trailing: Icon(
@@ -237,7 +238,7 @@ class _AboutPageState extends State<AboutPage> {
                 ),
                 SettingsMenuTile(
                   key: const Key('about_license_tile'),
-                  icon: Icons.description_outlined,
+                  icon: ClaudeIcons.fileText,
                   title: l10n.aboutLicense,
                   onTap: _openLicenses,
                 ),
