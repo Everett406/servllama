@@ -158,32 +158,51 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
     ValueListenable<StreamingChatMessageData>? stream,
     ValueListenable<String>? liveReasoning,
   }) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: ClaudeSpacing.readingWidth),
-        child: ChatMessageItem(
-          message: message,
-          isStreaming: isStreaming,
-          promptedAt: promptedAt,
-          canManage: provider.canManageMessages,
-          onCopy: () async {
-            await Clipboard.setData(ClipboardData(text: message.content));
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.l10n.chatMessageCopied)),
-            );
-          },
-          onRegenerate: () => provider.regenerateFromMessage(message.id),
-          onEdit: () => _editMessage(provider, message),
-          onDelete: () => provider.deleteMessage(message.id),
-        ),
+    return ChatMessageRow(
+      child: ChatMessageItem(
+        message: message,
+        isStreaming: isStreaming,
+        promptedAt: promptedAt,
+        canManage: provider.canManageMessages,
+        onCopy: () async {
+          await Clipboard.setData(ClipboardData(text: message.content));
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.chatMessageCopied)),
+          );
+        },
+        onRegenerate: () => provider.regenerateFromMessage(message.id),
+        onEdit: () => _editMessage(provider, message),
+        onDelete: () => provider.deleteMessage(message.id),
       ),
     );
   }
 }
 
-/// Floating "jump to latest" affordance. Only appears once the user has
-/// scrolled away from the bottom, so it never occupies the resting layout.
+/// One turn in the transcript, inside the reading measure.
+///
+/// [Center] used to do two jobs here: capping the measure and centring the
+/// result. A message item is a Column that sizes itself to its widest child,
+/// so a long turn filled the measure and happened to look right-aligned,
+/// while a short one came out narrow and got parked in the middle. Pinning
+/// the child to the full measure hands alignment back to the item's own
+/// cross-axis, which is the thing that knows whether the turn is yours.
+class ChatMessageRow extends StatelessWidget {
+  const ChatMessageRow({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: ClaudeSpacing.readingWidth),
+        child: SizedBox(width: double.infinity, child: child),
+      ),
+    );
+  }
+}
+
 class JumpToLatestButton extends StatelessWidget {
   const JumpToLatestButton({super.key, required this.onPressed});
 

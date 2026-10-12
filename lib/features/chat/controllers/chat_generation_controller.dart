@@ -6,6 +6,7 @@ import 'package:servllama/features/chat/controllers/chat_model_controller.dart';
 import 'package:servllama/features/chat/controllers/chat_session_list_controller.dart';
 import 'package:servllama/features/chat/controllers/streaming_chat_message_notifier.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
+import 'package:servllama/features/chat/widgets/token_stats.dart';
 import 'package:servllama/features/chat/models/chat_message_version_record.dart';
 import 'package:servllama/features/chat/models/chat_model_option.dart';
 import 'package:servllama/features/chat/models/chat_session_record.dart';
@@ -649,6 +650,12 @@ class ChatGenerationController extends ChangeNotifier {
           // persisted record again — otherwise later edits or version
           // switches would be shadowed by the stale streaming snapshot.
           streamingMessages.remove(draft.id);
+          // Close the throughput sample here, while the last content length
+          // is still in hand. The list feeds TokenStats from its streaming
+          // builder, and that builder is detached by the remove above — so
+          // the one call that could mark the sample finished never happened,
+          // and the rate shown under a reply was always absent.
+          TokenStats.observe(draft.id, draft.content, isStreaming: false);
         }
 
         _draftAssistantMessage = null;

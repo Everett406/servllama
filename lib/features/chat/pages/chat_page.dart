@@ -293,14 +293,6 @@ class _ChatViewState extends State<_ChatView> {
             children: [
               Column(
                 children: [
-                  _ChatTopBar(
-                    onOpenSidebar: widget.onOpenSidebar,
-                    isStealth: chat.isStealthMode,
-                    onStealthChanged: chat.setStealthMode,
-                    onNewChat: chat.createSession,
-                    onSelectModel: _showModels,
-                    onOpenHistory: widget.onOpenHistory ?? () {},
-                  ),
                   Expanded(
                     child: isEmpty
                         ? ChatEmptyState(
@@ -372,6 +364,22 @@ class _ChatViewState extends State<_ChatView> {
                   ),
                 ],
               ),
+              // The pills float. Three opaque circles over the transcript is one thing;
+// a full-width opaque strip above it is another, and the strip is what was
+// cutting the first line in half.
+Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: _ChatTopBar(
+                  onOpenSidebar: widget.onOpenSidebar,
+                  isStealth: chat.isStealthMode,
+                  onStealthChanged: chat.setStealthMode,
+                  onNewChat: chat.createSession,
+                  onSelectModel: _showModels,
+                  onOpenHistory: widget.onOpenHistory ?? () {},
+                ),
+              ),
               if (!isEmpty)
                 // Above the composer, not on it. It used to sit bottom-
                 // right, which is precisely where the send button lives,
@@ -408,18 +416,12 @@ class _ChatViewState extends State<_ChatView> {
   }
 }
 
-/// How far the transcript dissolves at each end.
-///
-/// Shared by the padding and the fade so they meet exactly: the list's own
-/// runway and the gradient that covers it are the same length, which means
-/// text only fades once it has already scrolled clear of where the eye
-/// reads.
 /// Clearance above the first line.
 ///
-/// Small on purpose. The header is three solid pills floating over the
-/// transcript, not a bar the text has to queue behind, so the runway only
-/// has to keep a line from being sliced by the very top of the screen.
-const double _topRunway = 14;
+/// Enough to clear the pills when the transcript is scrolled to its very
+/// top, and no more: the pills are opaque circles, not a bar, so text is
+/// free to run up behind them and between them.
+const double _topRunway = 54;
 
 /// The composer is an opaque panel, so text genuinely has to leave the way
 /// it came in. Runway and fade share a length: a line starts dissolving

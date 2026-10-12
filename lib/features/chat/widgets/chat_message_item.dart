@@ -88,7 +88,7 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
       content: message.reasoningContent ?? '',
       elapsed: elapsed,
       messageId: message.id,
-      liveContent: widget.liveReasoning,
+      liveContent: _liveReasoning,
       answerStarted: (message.content).trim().isNotEmpty,
     );
     if (mounted) setState(() => _showReasoning = false);
@@ -143,10 +143,33 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
   }
 
 
+  /// Reasoning as the model produces it.
+  ///
+  /// Owned here rather than handed in. It was projected in the list and
+  /// passed down, but only on the branch that builds a streaming item, so a
+  /// sheet opened from the other branch was handed nothing to listen to and
+  /// showed the text it opened with until you closed it. The sheet is where
+  /// you go to watch the thought happen, so it follows the thought.
+  late final ValueNotifier<String> _liveReasoning = ValueNotifier<String>(
+    widget.message.reasoningContent ?? '',
+  );
+
+  @override
+  void dispose() {
+    _liveReasoning.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final message = widget.message;
     final reasoning = message.reasoningContent?.trim() ?? '';
+    // This item's own build is the one place that is guaranteed to run with
+    // the live message in hand, on either branch.
+    final liveReasoning = message.reasoningContent ?? '';
+    if (_liveReasoning.value != liveReasoning) {
+      _liveReasoning.value = liveReasoning;
+    }
     final content = message.content;
     final hasContent = content.trim().isNotEmpty;
 

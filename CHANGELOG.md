@@ -1,3 +1,36 @@
+## [1.8.0] - 2026-10-12
+
+### Icons
+
+- Every icon is now drawn from Keyline, an open set of 1,366 drawings on one
+  24x24 grid built around 2px strokes with round caps and joins (MIT).
+  It has packages for React, React Native, Iconify, Figma and an MCP server
+  but no Flutter one, and turning stroked artwork into a font means
+  flattening every stroke to an outline first. So the drawings stay as path
+  data and are stroked onto the canvas at paint time: same weight and
+  terminals as drawn, no new dependency, no APK growth.
+- All 26 icons come through the one abstraction the app already had, so no
+  call site changed.
+
+### Fixed
+
+- The header pills float. They were a row in the page column, which reserved
+  a full-width opaque strip above the transcript; the transcript now runs up
+  behind them.
+- A short turn of your own was drifting to the middle of the measure. The
+  row wrapper used `Center` to cap the reading width, and Center also
+  centres — so a long turn filled the measure and looked right-aligned by
+  accident while a short one came out narrow and got parked in the middle.
+  The measure is now pinned and alignment is the item's own decision again.
+- The thought sheet follows the thought. Its reasoning came from a
+  projection handed down from the list, but only on the branch that builds a
+  streaming item, so a sheet opened from the other branch listened to
+  nothing and showed its opening snapshot until closed. The item owns it now.
+- Tokens per second under a reply. The sample was closed by the one call
+  that could mark it finished — a call made from the streaming builder that
+  the list detaches the moment the stream ends. The rate could never appear.
+
+
 # Changelog
 
 All notable changes to this project are documented here.
