@@ -174,7 +174,10 @@ class _SliderNumberSettingState extends State<SliderNumberSetting> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(ClaudeRadius.sm),
-                    borderSide: BorderSide(color: ClaudeColors.accent, width: 1.5),
+                    borderSide: BorderSide(
+                      color: ClaudeColors.accent,
+                      width: 1.5,
+                    ),
                   ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(

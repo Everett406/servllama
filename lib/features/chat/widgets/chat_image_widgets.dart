@@ -93,8 +93,8 @@ class _ImageThumbnail extends StatelessWidget {
               // Decode at display size — full-size bitmaps of multi-MB photos
               // are wasted on a thumbnail. The fullscreen preview keeps the
               // original resolution.
-              cacheWidth:
-                  (size * MediaQuery.devicePixelRatioOf(context)).round(),
+              cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                  .round(),
               errorBuilder: (_, __, ___) => Container(
                 color: colorScheme.surfaceContainerHighest,
                 child: Icon(

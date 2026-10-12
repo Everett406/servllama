@@ -31,7 +31,10 @@ class AppThemeModeProvider extends ChangeNotifier {
     }
 
     _themeMode = value;
-    await _kvStorage.setString(AppPrefsKeys.themeMode, _themeModeToStorage(value));
+    await _kvStorage.setString(
+      AppPrefsKeys.themeMode,
+      _themeModeToStorage(value),
+    );
     notifyListeners();
   }
 

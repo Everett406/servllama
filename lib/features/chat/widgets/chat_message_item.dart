@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
+import 'package:servllama/features/chat/widgets/streaming_fade_text.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 
@@ -47,6 +47,33 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
   bool _hovered = false;
   bool _showReasoning = false;
 
+  /// Opens the thought in a sheet and drops the inline marker afterwards.
+  ///
+  /// The inline state exists only to keep the row's hit target honest while
+  /// the sheet is up; the sheet is what the user actually reads.
+  Future<void> _openThinking() async {
+    if (_showReasoning) {
+      setState(() => _showReasoning = false);
+      return;
+    }
+    setState(() => _showReasoning = true);
+    final message = widget.message;
+    final promptedAt = widget.promptedAt;
+    var elapsed =
+        ThinkingTimings.frozen(message.id) ??
+        (promptedAt == null
+            ? Duration.zero
+            : DateTime.now().difference(promptedAt));
+    if (elapsed.isNegative) elapsed = Duration.zero;
+    if (!mounted) return;
+    await showThinkingSheet(
+      context,
+      content: message.reasoningContent ?? '',
+      elapsed: elapsed,
+    );
+    if (mounted) setState(() => _showReasoning = false);
+  }
+
   bool get _isUser => widget.message.role == ChatRole.user;
 
   @override
@@ -73,18 +100,22 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
           children: [
             if (message.imageFilePaths.isNotEmpty)
               _MessageImages(paths: message.imageFilePaths, alignEnd: _isUser),
-            if (_isUser && hasContent) _UserBubble(content: content, id: message.id),
+            if (_isUser && hasContent)
+              _UserBubble(content: content, id: message.id),
             if (!_isUser) ...[
-              if (reasoning.isNotEmpty)
+              // Shown while generating even with nothing to quote yet: a
+              // reply that has not appeared needs to say why it has not
+              // appeared, and an empty gap is not a reason.
+              if (reasoning.isNotEmpty || widget.isStreaming)
                 ThinkingLine(
                   content: reasoning,
                   expanded: _showReasoning,
                   live: widget.isStreaming,
+                  answerStarted: hasContent,
                   messageId: message.id,
                   promptedAt: widget.promptedAt,
                   answeredAt: message.createdAt,
-                  onToggle: () =>
-                      setState(() => _showReasoning = !_showReasoning),
+                  onToggle: _openThinking,
                 ),
               if (hasContent || widget.isStreaming)
                 _AssistantBody(
@@ -113,6 +144,25 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
               onEdit: _isUser ? widget.onEdit : null,
               onDelete: widget.onDelete,
             ),
+            // Always on, unlike the action row: a standing footnote on every
+            // assistant turn. It says the one thing a reader should hold
+            // onto while skimming a machine's answer, and it sits right
+            // where a footnote belongs — under the last line.
+            if (!_isUser && hasContent && !widget.isStreaming)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    context.l10n.chatAnswerFootnote,
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.inkTertiary.withAlpha(190),
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -161,14 +211,16 @@ class _AssistantBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style =
+        Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: context.ink, height: 1.68) ??
+        const TextStyle();
     return RepaintBoundary(
-      child: GptMarkdown(
-        content.isEmpty && isStreaming ? '…' : content,
-        key: Key('chat_message_target_${id}_content'),
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: context.ink,
-          height: 1.68,
-        ),
+      child: FadingMarkdown(
+        content: content.isEmpty && isStreaming ? '…' : content,
+        isStreaming: isStreaming,
+        style: style,
       ),
     );
   }

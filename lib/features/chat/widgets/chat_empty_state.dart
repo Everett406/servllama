@@ -39,7 +39,8 @@ class ChatEmptyState extends StatelessWidget {
       onSelectModel: onSelectModel,
       onBrowseModels: onBrowseModels,
     );
-    final isBusy = status == EngineRuntimeStatus.preparing ||
+    final isBusy =
+        status == EngineRuntimeStatus.preparing ||
         status == EngineRuntimeStatus.stopping;
 
     return LayoutBuilder(
@@ -48,9 +49,12 @@ class ChatEmptyState extends StatelessWidget {
         // it yields vertical space instead of scaling the type down forever.
         final compact = constraints.maxHeight < 420;
         return SingleChildScrollView(
+          // Biased below centre on purpose. Dead centre reads as a splash
+          // screen; a third of the way down reads as a page you are about
+          // to type into, which is what it is.
           padding: EdgeInsets.fromLTRB(
             ClaudeSpacing.lg,
-            compact ? ClaudeSpacing.lg : 56,
+            compact ? 72 : 132,
             ClaudeSpacing.lg,
             ClaudeSpacing.xl,
           ),
@@ -73,10 +77,11 @@ class ChatEmptyState extends StatelessWidget {
                 Text(
                   layout.title,
                   textAlign: TextAlign.center,
-                  style: (compact
-                          ? Theme.of(context).textTheme.headlineSmall
-                          : Theme.of(context).textTheme.displaySmall)
-                      ?.copyWith(color: context.ink),
+                  style:
+                      (compact
+                              ? Theme.of(context).textTheme.headlineSmall
+                              : Theme.of(context).textTheme.displaySmall)
+                          ?.copyWith(color: context.ink),
                 ),
                 const SizedBox(height: ClaudeSpacing.sm),
                 Text(
@@ -157,7 +162,8 @@ class _EmptyLayout {
       );
     }
 
-    final running = status == EngineRuntimeStatus.ready ||
+    final running =
+        status == EngineRuntimeStatus.ready ||
         status == EngineRuntimeStatus.preparing;
 
     if (!running) {

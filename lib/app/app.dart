@@ -105,19 +105,26 @@ class ServLlamaApp extends StatelessWidget {
             ChatProvider
           >(
             create: (_) => ChatProvider(),
-            update: (_, runtimeProvider, chatTimeoutProvider, systemPromptProvider, chatProvider) {
-              final provider = chatProvider ?? ChatProvider();
-              provider.updateServerState(
-                baseUrl: runtimeProvider.baseUrl,
-                isServerRunning: runtimeProvider.isRunning,
-                engine: runtimeProvider.activeEngine,
-                activeModelId: runtimeProvider.activeModelId,
-                activeModelName: runtimeProvider.activeModelName,
-              );
-              provider.updateChatTimeout(chatTimeoutProvider.timeout);
-              provider.updateSystemPrompt(systemPromptProvider.prompt);
-              return provider;
-            },
+            update:
+                (
+                  _,
+                  runtimeProvider,
+                  chatTimeoutProvider,
+                  systemPromptProvider,
+                  chatProvider,
+                ) {
+                  final provider = chatProvider ?? ChatProvider();
+                  provider.updateServerState(
+                    baseUrl: runtimeProvider.baseUrl,
+                    isServerRunning: runtimeProvider.isRunning,
+                    engine: runtimeProvider.activeEngine,
+                    activeModelId: runtimeProvider.activeModelId,
+                    activeModelName: runtimeProvider.activeModelName,
+                  );
+                  provider.updateChatTimeout(chatTimeoutProvider.timeout);
+                  provider.updateSystemPrompt(systemPromptProvider.prompt);
+                  return provider;
+                },
           ),
         ],
         child: Consumer2<AppThemeModeProvider, AppLocaleProvider>(
@@ -147,7 +154,9 @@ class ServLlamaApp extends StatelessWidget {
                   return AnnotatedRegion<SystemUiOverlayStyle>(
                     value: SystemUiOverlayStyle(
                       statusBarColor: Colors.transparent,
-                      statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+                      statusBarBrightness: dark
+                          ? Brightness.dark
+                          : Brightness.light,
                       statusBarIconBrightness: dark
                           ? Brightness.light
                           : Brightness.dark,

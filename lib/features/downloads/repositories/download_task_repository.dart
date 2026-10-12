@@ -7,11 +7,9 @@ import 'package:servllama/features/downloads/models/download_task.dart';
 /// Persists download tasks so an interrupted transfer survives an app
 /// restart, and owns the staging directory each task writes into.
 class DownloadTaskRepository {
-  DownloadTaskRepository({
-    ModelStoragePaths? storagePaths,
-    HiveInterface? hive,
-  }) : _storagePaths = storagePaths ?? ModelStoragePaths(),
-       _hive = hive ?? Hive;
+  DownloadTaskRepository({ModelStoragePaths? storagePaths, HiveInterface? hive})
+    : _storagePaths = storagePaths ?? ModelStoragePaths(),
+      _hive = hive ?? Hive;
 
   static const String boxName = 'download_tasks';
   static const String stagingFolderName = 'downloads';
@@ -67,7 +65,9 @@ class DownloadTaskRepository {
     if (!await root.exists()) {
       return 0;
     }
-    final known = (await listTasks()).map((task) => task.stagingDirPath).toSet();
+    final known = (await listTasks())
+        .map((task) => task.stagingDirPath)
+        .toSet();
     var total = 0;
     await for (final entity in root.list()) {
       if (entity is! Directory || known.contains(entity.path)) {
@@ -86,7 +86,9 @@ class DownloadTaskRepository {
     if (!await root.exists()) {
       return;
     }
-    final known = (await listTasks()).map((task) => task.stagingDirPath).toSet();
+    final known = (await listTasks())
+        .map((task) => task.stagingDirPath)
+        .toSet();
     await for (final entity in root.list()) {
       if (entity is Directory && !known.contains(entity.path)) {
         await entity.delete(recursive: true);

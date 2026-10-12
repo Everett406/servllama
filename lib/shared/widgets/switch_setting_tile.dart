@@ -46,9 +46,9 @@ class SwitchSettingTile extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           subtitle!,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            height: 1.4,
-                          ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelSmall?.copyWith(height: 1.4),
                         ),
                       ),
                   ],

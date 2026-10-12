@@ -13,11 +13,14 @@ class ClaudeColors {
   // ── Light ────────────────────────────────────────────────────────────────
   /// Main chat canvas. Warm off-white, never #FFFFFF.
   static const canvas = Color(0xFFFAF9F5);
+
   /// Sidebar sits a half-step darker than the canvas so the seam is felt,
   /// not seen.
   static const sidebar = Color(0xFFF5F4EF);
+
   /// Raised cards, input fields, menus.
   static const surface = Color(0xFFFFFFFF);
+
   /// A step below surface — nested rows, hover fills.
   static const surfaceSunken = Color(0xFFF0EEE7);
 
@@ -163,9 +166,27 @@ class ClaudeText {
 
     return TextTheme(
       // Serif, tight — used for page titles and empty-state headlines.
-      displaySmall: s(32, FontWeight.w500, height: 1.2, spacing: -0.6, family: _serif),
-      headlineMedium: s(24, FontWeight.w500, height: 1.25, spacing: -0.4, family: _serif),
-      headlineSmall: s(20, FontWeight.w500, height: 1.3, spacing: -0.2, family: _serif),
+      displaySmall: s(
+        32,
+        FontWeight.w500,
+        height: 1.2,
+        spacing: -0.6,
+        family: _serif,
+      ),
+      headlineMedium: s(
+        24,
+        FontWeight.w500,
+        height: 1.25,
+        spacing: -0.4,
+        family: _serif,
+      ),
+      headlineSmall: s(
+        20,
+        FontWeight.w500,
+        height: 1.3,
+        spacing: -0.2,
+        family: _serif,
+      ),
       titleLarge: s(17, FontWeight.w600, height: 1.35, spacing: -0.2),
       titleMedium: s(15, FontWeight.w600, height: 1.4, color: primary),
       titleSmall: s(13, FontWeight.w600, height: 1.4, color: secondary),

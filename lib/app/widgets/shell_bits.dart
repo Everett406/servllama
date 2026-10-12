@@ -81,7 +81,10 @@ class _StatusDotState extends State<StatusDot>
         child: Container(
           width: widget.size,
           height: widget.size,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: widget.color),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.color,
+          ),
         ),
       ),
     );

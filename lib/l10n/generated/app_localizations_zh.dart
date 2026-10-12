@@ -134,7 +134,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatInputHintModelUnavailable => '当前模型未加载';
 
   @override
-  String get chatInputHintEnterMessage => '输入消息';
+  String get chatInputHintEnterMessage => '回复 Vela 吧';
 
   @override
   String get chatSend => '发送';
@@ -1588,7 +1588,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String chatThinkingDone(Object duration) {
-    return '已思考 $duration';
+    return '思考了 $duration';
   }
 
   @override
@@ -1619,4 +1619,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String contextUsageLabel(Object percent, Object used, Object total) {
     return '已用 $percent% 上下文 · $used / $total';
   }
+
+  @override
+  String get chatMore => '更多';
+
+  @override
+  String get chatThinkingWaiting => '在想…';
+
+  @override
+  String chatThinkingSheetTitle(Object duration) {
+    return '思考了 $duration';
+  }
+
+  @override
+  String get chatAnswerFootnote => 'Vela 在你自己的手机上跑，但仍然会犯错。重要的东西，请再看一眼。';
 }

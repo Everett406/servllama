@@ -26,42 +26,48 @@ class ContextUsageBar extends StatelessWidget {
   final List<ChatMessageRecord> messages;
   final int? contextWindow;
 
-  static const double _height = 3;
-
   @override
   Widget build(BuildContext context) {
     final window = contextWindow;
     if (window == null || window <= 0 || messages.isEmpty) {
-      return const SizedBox(width: double.infinity, height: _height);
+      return const SizedBox.shrink();
     }
 
     final used = estimateTokens(messages);
     final ratio = (used / window).clamp(0.0, 1.0);
-    final fill = switch (ratio) {
-      >= 0.9 => context.dangerText,
-      >= 0.75 => context.warningText,
-      _ => context.inkTertiary.withAlpha(110),
+    final percent = (ratio * 100).round();
+    final (fill, track) = switch (ratio) {
+      >= 0.9 => (context.dangerText, context.dangerText.withAlpha(28)),
+      >= 0.75 => (context.warningText, context.warningText.withAlpha(28)),
+      _ => (context.inkTertiary, context.inkTertiary.withAlpha(22)),
     };
 
     return Semantics(
       label: context.l10n.contextUsageLabel(
-        (ratio * 100).round(),
+        percent,
         formatTokenCount(used),
         formatTokenCount(window),
       ),
-      child: SizedBox(
-        width: double.infinity,
-        height: _height,
-        child: Align(
-          alignment: Alignment.center,
-          child: FractionallySizedBox(
-            // A hairline of track under a shorter fill reads as "this is a
-            // scale" without needing a label on screen at all.
-            widthFactor: ratio == 0 ? 0.0001 : ratio.clamp(0.02, 1.0),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: fill,
-                borderRadius: BorderRadius.circular(ClaudeRadius.pill),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          width: 84,
+          height: 5,
+          decoration: BoxDecoration(
+            color: track,
+            borderRadius: BorderRadius.circular(ClaudeRadius.pill),
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: ratio == 0 ? 0.02 : ratio.clamp(0.02, 1.0),
+              child: AnimatedContainer(
+                duration: ClaudeMotion.medium,
+                curve: ClaudeMotion.curve,
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(ClaudeRadius.pill),
+                ),
               ),
             ),
           ),

@@ -24,7 +24,9 @@ class ChatTimeoutProvider extends ChangeNotifier {
       return;
     }
 
-    final storedValue = await _kvStorage.getInt(AppPrefsKeys.chatTimeoutSeconds);
+    final storedValue = await _kvStorage.getInt(
+      AppPrefsKeys.chatTimeoutSeconds,
+    );
     _timeoutSeconds = _normalizeTimeoutSeconds(storedValue);
     _hasLoaded = true;
     notifyListeners();

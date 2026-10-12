@@ -77,7 +77,9 @@ class ModelCatalogService {
     final raw = await bundle.loadString(assetPath);
     final decoded = jsonDecode(raw);
     if (decoded is! Map || decoded['entries'] is! List) {
-      throw const FormatException('model catalog must be a JSON object with entries');
+      throw const FormatException(
+        'model catalog must be a JSON object with entries',
+      );
     }
 
     final entries = <CatalogEntry>[];

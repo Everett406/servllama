@@ -57,13 +57,17 @@ class _ChatSessionSearchFieldState extends State<ChatSessionSearchField> {
       );
     }
 
+    // The glyph and the hint sat on different baselines: the icon was
+    // pinned by its own constraints while the text followed the field's
+    // default padding, so the row read as two things instead of one. Both
+    // are now centred inside a fixed-height field.
     return Container(
-      height: 40,
+      height: 38,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(19),
         border: Border.all(color: colorScheme.outlineVariant.withAlpha(56)),
       ),
       child: TextField(
@@ -74,19 +78,25 @@ class _ChatSessionSearchFieldState extends State<ChatSessionSearchField> {
         style: theme.textTheme.bodyMedium?.copyWith(
           color: colorScheme.onSurface,
         ),
+        textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
           isCollapsed: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 9),
           border: InputBorder.none,
           hintText: widget.hintText ?? context.l10n.chatSearchHint,
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
+            height: 1.2,
           ),
           prefixIcon: ClaudeIcon(
             ClaudeIcons.search,
-            size: 17,
+            size: 16,
             color: colorScheme.onSurfaceVariant,
           ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 26),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 22,
+            minHeight: 22,
+          ),
           suffixIcon: widget.onOpenHistory == null
               ? null
               : IconButton(

@@ -15,12 +15,7 @@ import 'package:servllama/app/design/tokens.dart';
 /// why the empty state uses a muted tint rather than the full accent: at
 /// full strength the hole competes with the message.
 class BrandMark extends StatelessWidget {
-  const BrandMark({
-    super.key,
-    this.size = 22,
-    this.color,
-    this.tiled = true,
-  });
+  const BrandMark({super.key, this.size = 22, this.color, this.tiled = true});
 
   final double size;
   final Color? color;
@@ -43,7 +38,11 @@ class BrandMark extends StatelessWidget {
 }
 
 class _BalloonMarkPainter extends CustomPainter {
-  const _BalloonMarkPainter(this.color, {required this.tiled, required this.punchColor});
+  const _BalloonMarkPainter(
+    this.color, {
+    required this.tiled,
+    required this.punchColor,
+  });
 
   final Color color;
   final bool tiled;
@@ -89,12 +88,7 @@ class _BalloonMarkPainter extends CustomPainter {
     final body = ui.Path()
       ..addRRect(
         ui.RRect.fromRectAndRadius(
-          Rect.fromLTRB(
-            unit * 0.245,
-            unit * 0.275,
-            unit * 0.755,
-            unit * 0.575,
-          ),
+          Rect.fromLTRB(unit * 0.245, unit * 0.275, unit * 0.755, unit * 0.575),
           Radius.circular(unit * 0.072),
         ),
       );

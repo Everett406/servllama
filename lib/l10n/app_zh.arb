@@ -54,7 +54,7 @@
   "chatInputHintLoadingModel": "模型加载中...",
   "chatInputHintSelectModel": "请先选择模型",
   "chatInputHintModelUnavailable": "当前模型未加载",
-  "chatInputHintEnterMessage": "输入消息",
+  "chatInputHintEnterMessage": "回复 Vela 吧",
   "chatSend": "发送",
   "chatStop": "停止",
   "chatUnloadModel": "卸载模型",
@@ -727,7 +727,7 @@
       "duration": {}
     }
   },
-  "chatThinkingDone": "已思考 {duration}",
+  "chatThinkingDone": "思考了 {duration}",
   "@chatThinkingDone": {
     "placeholders": {
       "duration": {}
@@ -752,5 +752,14 @@
       "used": {},
       "total": {}
     }
-  }
+  },
+  "chatMore": "更多",
+  "chatThinkingWaiting": "在想…",
+  "chatThinkingSheetTitle": "思考了 {duration}",
+  "@chatThinkingSheetTitle": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "chatAnswerFootnote": "Vela 在你自己的手机上跑，但仍然会犯错。重要的东西，请再看一眼。"
 }

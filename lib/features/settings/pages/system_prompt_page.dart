@@ -86,9 +86,9 @@ class _SystemPromptPageState extends State<SystemPromptPage> {
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   keyboardType: TextInputType.multiline,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.65,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.65),
                   cursorColor: context.accent,
                   decoration: InputDecoration(
                     hintText: l10n.systemPromptPlaceholder,

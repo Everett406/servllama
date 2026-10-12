@@ -36,10 +36,10 @@ class _GenerationActivityDotState extends State<GenerationActivityDot>
     duration: const Duration(milliseconds: 1000),
   );
 
-  late final Animation<double> _scale = Tween<double>(begin: 0.55, end: 1.30)
-      .animate(
-        CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn),
-      );
+  late final Animation<double> _scale = Tween<double>(
+    begin: 0.55,
+    end: 1.30,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn));
 
   @override
   void initState() {
@@ -158,7 +158,12 @@ class _ArcPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final inset = strokeWidth / 2;
     canvas.drawArc(
-      Rect.fromLTWH(inset, inset, size.width - strokeWidth, size.height - strokeWidth),
+      Rect.fromLTWH(
+        inset,
+        inset,
+        size.width - strokeWidth,
+        size.height - strokeWidth,
+      ),
       -1.5707963,
       4.712389,
       false,

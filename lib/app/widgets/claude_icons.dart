@@ -56,11 +56,16 @@ class ClaudeIcons {
   static IconData get download => const _ClaudeDownload();
   static IconData get play => const _ClaudePlay();
   static IconData get clock => const _ClaudeClock();
+  static IconData get newChat => _ClaudeNewChat();
+  static IconData get more => _ClaudeMore();
+  static IconData get slash => _ClaudeSlash();
+  static IconData get penSquare => _ClaudePenSquare();
+  static IconData get archive => _ClaudeArchive();
   static IconData get chevronDown => const _ClaudeChevronDown();
 
   /// Stroke weight scales with the rendered size so a 16px icon keeps the
   /// same visual density as a 24px one.
-  static double strokeFor(double size) => math.max(1.3, size / 15);
+  static double strokeFor(double size) => math.max(1.7, size / 11);
 
   static IconData chevronDownFor(bool expanded) =>
       expanded ? _ClaudeChevronUp() : _ClaudeChevronDown();
@@ -114,6 +119,26 @@ class _ClaudeClock extends IconData {
   const _ClaudeClock() : super(0xe915, fontFamily: 'ClaudeIcons');
 }
 
+class _ClaudeNewChat extends IconData {
+  const _ClaudeNewChat() : super(0xe916, fontFamily: 'ClaudeIcons');
+}
+
+class _ClaudeMore extends IconData {
+  const _ClaudeMore() : super(0xe917, fontFamily: 'ClaudeIcons');
+}
+
+class _ClaudeSlash extends IconData {
+  const _ClaudeSlash() : super(0xe918, fontFamily: 'ClaudeIcons');
+}
+
+class _ClaudePenSquare extends IconData {
+  const _ClaudePenSquare() : super(0xe919, fontFamily: 'ClaudeIcons');
+}
+
+class _ClaudeArchive extends IconData {
+  const _ClaudeArchive() : super(0xe91a, fontFamily: 'ClaudeIcons');
+}
+
 class _ClaudeSearch extends IconData {
   const _ClaudeSearch() : super(0xe90d, fontFamily: 'ClaudeIcons');
 }
@@ -160,7 +185,11 @@ class _ClaudeChevronUp extends IconData {
 /// setup, and a font entry point for each one would mean registering a
 /// family the build would otherwise have to bundle.
 class ClaudeIconPainter extends CustomPainter {
-  const ClaudeIconPainter(this.codePoint, {required this.color, required this.size});
+  const ClaudeIconPainter(
+    this.codePoint, {
+    required this.color,
+    required this.size,
+  });
 
   final int codePoint;
   final Color color;
@@ -228,6 +257,16 @@ class ClaudeIconPainter extends CustomPainter {
         _play(canvas, paint);
       case 0xe915:
         _clock(canvas, paint);
+      case 0xe916:
+        _newChat(canvas, paint);
+      case 0xe917:
+        _more(canvas, paint);
+      case 0xe918:
+        _slash(canvas, paint);
+      case 0xe919:
+        _penSquare(canvas, paint);
+      case 0xe91a:
+        _archive(canvas, paint);
     }
 
     canvas.restore();
@@ -303,7 +342,11 @@ class ClaudeIconPainter extends CustomPainter {
       ..close();
     canvas
       ..drawPath(body, paint)
-      ..drawCircle(const Offset(9.9, 11.4), 0.95, paint..style = PaintingStyle.fill)
+      ..drawCircle(
+        const Offset(9.9, 11.4),
+        0.95,
+        paint..style = PaintingStyle.fill,
+      )
       ..drawCircle(const Offset(14.1, 11.4), 0.95, paint);
   }
 
@@ -313,8 +356,6 @@ class ClaudeIconPainter extends CustomPainter {
       ..drawLine(const Offset(4, 12), const Offset(20, 12), paint)
       ..drawLine(const Offset(4, 16.6), const Offset(20, 16.6), paint);
   }
-
-
 
   void _copy(Canvas canvas, Paint paint) {
     canvas
@@ -338,15 +379,15 @@ class ClaudeIconPainter extends CustomPainter {
 
   void _edit(Canvas canvas, Paint paint) {
     canvas.drawPath(
-        Path()
-          ..moveTo(4.6, 19.4)
-          ..lineTo(5.0, 15.6)
-          ..lineTo(15.6, 5.0)
-          ..lineTo(19.0, 8.4)
-          ..lineTo(8.4, 19.0)
-          ..close(),
-        paint,
-      );
+      Path()
+        ..moveTo(4.6, 19.4)
+        ..lineTo(5.0, 15.6)
+        ..lineTo(15.6, 5.0)
+        ..lineTo(19.0, 8.4)
+        ..lineTo(8.4, 19.0)
+        ..close(),
+      paint,
+    );
     canvas.drawLine(const Offset(13.4, 7.2), const Offset(16.8, 10.6), paint);
   }
 
@@ -420,18 +461,97 @@ class ClaudeIconPainter extends CustomPainter {
     }
   }
 
+  /// Elapsed time, not a stopwatch.
+  ///
+  /// The first version was a 13px circle with hairline hands and it read as
+  /// a smudge next to body text. Bigger, one hand only, and no bezel
+  /// detail: at this size anything more than a ring and two strokes is
+  /// noise.
   void _clock(Canvas canvas, Paint paint) {
     canvas
-      ..drawCircle(const Offset(12, 12), 8, paint)
-      // Hands, at ten past — a clock face reads as time, a full circle does not.
+      ..drawCircle(const Offset(12, 12), 8.4, paint)
+      // Hour hand, straight up; minute hand, a third of the way round.
       ..drawPath(
         Path()
           ..moveTo(12, 12)
-          ..lineTo(12, 7.2)
+          ..lineTo(12, 6.6)
           ..moveTo(12, 12)
-          ..lineTo(15.6, 13.6),
+          ..lineTo(16.2, 14.1),
         paint,
       );
+  }
+
+  // A rounded square with a plus inside: "start something", not "open a
+  // menu". Distinct from the bare plus in the composer, which attaches.
+  void _newChat(Canvas canvas, Paint paint) {
+    canvas
+      ..drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(4.2, 4.2, 15.6, 15.6),
+          const Radius.circular(4.6),
+        ),
+        paint,
+      )
+      ..drawLine(const Offset(12, 8.6), const Offset(12, 15.4), paint)
+      ..drawLine(const Offset(8.6, 12), const Offset(15.4, 12), paint);
+  }
+
+  void _more(Canvas canvas, Paint paint) {
+    for (final y in const [7.4, 12.0, 16.6]) {
+      canvas.drawCircle(Offset(12, y), 1.5, paint..style = PaintingStyle.fill);
+    }
+    paint.style = PaintingStyle.stroke;
+  }
+
+  // Stands in for an engine that is off. Says "not running" in one glyph,
+  // which is more than any label manages in a row this size.
+  void _slash(Canvas canvas, Paint paint) {
+    canvas.drawLine(const Offset(6.4, 17.6), const Offset(17.6, 6.4), paint);
+  }
+
+  void _penSquare(Canvas canvas, Paint paint) {
+    canvas
+      ..drawRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(4.6, 4.6, 14.8, 14.8),
+          const Radius.circular(3.4),
+        ),
+        paint,
+      )
+      ..drawPath(
+        Path()
+          ..moveTo(8.4, 15.6)
+          ..lineTo(8.9, 12.6)
+          ..lineTo(14.6, 6.9)
+          ..lineTo(17.1, 9.4)
+          ..lineTo(11.4, 15.1)
+          ..close(),
+        paint,
+      );
+  }
+
+  void _archive(Canvas canvas, Paint paint) {
+    canvas
+      // Lid
+      ..drawPath(
+        Path()
+          ..moveTo(3.8, 4.6)
+          ..lineTo(20.2, 4.6)
+          ..lineTo(20.2, 8.4)
+          ..lineTo(3.8, 8.4)
+          ..close(),
+        paint,
+      )
+      // Body
+      ..drawPath(
+        Path()
+          ..moveTo(5.4, 8.4)
+          ..lineTo(6.2, 19.6)
+          ..lineTo(17.8, 19.6)
+          ..lineTo(18.6, 8.4),
+        paint,
+      )
+      ..drawLine(const Offset(9.8, 12.4), const Offset(14.2, 12.4), paint);
   }
 
   void _search(Canvas canvas, Paint paint) {
@@ -460,7 +580,11 @@ class ClaudeIconPainter extends CustomPainter {
     canvas
       ..drawCircle(const Offset(12, 12), 8.2, paint)
       ..drawLine(const Offset(12, 11.2), const Offset(12, 16.4), paint);
-    canvas.drawCircle(const Offset(12, 8.2), 0.95, paint..style = PaintingStyle.fill);
+    canvas.drawCircle(
+      const Offset(12, 8.2),
+      0.95,
+      paint..style = PaintingStyle.fill,
+    );
   }
 
   // Two rules with a knob on each — the settings glyph, drawn as controls

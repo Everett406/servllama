@@ -150,21 +150,20 @@ class _ChatViewState extends State<_ChatView> {
     unawaited(library.load());
     final engine = await showModalBottomSheet<InferenceEngine>(
       context: context,
-      builder: (sheetContext) =>
-          Consumer<EngineRuntimeProvider>(
-            builder: (_, runtime, __) => ChatEngineStartSheet(
-              currentEngine: runtime.activeEngine,
-              defaultModelNames: <InferenceEngine, String?>{
-                for (final engine in InferenceEngine.values)
-                  engine: _modelDisplayName(
-                    library,
-                    engine,
-                    runtime.selectedModelIdFor(engine),
-                  ),
-              },
-              onSelect: (engine) => Navigator.of(sheetContext).pop(engine),
-            ),
-          ),
+      builder: (sheetContext) => Consumer<EngineRuntimeProvider>(
+        builder: (_, runtime, __) => ChatEngineStartSheet(
+          currentEngine: runtime.activeEngine,
+          defaultModelNames: <InferenceEngine, String?>{
+            for (final engine in InferenceEngine.values)
+              engine: _modelDisplayName(
+                library,
+                engine,
+                runtime.selectedModelIdFor(engine),
+              ),
+          },
+          onSelect: (engine) => Navigator.of(sheetContext).pop(engine),
+        ),
+      ),
     );
     if (engine == null || !mounted) return;
 
@@ -206,7 +205,11 @@ class _ChatViewState extends State<_ChatView> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) =>
-          Consumer3<EngineRuntimeProvider, ModelManagementProvider, DownloadProvider>(
+          Consumer3<
+            EngineRuntimeProvider,
+            ModelManagementProvider,
+            DownloadProvider
+          >(
             builder: (_, runtime, library, downloads, __) {
               final engine = runtime.activeEngine;
               final error = runtime.lastError;
@@ -242,9 +245,9 @@ class _ChatViewState extends State<_ChatView> {
 
   void _openDiscovery() {
     unawaited(
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => const ModelDiscoveryPage())),
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ModelDiscoveryPage()),
+      ),
     );
   }
 
@@ -261,7 +264,9 @@ class _ChatViewState extends State<_ChatView> {
     if (error == null) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(RuntimeLabels.runtimeError(context.l10n, error, runtime.port)),
+        content: Text(
+          RuntimeLabels.runtimeError(context.l10n, error, runtime.port),
+        ),
       ),
     );
   }
@@ -275,6 +280,9 @@ class _ChatViewState extends State<_ChatView> {
     return Scaffold(
       backgroundColor: context.canvas,
       body: SafeArea(
+        // The header and the composer are floating surfaces over the
+        // transcript, so only the status bar and the home indicator are
+        // real insets here. The transcript is free to run under both.
         bottom: false,
         child: AnimatedBuilder(
           animation: _scroll,
@@ -286,13 +294,18 @@ class _ChatViewState extends State<_ChatView> {
                     onOpenSidebar: widget.onOpenSidebar,
                     isStealth: chat.isStealthMode,
                     onStealthChanged: chat.setStealthMode,
+                    onNewChat: chat.createSession,
+                    onSelectModel: _showModels,
+                    onOpenHistory: widget.onOpenHistory ?? () {},
                   ),
                   Expanded(
                     child: isEmpty
                         ? ChatEmptyState(
                             status: runtime?.status ?? EngineRuntimeStatus.idle,
-                            hasModels:
-                                context.watch<ModelManagementProvider>().libraryModels.isNotEmpty,
+                            hasModels: context
+                                .watch<ModelManagementProvider>()
+                                .libraryModels
+                                .isNotEmpty,
                             onStartServer: _startServer,
                             onSelectModel: _showModels,
                             onBrowseModels: () => _openDiscovery(),
@@ -354,7 +367,8 @@ class _ChatViewState extends State<_ChatView> {
               if (!isEmpty)
                 Positioned(
                   right: ClaudeSpacing.lg,
-                  bottom: MediaQuery.viewInsetsOf(context).bottom +
+                  bottom:
+                      MediaQuery.viewInsetsOf(context).bottom +
                       ClaudeSpacing.xxl * 2,
                   child: AnimatedSlide(
                     offset: _scroll.showJumpToLatestButton
@@ -394,46 +408,197 @@ double _composerBottomInset(BuildContext context) {
 }
 
 /// Stealth toggle.
+/// The top strip.
 ///
-/// Sits at the trailing corner because it is a promise about what will
-/// happen to this conversation, and promises live where the eye already
-/// rests after reading. When it is on the whole bar takes a faint tint, so
-/// the mode is visible for the rest of the conversation rather than only at
-/// the moment it was switched.
-class _StealthToggle extends StatelessWidget {
-  const _StealthToggle({required this.active, required this.onChanged});
+/// Three floating pills and nothing else. They sit on a surface of their own
+/// rather than on a band with a rule under it, because the thing that makes
+/// a header read as a layer is that it has an edge to float over — a hairline
+/// across a canvas that is the same colour everywhere else only draws a
+/// boundary the eye has to interpret.
+///
+/// The right pair is one pill split in two: new conversation, and the
+/// overflow beside it that has no other home. Stealth went in there, along
+/// with everything else that is configuration rather than conversation.
+class _ChatTopBar extends StatelessWidget {
+  const _ChatTopBar({
+    required this.isStealth,
+    required this.onStealthChanged,
+    required this.onNewChat,
+    required this.onSelectModel,
+    required this.onOpenHistory,
+    this.onOpenSidebar,
+  });
 
-  final bool active;
-  final ValueChanged<bool> onChanged;
+  final bool isStealth;
+  final ValueChanged<bool> onStealthChanged;
+  final VoidCallback onNewChat;
+  final VoidCallback onSelectModel;
+  final VoidCallback onOpenHistory;
+  final VoidCallback? onOpenSidebar;
 
   @override
   Widget build(BuildContext context) {
-    final tooltip = active
-        ? context.l10n.chatStealthOn
-        : context.l10n.chatStealthOff;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ClaudeSpacing.md,
+        ClaudeSpacing.sm,
+        ClaudeSpacing.md,
+        ClaudeSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          _FloatPill(
+            keyValue: 'chat_open_sidebar_button',
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            onPressed: onOpenSidebar,
+            child: ClaudeIcon(ClaudeIcons.menu, size: 19, color: context.ink),
+          ),
+          const Spacer(),
+          _FloatPill(
+            keyValue: 'chat_new_chat_button',
+            tooltip: context.l10n.chatNewConversation,
+            onPressed: onNewChat,
+            child: ClaudeIcon(
+              ClaudeIcons.newChat,
+              size: 19,
+              color: context.ink,
+            ),
+          ),
+          const SizedBox(width: 6),
+          _FloatPill(
+            keyValue: 'chat_more_button',
+            tooltip: context.l10n.chatMore,
+            onPressed: () => _showOverflow(context),
+            child: ClaudeIcon(ClaudeIcons.more, size: 19, color: context.ink),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showOverflow(BuildContext context) async {
+    final chat = context.read<ChatProvider>();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              key: const Key('chat_stealth_tile'),
+              leading: ClaudeIcon(
+                ClaudeIcons.ghost,
+                size: 20,
+                color: isStealth ? context.accent : context.inkSecondary,
+              ),
+              title: Text(
+                isStealth
+                    ? context.l10n.chatStealthOn
+                    : context.l10n.chatStealthOff,
+              ),
+              trailing: Switch(
+                value: isStealth,
+                onChanged: (value) {
+                  onStealthChanged(value);
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+              onTap: () {
+                onStealthChanged(!isStealth);
+                Navigator.of(sheetContext).pop();
+              },
+            ),
+            ListTile(
+              key: const Key('chat_model_tile'),
+              leading: ClaudeIcon(
+                ClaudeIcons.chip,
+                size: 20,
+                color: context.inkSecondary,
+              ),
+              title: Text(context.l10n.chatSelectModel),
+              subtitle: Text(
+                chat.currentModel?.displayName ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => _closeThen(sheetContext, onSelectModel),
+            ),
+            ListTile(
+              key: const Key('chat_history_tile'),
+              leading: ClaudeIcon(
+                ClaudeIcons.archive,
+                size: 20,
+                color: context.inkSecondary,
+              ),
+              title: Text(context.l10n.drawerAllHistoryTooltip),
+              onTap: () => _closeThen(sheetContext, onOpenHistory),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dismisses this sheet, then runs [action].
+  ///
+  /// Deferred rather than immediate: the sheet owns the navigator until its
+  /// own pop animation finishes, and pushing a second route on top of a
+  /// sheet still animating out puts two surfaces in one transition.
+  static void _closeThen(BuildContext sheetContext, VoidCallback action) {
+    Navigator.of(sheetContext).pop();
+    Future<void>.delayed(const Duration(milliseconds: 200), action);
+  }
+}
+
+/// A control that floats on the canvas instead of being stamped into a bar.
+///
+/// The soft fill plus the hairline is what separates it from the transcript
+/// underneath; without the fill, a pill reads as a floating outline with no
+/// material, and with it the header stops competing with the messages for
+/// attention.
+class _FloatPill extends StatelessWidget {
+  const _FloatPill({
+    required this.tooltip,
+    required this.onPressed,
+    required this.child,
+    this.keyValue,
+  });
+
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget child;
+  final String? keyValue;
+
+  @override
+  Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: Semantics(
-        toggled: active,
         button: true,
         label: tooltip,
         child: Material(
-          color: active ? context.accentSubtle : Colors.transparent,
-          shape: const CircleBorder(),
+          color: context.surface,
+          borderRadius: BorderRadius.circular(ClaudeRadius.pill),
           child: InkWell(
-            key: const Key('chat_stealth_button'),
-            onTap: () => onChanged(!active),
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: 38,
-              height: 38,
-              child: Center(
-                child: ClaudeIcon(
-                  ClaudeIcons.ghost,
-                  size: 19,
-                  color: active ? context.accent : context.inkTertiary,
-                ),
+            key: keyValue == null ? null : Key(keyValue!),
+            onTap: onPressed,
+            customBorder: const StadiumBorder(),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(ClaudeRadius.pill),
+                border: Border.all(color: context.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(12),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
+              child: Center(child: child),
             ),
           ),
         ),
@@ -442,6 +607,13 @@ class _StealthToggle extends StatelessWidget {
   }
 }
 
+/// Stealth toggle.
+///
+/// Sits at the trailing corner because it is a promise about what will
+/// happen to this conversation, and promises live where the eye already
+/// rests after reading. When it is on the whole bar takes a faint tint, so
+/// the mode is visible for the rest of the conversation rather than only at
+/// the moment it was switched.
 /// Thin contextual bar. Everything here is secondary to the conversation —
 /// no title, no tabs, no chrome beyond what the user needs right now.
 /// The top strip.
@@ -454,85 +626,4 @@ class _StealthToggle extends StatelessWidget {
 /// everybody already knows. The rule underneath it went too, since a
 /// hairline across a canvas that already separates the sidebar from the
 /// canvas just draws the boundary twice.
-class _ChatTopBar extends StatelessWidget {
-  const _ChatTopBar({
-    required this.isStealth,
-    required this.onStealthChanged,
-    this.onOpenSidebar,
-  });
-
-  final bool isStealth;
-  final ValueChanged<bool> onStealthChanged;
-  final VoidCallback? onOpenSidebar;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.sm),
-        child: Row(
-          children: [
-            _CircleButton(
-              keyValue: 'chat_open_sidebar_button',
-              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-              onPressed: onOpenSidebar,
-              icon: ClaudeIcons.menu,
-            ),
-            const Spacer(),
-            _StealthToggle(
-              active: isStealth,
-              onChanged: onStealthChanged,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A bare round control. No label, no background until it is pressed.
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    required this.keyValue,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final String keyValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        label: tooltip,
-        child: Material(
-          color: Colors.transparent,
-          shape: const CircleBorder(),
-          child: InkWell(
-            key: Key(keyValue),
-            onTap: onPressed,
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: ClaudeIcon(
-                  icon,
-                  size: 20,
-                  color: context.inkSecondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

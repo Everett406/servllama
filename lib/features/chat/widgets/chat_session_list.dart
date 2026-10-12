@@ -80,9 +80,7 @@ class ChatSessionList extends StatelessWidget {
         if (sessions.isEmpty) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: ClaudeSpacing.xl,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: ClaudeSpacing.xl),
               child: Text(
                 provider.sessionQuery.trim().isEmpty
                     ? context.l10n.chatSessionEmpty
@@ -152,10 +150,14 @@ class ChatSessionList extends StatelessWidget {
     final buckets = <SessionBucket, List<ChatSessionRecord>>{};
     for (final session in sessions) {
       buckets
-          .putIfAbsent(_bucketFor(session.updatedAt, now), () => <ChatSessionRecord>[])
+          .putIfAbsent(
+            _bucketFor(session.updatedAt, now),
+            () => <ChatSessionRecord>[],
+          )
           .add(session);
     }
-    final grouped = <({SessionBucket bucket, List<ChatSessionRecord> sessions})>[];
+    final grouped =
+        <({SessionBucket bucket, List<ChatSessionRecord> sessions})>[];
     for (final bucket in SessionBucket.values) {
       final group = buckets[bucket];
       if (group != null && group.isNotEmpty) {
@@ -177,9 +179,10 @@ class _BucketHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
       child: Text(
         label,
-        style: Theme.of(
-          context,
-        ).textTheme.labelSmall?.copyWith(color: context.inkTertiary, letterSpacing: 0.4),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.inkTertiary,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
@@ -241,7 +244,9 @@ class _SessionRowState extends State<_SessionRow> {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: foreground,
-                      fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: widget.selected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -257,7 +262,10 @@ class _SessionRowState extends State<_SessionRow> {
                     icon: const Icon(Icons.more_horiz_rounded, size: 18),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints.tightFor(width: 32, height: 28),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 32,
+                      height: 28,
+                    ),
                     color: context.inkSecondary,
                   ),
                 ),

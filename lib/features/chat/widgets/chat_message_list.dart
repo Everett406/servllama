@@ -58,9 +58,7 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
             // landing. Both are stamped on the stored message, so a
             // conversation reopened tomorrow still reports a real span.
             final promptedAt = _promptedBefore(messages, index);
-            final stream = provider.streamingMessages.listenableFor(
-              message.id,
-            );
+            final stream = provider.streamingMessages.listenableFor(message.id);
             if (stream != null) {
               return ValueListenableBuilder<StreamingChatMessageData>(
                 valueListenable: stream,
@@ -96,9 +94,9 @@ class _ChatMessageListViewState extends State<ChatMessageListView> {
     if (edited == null || !mounted) return;
     await provider.editMessage(messageId: message.id, newContent: edited);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.chatMessageUpdated)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.chatMessageUpdated)));
   }
 
   /// The most recent prompt before [index], or null if there isn't one.
@@ -163,7 +161,11 @@ class JumpToLatestButton extends StatelessWidget {
         onTap: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(9),
-          child: Icon(Icons.arrow_downward_rounded, size: 18, color: context.ink),
+          child: Icon(
+            Icons.arrow_downward_rounded,
+            size: 18,
+            color: context.ink,
+          ),
         ),
       ),
     );

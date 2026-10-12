@@ -190,7 +190,10 @@ class _DebugPageState extends State<DebugPage> {
                     enabled: !_isRunning,
                     maxLines: 3,
                     minLines: 1,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                    ),
                     decoration: const InputDecoration(
                       labelText: '启动参数',
                       hintText: '例如: -m <模型路径> --device HTP0 -ngl 99',
@@ -202,7 +205,9 @@ class _DebugPageState extends State<DebugPage> {
                     children: [
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: _isRunning || _isBusy ? null : _startServer,
+                          onPressed: _isRunning || _isBusy
+                              ? null
+                              : _startServer,
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('启动'),
                         ),
@@ -210,7 +215,9 @@ class _DebugPageState extends State<DebugPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton.tonalIcon(
-                          onPressed: !_isRunning || _isBusy ? null : _stopServer,
+                          onPressed: !_isRunning || _isBusy
+                              ? null
+                              : _stopServer,
                           icon: const Icon(Icons.stop),
                           label: const Text('停止'),
                         ),
@@ -298,9 +305,7 @@ class _PathRow extends StatelessWidget {
             path ?? '-',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
           ),
         ),
         if (path != null)

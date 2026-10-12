@@ -203,23 +203,24 @@ class AppTheme {
 
   static ThemeData _buildTheme(AppColors c) {
     final isDark = c == AppColors.dark;
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: ClaudeColors.accent,
-      brightness: isDark ? Brightness.dark : Brightness.light,
-    ).copyWith(
-      primary: ClaudeColors.accent,
-      onPrimary: ClaudeColors.onAccent,
-      surface: c.surface,
-      onSurface: c.textPrimary,
-      onSurfaceVariant: c.textSecondary,
-      outline: c.borderStrong,
-      outlineVariant: c.border,
-      surfaceContainerLowest: c.canvas,
-      surfaceContainerLow: c.sidebar,
-      surfaceContainer: c.surfaceSunken,
-      surfaceTint: Colors.transparent,
-      error: c.dangerMark,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: ClaudeColors.accent,
+          brightness: isDark ? Brightness.dark : Brightness.light,
+        ).copyWith(
+          primary: ClaudeColors.accent,
+          onPrimary: ClaudeColors.onAccent,
+          surface: c.surface,
+          onSurface: c.textPrimary,
+          onSurfaceVariant: c.textSecondary,
+          outline: c.borderStrong,
+          outlineVariant: c.border,
+          surfaceContainerLowest: c.canvas,
+          surfaceContainerLow: c.sidebar,
+          surfaceContainer: c.surfaceSunken,
+          surfaceTint: Colors.transparent,
+          error: c.dangerMark,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -277,11 +278,7 @@ class AppTheme {
           color: c.textPrimary,
         ),
       ),
-      dividerTheme: DividerThemeData(
-        color: c.border,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: c.border, thickness: 1, space: 1),
       iconTheme: IconThemeData(color: c.textSecondary, size: 22),
 
       filledButtonTheme: FilledButtonThemeData(

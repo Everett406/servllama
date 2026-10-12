@@ -35,8 +35,11 @@ class EngineBadge extends StatelessWidget {
           SizedBox(width: compact ? 5 : 6),
           Text(
             engine.displayName,
-            style: (compact ? theme.textTheme.labelSmall : theme.textTheme.labelMedium)
-                ?.copyWith(color: color, fontWeight: FontWeight.w700),
+            style:
+                (compact
+                        ? theme.textTheme.labelSmall
+                        : theme.textTheme.labelMedium)
+                    ?.copyWith(color: color, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -149,10 +152,7 @@ class NoticeBanner extends StatelessWidget {
       StatusTone.ok => (palette.okMark, palette.okText),
       StatusTone.warning => (palette.warningMark, palette.warningText),
       StatusTone.danger => (palette.dangerMark, palette.dangerText),
-      StatusTone.idle => (
-        palette.idleMark,
-        theme.colorScheme.onSurfaceVariant,
-      ),
+      StatusTone.idle => (palette.idleMark, theme.colorScheme.onSurfaceVariant),
     };
 
     return Container(

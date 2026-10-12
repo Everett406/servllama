@@ -341,7 +341,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatInputHintEnterMessage.
   ///
   /// In en, this message translates to:
-  /// **'Enter a message'**
+  /// **'Reply to Vela'**
   String get chatInputHintEnterMessage;
 
   /// No description provided for @chatSend.
@@ -3028,6 +3028,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Context {percent}% used · {used} / {total}'**
   String contextUsageLabel(Object percent, Object used, Object total);
+
+  /// No description provided for @chatMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get chatMore;
+
+  /// No description provided for @chatThinkingWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get chatThinkingWaiting;
+
+  /// No description provided for @chatThinkingSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Thought for {duration}'**
+  String chatThinkingSheetTitle(Object duration);
+
+  /// No description provided for @chatAnswerFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Vela runs on your own device and still gets things wrong. Check anything that matters.'**
+  String get chatAnswerFootnote;
 }
 
 class _AppLocalizationsDelegate

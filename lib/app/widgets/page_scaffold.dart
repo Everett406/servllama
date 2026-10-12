@@ -44,7 +44,8 @@ class PageScaffold extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        leading: leading ??
+        leading:
+            leading ??
             IconButton(
               key: const Key('page_back_button'),
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -105,9 +106,10 @@ class PageIntro extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: ClaudeSpacing.xl, top: 4),
       child: Text(
         text,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: context.inkSecondary, height: 1.6),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: context.inkSecondary,
+          height: 1.6,
+        ),
       ),
     );
   }
@@ -148,9 +150,9 @@ class InlineEmptyState extends StatelessWidget {
               child: Text(
                 detail!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  height: 1.55,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(height: 1.55),
               ),
             ),
           ],

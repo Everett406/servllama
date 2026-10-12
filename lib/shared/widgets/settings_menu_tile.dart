@@ -84,9 +84,9 @@ class _SettingsMenuTileState extends State<SettingsMenuTile> {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       widget.subtitle!,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        height: 1.4,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(height: 1.4),
                     ),
                   ),
               ],

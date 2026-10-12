@@ -28,8 +28,9 @@ class ModelDescriptorAdapter extends TypeAdapter<ModelDescriptor> {
       repoId: fields[8] as String?,
       revision: fields[9] as String?,
       visionEnabled: fields[10] as bool?,
-      mmprojFiles:
-          fields[11] == null ? {} : (fields[11] as Map).cast<String, String>(),
+      mmprojFiles: fields[11] == null
+          ? {}
+          : (fields[11] as Map).cast<String, String>(),
     );
   }
 

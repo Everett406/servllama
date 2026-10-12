@@ -135,7 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatInputHintModelUnavailable => 'Current model is not loaded';
 
   @override
-  String get chatInputHintEnterMessage => 'Enter a message';
+  String get chatInputHintEnterMessage => 'Reply to Vela';
 
   @override
   String get chatSend => 'Send';
@@ -1703,4 +1703,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String contextUsageLabel(Object percent, Object used, Object total) {
     return 'Context $percent% used · $used / $total';
   }
+
+  @override
+  String get chatMore => 'More';
+
+  @override
+  String get chatThinkingWaiting => 'Thinking…';
+
+  @override
+  String chatThinkingSheetTitle(Object duration) {
+    return 'Thought for $duration';
+  }
+
+  @override
+  String get chatAnswerFootnote =>
+      'Vela runs on your own device and still gets things wrong. Check anything that matters.';
 }

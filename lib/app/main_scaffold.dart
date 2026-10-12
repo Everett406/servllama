@@ -55,9 +55,8 @@ class _MainScaffoldState extends State<MainScaffold> {
     final navigator = Navigator.of(context);
     await navigator.push(
       MaterialPageRoute<void>(
-        builder: (_) => ChatHistoryPage(
-          onSessionOpened: _closeSidebarIfOverlay,
-        ),
+        builder: (_) =>
+            ChatHistoryPage(onSessionOpened: _closeSidebarIfOverlay),
       ),
     );
   }
@@ -148,24 +147,26 @@ class _SidebarHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         ClaudeSpacing.lg,
         ClaudeSpacing.lg,
-        ClaudeSpacing.sm,
+        ClaudeSpacing.lg,
         ClaudeSpacing.sm,
       ),
       child: Row(
         children: [
           const Expanded(child: BrandLockup(size: 20)),
-          IconButton(
-            key: const Key('sidebar_collapse_button'),
-            tooltip: l10n.sidebarCollapse,
-            onPressed: controller.close,
-            icon: const Icon(Icons.keyboard_double_arrow_left_rounded, size: 20),
-            visualDensity: VisualDensity.compact,
-          ),
+          // No close control. On a phone the drawer is dismissed by
+          // swiping, tapping the scrim, or picking something — a lone
+          // chevron in the corner adds a third way to do one thing and
+          // takes the eye's attention off the list.
+          if (controller.isDrawerMode)
+            ClaudeIcon(
+              ClaudeIcons.slash,
+              size: 14,
+              color: context.inkTertiary.withAlpha(90),
+            ),
         ],
       ),
     );
@@ -270,7 +271,10 @@ class _EngineStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = runtime?.status ?? EngineRuntimeStatus.idle;
     final (dotColor, label) = switch (status) {
-      EngineRuntimeStatus.ready => (context.okText, context.l10n.serverStatusRunning),
+      EngineRuntimeStatus.ready => (
+        context.okText,
+        context.l10n.serverStatusRunning,
+      ),
       EngineRuntimeStatus.preparing => (
         context.accent,
         context.l10n.serverStatusPreparing,
@@ -279,7 +283,10 @@ class _EngineStrip extends StatelessWidget {
         context.accent,
         context.l10n.serverStatusStopping,
       ),
-      EngineRuntimeStatus.error => (context.dangerText, context.l10n.serverStatusError),
+      EngineRuntimeStatus.error => (
+        context.dangerText,
+        context.l10n.serverStatusError,
+      ),
       EngineRuntimeStatus.idle => (
         context.inkTertiary,
         context.l10n.sidebarEngineIdle,
@@ -310,7 +317,8 @@ class _EngineStrip extends StatelessWidget {
                 key: const Key('sidebar_engine_status_badge'),
                 color: dotColor,
                 size: 7,
-                pulsing: status == EngineRuntimeStatus.preparing ||
+                pulsing:
+                    status == EngineRuntimeStatus.preparing ||
                     status == EngineRuntimeStatus.stopping,
               ),
               const SizedBox(width: 2),
@@ -379,14 +387,17 @@ class _SidebarNavRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: context.ink,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: context.ink),
                 ),
               ),
               if (badge != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: context.accent,
                     borderRadius: BorderRadius.circular(ClaudeRadius.pill),

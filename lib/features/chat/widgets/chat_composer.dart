@@ -91,6 +91,18 @@ class ChatComposerState extends State<ChatComposer> {
         color: context.surface,
         borderRadius: BorderRadius.circular(ClaudeRadius.composer),
         border: Border.all(color: context.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(16),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -137,24 +149,30 @@ class ChatComposerState extends State<ChatComposer> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-            // Attach first, send last, engine under the thumb: the order
-            // matches how the row is read — build the message, then commit
-            // it, then deal with the machine.
+            // What you are composing lives on the left; what runs it lives on
+            // the right. The model name sits against the attach button
+            // because both describe the message, and the engine sits against
+            // send because both describe what happens when you send it.
             child: Row(
               children: [
                 _RoundIconButton(
                   keyValue: 'chat_attach_button',
                   icon: ClaudeIcons.plus,
                   tooltip: l10n.chatAttachImage,
-                  onPressed: isSending || !isRunning ? null : widget.onPickImage,
+                  onPressed: isSending || !isRunning
+                      ? null
+                      : widget.onPickImage,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: _ModelChip(model: model, onTap: widget.onSelectModel),
                 ),
                 const Spacer(),
                 _EngineButton(
                   running: isRunning,
-                  modelReady: modelReady,
-                  onTap: isRunning ? widget.onOpenSettings : widget.onStartServer,
-                  onSelectModel: widget.onSelectModel,
-                  model: model,
+                  onTap: isRunning
+                      ? widget.onOpenSettings
+                      : widget.onStartServer,
                 ),
                 const SizedBox(width: 6),
                 _SendStopButton(
@@ -172,64 +190,63 @@ class ChatComposerState extends State<ChatComposer> {
   }
 }
 
-/// Server state on the left of the composer.
+/// The engine, one glyph.
 ///
-/// Tapping it is the fix when the engine is down and the settings shortcut
-/// once it is up, which is the same affordance the sidebar's status strip
-/// offers — kept here so the composer never has to explain itself in words.
+/// No label, and when the server is down not even a status word — just the
+/// same chip with a slash through it. A row this size can carry one idea
+/// per glyph; "启动服务器" in orange next to a control that already does
+/// that was a sentence fighting a button.
+///
+/// Tapping it starts the engine when it is down and opens settings when it
+/// is up. Same affordance the sidebar's status strip offers, kept here so
+/// the composer never has to explain itself.
 class _EngineButton extends StatelessWidget {
-  const _EngineButton({
-    required this.running,
-    required this.modelReady,
-    required this.onTap,
-    required this.onSelectModel,
-    required this.model,
-  });
+  const _EngineButton({required this.running, required this.onTap});
 
   final bool running;
-  final bool modelReady;
   final VoidCallback onTap;
-  final VoidCallback onSelectModel;
-  final ChatModelOption? model;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _RoundIconButton(
-          keyValue: 'chat_engine_button',
-          icon: running ? ClaudeIcons.chip : ClaudeIcons.stop,
-          tooltip: context.l10n.drawerSettings,
-          onPressed: onTap,
-          active: running,
-        ),
-        const SizedBox(width: 2),
-        if (running)
-          _ModelChip(model: model, onTap: onSelectModel)
-        else
-          // Quiet affordance: the placeholder already says what is wrong, so
-          // this only has to offer the repair.
-          Semantics(
-            button: true,
-            label: context.l10n.chatInputHintStartServer,
-            child: InkWell(
-              key: const Key('chat_blocked_action'),
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(ClaudeRadius.pill),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Text(
-                  context.l10n.chatStartServer,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: context.accent,
-                    fontWeight: FontWeight.w500,
+    final tooltip = running
+        ? context.l10n.drawerSettings
+        : context.l10n.chatStartServer;
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        toggled: running,
+        child: Material(
+          color: running ? context.accentSubtle : context.surfaceSunken,
+          shape: const CircleBorder(),
+          child: InkWell(
+            key: const Key('chat_engine_button'),
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 36,
+              height: 36,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  ClaudeIcon(
+                    ClaudeIcons.chip,
+                    size: 17,
+                    color: running ? context.accent : context.inkSecondary,
                   ),
-                ),
+                  if (!running)
+                    ClaudeIcon(
+                      ClaudeIcons.slash,
+                      size: 17,
+                      color: context.inkTertiary,
+                    ),
+                ],
               ),
             ),
           ),
-      ],
+        ),
+      ),
     );
   }
 }
@@ -240,14 +257,12 @@ class _RoundIconButton extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     this.keyValue,
-    this.active = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
   final String? keyValue;
-  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -258,7 +273,7 @@ class _RoundIconButton extends StatelessWidget {
         button: true,
         label: tooltip,
         child: Material(
-          color: active ? context.accentSubtle : context.surfaceSunken,
+          color: context.surfaceSunken,
           shape: const CircleBorder(),
           child: InkWell(
             key: keyValue == null ? null : Key(keyValue!),
@@ -271,11 +286,9 @@ class _RoundIconButton extends StatelessWidget {
                 child: ClaudeIcon(
                   icon,
                   size: 18,
-                  color: !enabled
-                      ? context.inkTertiary.withAlpha(120)
-                      : active
-                      ? context.accent
-                      : context.inkSecondary,
+                  color: enabled
+                      ? context.inkSecondary
+                      : context.inkTertiary.withAlpha(120),
                 ),
               ),
             ),

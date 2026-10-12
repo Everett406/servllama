@@ -54,7 +54,7 @@
   "chatInputHintLoadingModel": "Model loading...",
   "chatInputHintSelectModel": "Choose a model first",
   "chatInputHintModelUnavailable": "Current model is not loaded",
-  "chatInputHintEnterMessage": "Enter a message",
+  "chatInputHintEnterMessage": "Reply to Vela",
   "chatSend": "Send",
   "chatStop": "Stop",
   "chatUnloadModel": "Unload model",
@@ -965,5 +965,14 @@
       "used": {},
       "total": {}
     }
-  }
+  },
+  "chatMore": "More",
+  "chatThinkingWaiting": "Thinking…",
+  "chatThinkingSheetTitle": "Thought for {duration}",
+  "@chatThinkingSheetTitle": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "chatAnswerFootnote": "Vela runs on your own device and still gets things wrong. Check anything that matters."
 }

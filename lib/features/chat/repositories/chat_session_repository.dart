@@ -59,7 +59,6 @@ class ChatSessionRepository {
     _transientSessionIds.add(sessionId);
   }
 
-
   Future<Box<ChatSessionRecord>>? _boxFuture;
   Future<Box<ChatMessageRecord>>? _messageBoxFuture;
   Future<Box<ChatMessageVersionRecord>>? _versionBoxFuture;

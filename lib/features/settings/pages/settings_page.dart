@@ -30,110 +30,119 @@ class SettingsPage extends StatelessWidget {
       ChatTimeoutProvider,
       SystemPromptProvider
     >(
-      builder: (context, themeProvider, localeProvider, chatTimeoutProvider, systemPromptProvider, _) => PageScaffold(
-        title: l10n.settingsTitle,
-        maxWidth: 620,
-        padding: const EdgeInsets.fromLTRB(
-          ClaudeSpacing.lg,
-          ClaudeSpacing.xl,
-          ClaudeSpacing.lg,
-          ClaudeSpacing.xxl,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-              SettingsSection(
-                title: l10n.settingsSectionGeneral,
-                child: SettingsTileList(
-                  children: [
-                    SettingsMenuTile(
-                      key: const Key('settings_theme_mode_tile'),
-                      icon: Icons.palette_outlined,
-                      title: l10n.settingsThemeMode,
-                      value: _themeModeLabel(l10n, themeProvider.themeMode),
-                      onTap: () => _showThemeModeSheet(context, themeProvider),
-                    ),
-                    SettingsMenuTile(
-                      key: const Key('settings_language_tile'),
-                      icon: Icons.language_rounded,
-                      title: l10n.settingsLanguage,
-                      value: _localeModeLabel(
-                        l10n,
-                        localeProvider.localeMode,
+      builder:
+          (
+            context,
+            themeProvider,
+            localeProvider,
+            chatTimeoutProvider,
+            systemPromptProvider,
+            _,
+          ) => PageScaffold(
+            title: l10n.settingsTitle,
+            maxWidth: 620,
+            padding: const EdgeInsets.fromLTRB(
+              ClaudeSpacing.lg,
+              ClaudeSpacing.xl,
+              ClaudeSpacing.lg,
+              ClaudeSpacing.xxl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SettingsSection(
+                  title: l10n.settingsSectionGeneral,
+                  child: SettingsTileList(
+                    children: [
+                      SettingsMenuTile(
+                        key: const Key('settings_theme_mode_tile'),
+                        icon: Icons.palette_outlined,
+                        title: l10n.settingsThemeMode,
+                        value: _themeModeLabel(l10n, themeProvider.themeMode),
+                        onTap: () =>
+                            _showThemeModeSheet(context, themeProvider),
                       ),
-                      onTap: () => _showLanguageSheet(context, localeProvider),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              SettingsSection(
-                title: l10n.settingsSectionChat,
-                child: SettingsTileList(
-                  children: [
-                    SettingsMenuTile(
-                      key: const Key('settings_chat_timeout_tile'),
-                      icon: Icons.timer_outlined,
-                      title: l10n.settingsChatTimeout,
-                      value: l10n.settingsChatTimeoutValue(
-                        chatTimeoutProvider.timeoutSeconds,
+                      SettingsMenuTile(
+                        key: const Key('settings_language_tile'),
+                        icon: Icons.language_rounded,
+                        title: l10n.settingsLanguage,
+                        value: _localeModeLabel(
+                          l10n,
+                          localeProvider.localeMode,
+                        ),
+                        onTap: () =>
+                            _showLanguageSheet(context, localeProvider),
                       ),
-                      onTap: () => _showChatTimeoutSheet(
-                        context,
-                        chatTimeoutProvider,
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SettingsSection(
+                  title: l10n.settingsSectionChat,
+                  child: SettingsTileList(
+                    children: [
+                      SettingsMenuTile(
+                        key: const Key('settings_chat_timeout_tile'),
+                        icon: Icons.timer_outlined,
+                        title: l10n.settingsChatTimeout,
+                        value: l10n.settingsChatTimeoutValue(
+                          chatTimeoutProvider.timeoutSeconds,
+                        ),
+                        onTap: () =>
+                            _showChatTimeoutSheet(context, chatTimeoutProvider),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              const DownloadSettingsSection(),
-              const SizedBox(height: 18),
-              SettingsSection(
-                title: l10n.settingsSectionModel,
-                child: SettingsTileList(
-                  children: [
-                    SettingsMenuTile(
-                      key: const Key('settings_model_library_tile'),
-                      icon: ClaudeIcons.layers,
-                      title: l10n.modelLibraryTitle,
-                      onTap: () => _push(context, const ModelManagementPage()),
-                    ),
-                    SettingsMenuTile(
-                      key: const Key('settings_system_prompt_tile'),
-                      icon: ClaudeIcons.edit,
-                      title: l10n.systemPromptTitle,
-                      subtitle: systemPromptProvider.isEmpty
-                          ? l10n.systemPromptEmpty
-                          : systemPromptProvider.prompt,
-                      onTap: () => _push(context, const SystemPromptPage()),
-                    ),
-                  ],
+                const SizedBox(height: 18),
+                const DownloadSettingsSection(),
+                const SizedBox(height: 18),
+                SettingsSection(
+                  title: l10n.settingsSectionModel,
+                  child: SettingsTileList(
+                    children: [
+                      SettingsMenuTile(
+                        key: const Key('settings_model_library_tile'),
+                        icon: ClaudeIcons.layers,
+                        title: l10n.modelLibraryTitle,
+                        onTap: () =>
+                            _push(context, const ModelManagementPage()),
+                      ),
+                      SettingsMenuTile(
+                        key: const Key('settings_system_prompt_tile'),
+                        icon: ClaudeIcons.edit,
+                        title: l10n.systemPromptTitle,
+                        subtitle: systemPromptProvider.isEmpty
+                            ? l10n.systemPromptEmpty
+                            : systemPromptProvider.prompt,
+                        onTap: () => _push(context, const SystemPromptPage()),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              SettingsSection(
-                title: l10n.settingsSectionAbout,
-                child: SettingsTileList(
-                  children: [
-                    SettingsMenuTile(
-                      icon: ClaudeIcons.info,
-                      title: l10n.settingsAbout,
-                      onTap: () => _push(context, const AboutPage()),
-                    ),
-                  ],
+                const SizedBox(height: 18),
+                SettingsSection(
+                  title: l10n.settingsSectionAbout,
+                  child: SettingsTileList(
+                    children: [
+                      SettingsMenuTile(
+                        icon: ClaudeIcons.info,
+                        title: l10n.settingsAbout,
+                        onTap: () => _push(context, const AboutPage()),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-        ),
-      ),
+              ],
+            ),
+          ),
     );
   }
 
   static Future<void> _push(BuildContext context, Widget page) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => page));
   }
 
   static Future<void> _showThemeModeSheet(
@@ -257,10 +266,7 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-  static String _localeModeLabel(
-    AppLocalizations l10n,
-    AppLocaleMode value,
-  ) {
+  static String _localeModeLabel(AppLocalizations l10n, AppLocaleMode value) {
     switch (value) {
       case AppLocaleMode.system:
         return l10n.languageModeSystem;

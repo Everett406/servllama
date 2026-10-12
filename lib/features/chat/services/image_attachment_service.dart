@@ -40,11 +40,12 @@ class ImageAttachmentService {
       );
     }
 
-    final result = await (_filePicker?.pickFiles() ??
-        FilePicker.platform.pickFiles(
-          type: FileType.image,
-          allowMultiple: true,
-        ));
+    final result =
+        await (_filePicker?.pickFiles() ??
+            FilePicker.platform.pickFiles(
+              type: FileType.image,
+              allowMultiple: true,
+            ));
 
     if (result == null || result.files.isEmpty) {
       return const [];
@@ -52,9 +53,7 @@ class ImageAttachmentService {
 
     final pickedFiles = result.files;
     if (pickedFiles.length > remaining) {
-      throw const ImageAttachmentException(
-        '每条消息最多添加5张图片',
-      );
+      throw const ImageAttachmentException('每条消息最多添加5张图片');
     }
 
     return _processAndCopyFiles(pickedFiles);
@@ -62,9 +61,7 @@ class ImageAttachmentService {
 
   Future<String?> pickFromCamera({int currentCount = 0}) async {
     if (currentCount >= maxImagesPerMessage) {
-      throw const ImageAttachmentException(
-        '每条消息最多添加5张图片',
-      );
+      throw const ImageAttachmentException('每条消息最多添加5张图片');
     }
 
     final picker = _imagePicker ?? ImagePicker();
@@ -76,9 +73,7 @@ class ImageAttachmentService {
     final file = File(xFile.path);
     final fileSize = await file.length();
     if (fileSize > maxImageSizeBytes) {
-      throw const ImageAttachmentException(
-        '图片大小不能超过10MB',
-      );
+      throw const ImageAttachmentException('图片大小不能超过10MB');
     }
 
     return _copyToAttachmentsDirectory(file);
@@ -86,15 +81,11 @@ class ImageAttachmentService {
 
   void validateCount(int currentCount, int additionalCount) {
     if (currentCount + additionalCount > maxImagesPerMessage) {
-      throw const ImageAttachmentException(
-        '每条消息最多添加5张图片',
-      );
+      throw const ImageAttachmentException('每条消息最多添加5张图片');
     }
   }
 
-  Future<List<String>> _processAndCopyFiles(
-    List<PlatformFile> files,
-  ) async {
+  Future<List<String>> _processAndCopyFiles(List<PlatformFile> files) async {
     final copiedPaths = <String>[];
     for (final file in files) {
       final filePath = file.path;
@@ -105,9 +96,7 @@ class ImageAttachmentService {
       final sourceFile = File(filePath);
       final fileSize = await sourceFile.length();
       if (fileSize > maxImageSizeBytes) {
-        throw const ImageAttachmentException(
-          '图片大小不能超过10MB',
-        );
+        throw const ImageAttachmentException('图片大小不能超过10MB');
       }
 
       final newPath = await _copyToAttachmentsDirectory(sourceFile);

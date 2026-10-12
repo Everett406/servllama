@@ -69,7 +69,9 @@ class ServerLaunchArgsBuilder {
         return const <String>['--device', 'none'];
       case LlamaCppBackend.opencl:
       case LlamaCppBackend.hexagon:
-        final fallback = backend == LlamaCppBackend.opencl ? 'GPUOpenCL' : 'HTP0';
+        final fallback = backend == LlamaCppBackend.opencl
+            ? 'GPUOpenCL'
+            : 'HTP0';
         return <String>[
           '--device',
           (deviceName == null || deviceName.isEmpty) ? fallback : deviceName,
