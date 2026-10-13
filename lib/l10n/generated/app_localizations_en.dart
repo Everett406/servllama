@@ -750,6 +750,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get generationParamsUnsetHint => 'Model decides';
 
   @override
+  String get streamingTableStarting => 'Generating a table';
+
+  @override
+  String streamingTableBuilding(Object count) {
+    return 'Generating a table · $count rows so far';
+  }
+
+  @override
   String get generationParamsEntry => 'Generation parameters';
 
   @override

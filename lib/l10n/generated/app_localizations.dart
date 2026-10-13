@@ -1427,6 +1427,18 @@ abstract class AppLocalizations {
   /// **'Model decides'**
   String get generationParamsUnsetHint;
 
+  /// No description provided for @streamingTableStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating a table'**
+  String get streamingTableStarting;
+
+  /// No description provided for @streamingTableBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating a table · {count} rows so far'**
+  String streamingTableBuilding(Object count);
+
   /// No description provided for @generationParamsEntry.
   ///
   /// In en, this message translates to:

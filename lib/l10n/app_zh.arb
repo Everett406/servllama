@@ -359,6 +359,8 @@
   "generationParamsMaxTokensHint": "回复长度上限。留空则让长回答能写完。",
   "generationParamsReset": "全部重置",
   "generationParamsUnsetHint": "由模型决定",
+  "streamingTableStarting": "正在生成表格",
+  "streamingTableBuilding": "正在生成表格 · 已完成 {count} 行",
   "generationParamsEntry": "生成参数",
   "titleGenerationEntry": "会话命名",
   "titleGenerationHint": "用第一条回复之后生成的短标题给新会话命名，而不是截取你的第一句话。",

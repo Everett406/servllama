@@ -722,6 +722,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generationParamsUnsetHint => '由模型决定';
 
   @override
+  String get streamingTableStarting => '正在生成表格';
+
+  @override
+  String streamingTableBuilding(Object count) {
+    return '正在生成表格 · 已完成 $count 行';
+  }
+
+  @override
   String get generationParamsEntry => '生成参数';
 
   @override

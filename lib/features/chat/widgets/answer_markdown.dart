@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
+import 'package:servllama/features/chat/widgets/streaming_block_splitter.dart';
+import 'package:servllama/features/chat/widgets/streaming_table_placeholder.dart';
 import 'package:servllama/app/app_theme.dart';
 
 
@@ -26,8 +28,32 @@ class AnswerMarkdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // While the reply is still arriving, a table that has not closed is held
+    // back behind a placeholder. gpt_markdown already keeps a half-row from
+    // forming, so this is not about a broken table — it is that a table grows
+    // row by row while the reader is in the middle of the rows already there,
+    // and each new row reflows the ones above it.
+    if (isStreaming) {
+      final segments = splitStreamingBlocks(content);
+      if (segments.any((segment) => segment.isOpenTable)) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final segment in segments)
+              if (segment.isOpenTable)
+                StreamingTablePlaceholder(segment: segment)
+              else if (segment.markdown!.trim().isNotEmpty)
+                _markdown(context, segment.markdown!),
+          ],
+        );
+      }
+    }
+    return _markdown(context, content);
+  }
+
+  Widget _markdown(BuildContext context, String source) {
     return GptMarkdown(
-      content,
+      source,
       style: style,
       styleSheet: _sheet(context),
       animation: isStreaming
