@@ -753,6 +753,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get generationParamsEntry => 'Generation parameters';
 
   @override
+  String get titleGenerationEntry => 'Conversation names';
+
+  @override
+  String get titleGenerationHint =>
+      'Name a new conversation after its first answer instead of naming it after the first line.';
+
+  @override
+  String get titleGenerationModel => 'Naming model';
+
+  @override
+  String get titleGenerationModelHint =>
+      'A model to name conversations with. Empty reuses the running one.';
+
+  @override
+  String get titleGenerationModelClear => 'Use the running model';
+
+  @override
   String get modelSettingsNameLabel => 'Model name';
 
   @override

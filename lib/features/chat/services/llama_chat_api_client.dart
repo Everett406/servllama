@@ -242,6 +242,75 @@ class LlamaChatApiClient {
     return headers;
   }
 
+  /// A single non-streaming completion.
+  ///
+  /// Only the title generator uses this. It is a separate call from the chat
+  /// stream rather than a mode of it because it must never interleave: two
+  /// concurrent requests to one llama-server means two decode loops sharing a
+  /// context, and the answer the user is waiting for would be the one that
+  /// loses.
+  Future<String?> completeTitle({
+    required String modelId,
+    required String systemPrompt,
+    required String userPrompt,
+    required CancelToken cancelToken,
+    GenerationParams generationParams = const GenerationParams(),
+  }) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        '$_baseUrl/v1/chat/completions',
+        data: <String, dynamic>{
+          'model': modelId,
+          'stream': false,
+          'messages': <Map<String, dynamic>>[
+            <String, dynamic>{'role': 'system', 'content': systemPrompt},
+            <String, dynamic>{'role': 'user', 'content': userPrompt},
+          ],
+          ...generationParams.sanitized().toRequestFields(),
+        },
+        cancelToken: cancelToken,
+        options: Options(
+          // A title is a few words and must not hang the UI while it is
+          // produced; the chat stream's timeout would be wildly wrong here.
+          receiveTimeout: const Duration(seconds: 30),
+          headers: await _headers(),
+        ),
+      );
+    } on DioException catch (error) {
+      if (CancelToken.isCancel(error)) return null;
+      throw _exceptionFromDio(error);
+    }
+
+    if (response.statusCode != 200) {
+      throw await _exceptionFromResponse(
+        statusCode: response.statusCode,
+        body: response.data,
+      );
+    }
+
+    final body = response.data;
+    if (body is! Map) return null;
+    final choices = body['choices'];
+    if (choices is! List || choices.isEmpty) return null;
+    final first = choices.first;
+    if (first is! Map) return null;
+    final message = first['message'];
+    if (message is! Map) return null;
+    final content = message['content'];
+    if (content is! String) return null;
+    // A reasoning model may put the answer in `reasoning_content` and leave
+    // `content` empty; take whichever actually has words in it.
+    if (content.trim().isEmpty) {
+      final reasoning = message['reasoning_content'];
+      if (reasoning is String && reasoning.trim().isNotEmpty) {
+        return reasoning;
+      }
+      return null;
+    }
+    return content;
+  }
+
   Future<List<Map<String, dynamic>>> _serializeMessages(
     List<ChatMessageRecord> messages,
   ) async {

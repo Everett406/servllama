@@ -26,4 +26,14 @@ class ServerPrefsKeys {
   /// are written and read together, and a half-written set of five preferences
   /// is harder to reason about than one document that is either there or not.
   static const String generationParams = 'chat.generation_params';
+
+  /// Whether to spend a request naming a conversation. On by default: without
+  /// it every conversation is named by the first line of the user's message,
+  /// which is usually a question rather than a topic.
+  static const String titleGenerationEnabled = 'chat.title_generation_enabled';
+
+  /// A model to name conversations with, empty to reuse the running one. A
+  /// title is a few words; a small model can do it without the memory a big one
+  /// would be holding for no reason.
+  static const String titleGenerationModel = 'chat.title_generation_model';
 }

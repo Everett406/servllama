@@ -9,6 +9,7 @@ import 'package:servllama/features/chat/controllers/streaming_chat_message_notif
 import 'package:servllama/features/chat/models/chat_message_record.dart';
 import 'package:servllama/features/chat/widgets/token_stats.dart';
 import 'package:servllama/features/chat/widgets/answer_markdown.dart';
+import 'package:servllama/features/chat/widgets/prefill_orb.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/app/sheet/vela_sheet.dart';
@@ -204,6 +205,11 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
             // Shown while generating even with nothing to quote yet: a
             // reply that has not appeared needs to say why it has not
             // appeared, and an empty gap is not a reason.
+            // Pure prefill: generating, but neither a token of the answer nor
+            // a word of reasoning yet. The thinking line has nothing to put on
+            // screen in that window, so the orb covers it.
+            if (widget.isStreaming && !hasContent && reasoning.isEmpty)
+              const PrefillOrb(),
             if (reasoning.isNotEmpty || widget.isStreaming)
               ThinkingLine(
                 content: reasoning,

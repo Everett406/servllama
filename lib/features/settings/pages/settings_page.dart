@@ -1,5 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/providers/model_management_provider.dart';
+import 'package:servllama/app/sheet/vela_menu.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
+import 'package:servllama/features/chat/services/session_title_generator.dart';
+import 'package:servllama/shared/widgets/switch_setting_tile.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/providers/system_prompt_provider.dart';
@@ -18,7 +25,6 @@ import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/settings_section.dart';
 import 'package:servllama/shared/widgets/settings_tile_list.dart';
-import 'package:servllama/app/sheet/vela_sheet.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -26,6 +32,9 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    // Not watched: it is a plain Provider, and the settings page re-reads it
+    // when it comes back. Nothing rebuilds the app when a title model moves.
+    final titleGenerator = context.read<SessionTitleGenerator>();
 
     return Consumer4<
       AppThemeModeProvider,
@@ -136,6 +145,26 @@ class SettingsPage extends StatelessWidget {
                         onTap: () =>
                             _push(context, const GenerationParamsPage()),
                       ),
+                      SwitchSettingTile(
+                        key: const Key('settings_title_generation_tile'),
+                        title: l10n.titleGenerationEntry,
+                        subtitle: l10n.titleGenerationHint,
+                        value: titleGenerator.enabled,
+                        onChanged: (value) =>
+                            titleGenerator.setEnabled(value),
+                      ),
+                      SettingsMenuTile(
+                        key: const Key('settings_title_model_tile'),
+                        icon: ClaudeIcons.chip,
+                        title: l10n.titleGenerationModel,
+                        subtitle:
+                            titleGenerator.modelOverrideId ??
+                            l10n.titleGenerationModelHint,
+                        onTap: () => _pickTitleModel(
+                          context,
+                          titleGenerator,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -155,6 +184,58 @@ class SettingsPage extends StatelessWidget {
               ],
             ),
           ),
+    );
+  }
+
+  /// Choose which model names conversations, or go back to reusing whatever
+  /// is already running.
+  Future<void> _pickTitleModel(
+    BuildContext context,
+    SessionTitleGenerator generator,
+  ) async {
+    final l10n = context.l10n;
+    final library = context.read<ModelManagementProvider>();
+    unawaited(library.load());
+    final models = library.libraryModels;
+
+    await showVelaSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            VelaMenuItem(
+              key: const Key('title_model_clear'),
+              title: l10n.titleGenerationModelClear,
+              leading: ClaudeIcon(ClaudeIcons.star, size: 17),
+              onTap: () {
+                generator.setModelOverride(null);
+                Navigator.of(sheetContext).pop();
+              },
+            ),
+            const Divider(height: ClaudeSpacing.lg),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final model in models)
+                    ListTile(
+                      key: Key('title_model_${model.id}'),
+                      title: Text(model.title),
+                      selected: generator.modelOverrideId == model.runtimeId,
+                      onTap: () {
+                        generator.setModelOverride(model.runtimeId);
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

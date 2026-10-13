@@ -32,6 +32,7 @@ import 'package:servllama/features/chat/models/chat_stream_delta.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/repositories/chat_session_repository.dart';
 import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
+import 'package:servllama/features/chat/services/session_title_generator.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -399,6 +400,14 @@ class _TestApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<ChatTimeoutProvider>(
           create: (_) => ChatTimeoutProvider(),
+        ),
+        // Standalone on purpose: the test owns the ChatProvider below, so
+        // nothing would otherwise register a shared API client for it.
+        Provider<SessionTitleGenerator>(
+          create: (_) => SessionTitleGenerator(
+            apiClient: LlamaChatApiClient(),
+            kvStorage: KvStorage(),
+          ),
         ),
         ChangeNotifierProvider<GenerationParamsProvider>(
           create: (_) => GenerationParamsProvider(

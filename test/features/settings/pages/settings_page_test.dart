@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
+import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/storage/kv_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -212,6 +214,12 @@ class _TestHost extends StatelessWidget {
         ChangeNotifierProvider<AppLocaleProvider>.value(value: localeProvider),
         ChangeNotifierProvider<ChatTimeoutProvider>.value(
           value: chatTimeoutProvider,
+        ),
+        Provider<SessionTitleGenerator>(
+          create: (_) => SessionTitleGenerator(
+            apiClient: LlamaChatApiClient(),
+            kvStorage: KvStorage(),
+          ),
         ),
         ChangeNotifierProvider<GenerationParamsProvider>.value(
           value: GenerationParamsProvider(

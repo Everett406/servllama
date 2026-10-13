@@ -14,6 +14,8 @@ import 'package:servllama/app/main_scaffold.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
+import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
+import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/features/downloads/providers/model_discovery_provider.dart';
@@ -50,6 +52,22 @@ class ServLlamaApp extends StatelessWidget {
           ),
           // Above ChatProvider so the chat path can read the current sampling
           // settings at the moment a request goes out.
+          // One client, shared. The title generator has to reach the same
+          // llama-server the conversation is talking to; a second instance
+          // would keep its own base URL and start its own doomed requests
+          // whenever the port moved.
+          Provider<LlamaChatApiClient>(create: (_) => LlamaChatApiClient()),
+          // A plain provider rather than a ChangeNotifier: nothing listens to
+          // it, the chat controller just reads it.
+          Provider<SessionTitleGenerator>(
+            create: (context) {
+              final generator = SessionTitleGenerator(
+                apiClient: context.read<LlamaChatApiClient>(),
+              );
+              unawaited(generator.load());
+              return generator;
+            },
+          ),
           ChangeNotifierProvider(
             create: (_) {
               final provider = GenerationParamsProvider();
@@ -114,9 +132,11 @@ class ServLlamaApp extends StatelessWidget {
             SystemPromptProvider,
             ChatProvider
           >(
-            create: (_) => ChatProvider(
+            create: (context) => ChatProvider(
+              apiClient: context.read<LlamaChatApiClient>(),
               generationParamsProvider: context
                   .read<GenerationParamsProvider>(),
+              titleGenerator: context.read<SessionTitleGenerator>(),
             ),
             update:
                 (

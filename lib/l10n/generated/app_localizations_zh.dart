@@ -725,6 +725,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generationParamsEntry => '生成参数';
 
   @override
+  String get titleGenerationEntry => '会话命名';
+
+  @override
+  String get titleGenerationHint => '用第一条回复之后生成的短标题给新会话命名，而不是截取你的第一句话。';
+
+  @override
+  String get titleGenerationModel => '标题模型';
+
+  @override
+  String get titleGenerationModelHint => '专门用来命名的模型。留空则复用当前运行的模型。';
+
+  @override
+  String get titleGenerationModelClear => '用当前模型';
+
+  @override
   String get modelSettingsNameLabel => '模型名称';
 
   @override

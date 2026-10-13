@@ -1433,6 +1433,36 @@ abstract class AppLocalizations {
   /// **'Generation parameters'**
   String get generationParamsEntry;
 
+  /// No description provided for @titleGenerationEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation names'**
+  String get titleGenerationEntry;
+
+  /// No description provided for @titleGenerationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name a new conversation after its first answer instead of naming it after the first line.'**
+  String get titleGenerationHint;
+
+  /// No description provided for @titleGenerationModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Naming model'**
+  String get titleGenerationModel;
+
+  /// No description provided for @titleGenerationModelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A model to name conversations with. Empty reuses the running one.'**
+  String get titleGenerationModelHint;
+
+  /// No description provided for @titleGenerationModelClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the running model'**
+  String get titleGenerationModelClear;
+
   /// No description provided for @modelSettingsNameLabel.
   ///
   /// In en, this message translates to:

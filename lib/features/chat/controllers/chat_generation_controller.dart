@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/features/chat/controllers/chat_conversation_controller.dart';
 import 'package:servllama/features/chat/controllers/chat_id_generator.dart';
 import 'package:servllama/features/chat/controllers/chat_model_controller.dart';
@@ -24,6 +27,7 @@ class ChatGenerationController extends ChangeNotifier {
     required ChatIdGenerator idGenerator,
     required this.defaultSessionTitle,
     required this.generationParams,
+    this.titleGenerator,
   }) : _repository = repository,
        _apiClient = apiClient,
        _sessionList = sessionList,
@@ -43,6 +47,9 @@ class ChatGenerationController extends ChangeNotifier {
   /// a copy from construction would mean changing a sampling setting has no
   /// effect until the provider is rebuilt.
   final GenerationParams Function() generationParams;
+
+  /// Names a conversation once its first answer is done. Null disables it.
+  final SessionTitleGenerator? titleGenerator;
   final StreamingChatMessageNotifier streamingMessages =
       StreamingChatMessageNotifier();
 
@@ -668,8 +675,73 @@ class ChatGenerationController extends ChangeNotifier {
 
         _draftAssistantMessage = null;
         _activeCancelToken = null;
+
+        // Only now, with the stream finished and the cancel token released.
+        // Running a title request alongside the answer would put two decode
+        // loops on one server and the answer would be the one that lost.
+        unawaited(_maybeNameSession(session, model.id));
       }
     }
+  }
+
+  /// Give a fresh conversation a real name, if it still has the fallback one.
+  ///
+  /// Fire-and-forget on purpose: a title is a nicety, and an error surfacing
+  /// here would land in the middle of a conversation the user is fine with.
+  /// A title the user typed or renamed is never touched.
+  Future<void> _maybeNameSession(ChatSessionRecord session, String modelId) async {
+    final generator = titleGenerator;
+    if (generator == null) return;
+    if (session.title != defaultSessionTitle &&
+        session.title != _deriveSessionTitle(session.title)) {
+      return;
+    }
+
+    final firstUserMessage = await _firstUserText(session.id);
+    if (firstUserMessage == null || firstUserMessage.trim().isEmpty) return;
+
+    final title = await generator.generate(
+      modelId: modelId,
+      firstUserMessage: firstUserMessage,
+    );
+    if (title == null || _isDisposed) return;
+
+    ChatSessionRecord? findById(String id) {
+      for (final candidate in _sessionList.sessions) {
+        if (candidate.id == id) return candidate;
+      }
+      return null;
+    }
+
+    final current = findById(session.id) ?? session;
+    // Re-check: the user may have renamed it while the request was in flight,
+    // and a generated title must not overwrite a name someone chose.
+    if (current.title != session.title) return;
+
+    final updated = current.copyWith(
+      title: title,
+      updatedAt: current.updatedAt,
+    );
+    await _commitSession(updated);
+  }
+
+  Future<String?> _firstUserText(String sessionId) async {
+    ChatSessionRecord? findById(String id) {
+      for (final candidate in _sessionList.sessions) {
+        if (candidate.id == id) return candidate;
+      }
+      return null;
+    }
+
+    final session = findById(sessionId);
+    if (session == null) return null;
+    final messages = await _repository.loadAllMessages(session);
+    for (final message in messages) {
+      if (message.role == ChatRole.user && message.content.trim().isNotEmpty) {
+        return message.content;
+      }
+    }
+    return null;
   }
 
   /// Per-delta persistence: writes only the streaming draft message and,
