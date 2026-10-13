@@ -1307,6 +1307,42 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get modelManagementSettingsTooltip;
 
+  /// No description provided for @modelLibraryAliasTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get modelLibraryAliasTitle;
+
+  /// No description provided for @modelLibraryAliasHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown in the list. The file and the model id the server uses are not changed.'**
+  String get modelLibraryAliasHint;
+
+  /// No description provided for @modelLibraryAliasAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename for display'**
+  String get modelLibraryAliasAction;
+
+  /// No description provided for @modelLibraryAliasClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Use real name'**
+  String get modelLibraryAliasClear;
+
+  /// No description provided for @modelLibraryAliasSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name updated'**
+  String get modelLibraryAliasSaved;
+
+  /// No description provided for @modelLibraryAliasCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the real name again'**
+  String get modelLibraryAliasCleared;
+
   /// No description provided for @modelSettingsNameLabel.
   ///
   /// In en, this message translates to:

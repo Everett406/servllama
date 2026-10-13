@@ -198,7 +198,7 @@ class _ChatViewState extends State<_ChatView>
   ) {
     if (modelId == null) return null;
     for (final model in library.libraryModelsFor(engine)) {
-      if (model.runtimeId == modelId) return model.name;
+      if (model.runtimeId == modelId) return model.title;
     }
     return modelId;
   }

@@ -67,6 +67,17 @@ class UnifiedModelRepository {
     }
   }
 
+  /// Change only the name this model is shown under. See
+  /// [LocalModelRepository.setDisplayName] — no file moves, and the runtime id
+  /// the server is launched with is deliberately left alone.
+  Future<LibraryModel> setAlias(LibraryModel model, String? alias) async {
+    final updated = await _localModelRepository.setDisplayName(
+      rawIdOf(model.id),
+      alias,
+    );
+    return model.copyWith(alias: updated.displayName);
+  }
+
   Future<LibraryModel> renameModel(LibraryModel model, String newName) async {
     final trimmedName = newName.trim();
     validateName(trimmedName);
@@ -149,6 +160,7 @@ class UnifiedModelRepository {
             runtimeId: descriptor.modelName,
             engine: InferenceEngine.llamaCpp,
             name: descriptor.modelName,
+            alias: descriptor.displayName,
             sizeBytes: descriptor.sizeBytes,
             importedAt: descriptor.importedAt,
             storagePath: descriptor.storedFilePath,

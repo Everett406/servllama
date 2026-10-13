@@ -481,6 +481,29 @@ class ModelManagementProvider extends ChangeNotifier {
   Future<void> ensureNameAvailable(String modelName) =>
       _nameCoordinator.ensureAvailable(modelName);
 
+  /// Give [model] a different name to show, or clear it with null.
+  ///
+  /// Separate from [renameLibraryModel] on purpose. That one renames the file
+  /// and changes the id the server is launched with; this one touches neither
+  /// and must never be routed through it. It is also not subject to the name
+  /// coordinator: two models may well be *shown* under the same name, because
+  /// only one of them is actually called that.
+  Future<void> setModelAlias(LibraryModel model, String? alias) async {
+    final trimmed = alias?.trim();
+    final cleaned = (trimmed != null && trimmed.isNotEmpty) ? trimmed : null;
+    try {
+      final updated = await _unifiedRepository.setAlias(model, cleaned);
+      final index = _libraryModels.indexWhere((entry) => entry.id == model.id);
+      if (index >= 0) {
+        _libraryModels[index] = updated;
+        notifyListeners();
+      }
+    } catch (error, stackTrace) {
+      _logger.warning('模型别名设置失败: ${model.name}', channel: LogChannel.model);
+      _logger.debug('$error', channel: LogChannel.model, stackTrace: stackTrace);
+    }
+  }
+
   Future<String?> renameLibraryModel(LibraryModel model, String newName) async {
     if (_isRenaming) {
       return null;

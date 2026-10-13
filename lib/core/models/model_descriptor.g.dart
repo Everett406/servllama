@@ -31,13 +31,16 @@ class ModelDescriptorAdapter extends TypeAdapter<ModelDescriptor> {
       mmprojFiles: fields[11] == null
           ? {}
           : (fields[11] as Map).cast<String, String>(),
+      // Absent in anything stored before the field existed, which reads as no
+      // alias rather than failing the load.
+      displayName: fields[12] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ModelDescriptor obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -61,7 +64,9 @@ class ModelDescriptorAdapter extends TypeAdapter<ModelDescriptor> {
       ..writeByte(10)
       ..write(obj.visionEnabled)
       ..writeByte(11)
-      ..write(obj.mmprojFiles);
+      ..write(obj.mmprojFiles)
+      ..writeByte(12)
+      ..write(obj.displayName);
   }
 
   @override

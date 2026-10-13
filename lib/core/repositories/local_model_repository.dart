@@ -249,6 +249,28 @@ class LocalModelRepository {
         return updated;
       });
 
+  /// Give this model a different name to *show*.
+  ///
+  /// Nothing on disk moves: [ModelDescriptor.modelName], the stored file and
+  /// the directory all stay exactly as they were, and so does the id the
+  /// server is launched with. This is the opposite of [renameModel], which
+  /// renames the file — the two must not be routed through each other, because
+  /// a name the user chose for readability is not a name they want the server
+  /// to be addressed by.
+  ///
+  /// Pass null to clear the alias and go back to showing the real name.
+  Future<ModelDescriptor> setDisplayName(String modelId, String? displayName) =>
+      _withProjectorLock(() async {
+        final box = await _box();
+        final descriptor = _requireModel(box, modelId);
+        final trimmed = displayName?.trim();
+        final updated = descriptor.copyWith(
+          displayName: (trimmed != null && trimmed.isNotEmpty) ? trimmed : null,
+        );
+        await box.put(descriptor.id, updated);
+        return updated;
+      });
+
   Future<ModelDescriptor> selectMmproj(String modelId, String filePath) =>
       _withProjectorLock(() async {
         final box = await _box();

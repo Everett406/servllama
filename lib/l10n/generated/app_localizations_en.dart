@@ -683,6 +683,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modelManagementSettingsTooltip => 'Settings';
 
   @override
+  String get modelLibraryAliasTitle => 'Display name';
+
+  @override
+  String get modelLibraryAliasHint =>
+      'Shown in the list. The file and the model id the server uses are not changed.';
+
+  @override
+  String get modelLibraryAliasAction => 'Rename for display';
+
+  @override
+  String get modelLibraryAliasClear => 'Use real name';
+
+  @override
+  String get modelLibraryAliasSaved => 'Display name updated';
+
+  @override
+  String get modelLibraryAliasCleared => 'Showing the real name again';
+
+  @override
   String get modelSettingsNameLabel => 'Model name';
 
   @override

@@ -206,7 +206,7 @@ class _ModelRow extends StatelessWidget {
       key: Key('chat_model_sheet_row_${model.runtimeId}'),
       contentPadding: EdgeInsets.zero,
       leading: ModelFormatBadge(engine: model.engine, size: 40),
-      title: Text(model.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(model.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(FormatUtils.bytes(model.sizeBytes)),
       selected: isActive,
       enabled: onTap != null,

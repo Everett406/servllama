@@ -19,6 +19,7 @@ class LibraryModel {
     this.repoId,
     this.revision,
     this.warnings = const <String>[],
+    this.alias,
   });
 
   /// Key for library operations (rename, delete). Namespaced by engine because
@@ -32,6 +33,25 @@ class LibraryModel {
 
   final InferenceEngine engine;
   final String name;
+
+  /// A name the user chose for this model, shown instead of [name].
+  ///
+  /// Display only. [runtimeId] — what the server is actually launched with —
+  /// is untouched by it, as is the file on disk.
+  final String? alias;
+
+  /// What to show for this model: the alias when there is one, else the real
+  /// name.
+  String get title {
+    final trimmed = alias?.trim();
+    return (trimmed != null && trimmed.isNotEmpty) ? trimmed : name;
+  }
+
+  /// Whether this model has been given a different name to show.
+  bool get hasAlias {
+    final trimmed = alias?.trim();
+    return trimmed != null && trimmed.isNotEmpty;
+  }
   final int sizeBytes;
   final DateTime importedAt;
 
@@ -61,5 +81,45 @@ class LibraryModel {
         source.isNotEmpty &&
         repo != null &&
         repo.isNotEmpty;
+  }
+
+  /// Null means "keep what is there", except for [alias], which has to be
+  /// clearable — hence the sentinel.
+  static const _unset = Object();
+
+  LibraryModel copyWith({
+    String? id,
+    String? runtimeId,
+    InferenceEngine? engine,
+    String? name,
+    int? sizeBytes,
+    DateTime? importedAt,
+    String? storagePath,
+    bool? supportsVision,
+    bool? supportsToolCalling,
+    bool? hasMmproj,
+    String? sourceValue,
+    String? repoId,
+    String? revision,
+    List<String>? warnings,
+    Object? alias = _unset,
+  }) {
+    return LibraryModel(
+      id: id ?? this.id,
+      runtimeId: runtimeId ?? this.runtimeId,
+      engine: engine ?? this.engine,
+      name: name ?? this.name,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      importedAt: importedAt ?? this.importedAt,
+      storagePath: storagePath ?? this.storagePath,
+      supportsVision: supportsVision ?? this.supportsVision,
+      supportsToolCalling: supportsToolCalling ?? this.supportsToolCalling,
+      hasMmproj: hasMmproj ?? this.hasMmproj,
+      sourceValue: sourceValue ?? this.sourceValue,
+      repoId: repoId ?? this.repoId,
+      revision: revision ?? this.revision,
+      warnings: warnings ?? this.warnings,
+      alias: identical(alias, _unset) ? this.alias : alias as String?,
+    );
   }
 }

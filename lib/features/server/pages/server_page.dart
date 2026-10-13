@@ -171,7 +171,7 @@ class _ServerPageState extends State<ServerPage> {
     }
     for (final model in library.libraryModelsFor(engine)) {
       if (model.runtimeId == runtimeId) {
-        return model.name;
+        return model.title;
       }
     }
     return runtimeId;
@@ -287,7 +287,7 @@ class _ModelPickerSheet extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       leading: ModelFormatBadge(engine: model.engine, size: 40),
                       title: Text(
-                        model.name,
+                        model.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

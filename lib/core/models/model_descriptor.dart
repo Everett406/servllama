@@ -17,9 +17,24 @@ class ModelDescriptor {
     this.revision,
     this.visionEnabled,
     this.mmprojFiles = const <String, String>{},
+    this.displayName,
   });
 
   @HiveField(0)
+  /// A name the user chose for this model, shown everywhere instead of
+  /// [modelName].
+  ///
+  /// Display only. [modelName] stays the identity the server is launched
+  /// with and the name the file on disk carries — setting an alias must never
+  /// move a file or a directory, which is what the real rename does.
+  final String? displayName;
+
+  /// What to show for this model: the alias if there is one, else the real
+  /// name. Never empty.
+  String get label => (displayName != null && displayName!.trim().isNotEmpty)
+      ? displayName!.trim()
+      : modelName;
+
   final String id;
 
   @HiveField(1)
@@ -98,6 +113,7 @@ class ModelDescriptor {
     Object? sourceValue = _unset,
     Object? repoId = _unset,
     Object? revision = _unset,
+    Object? displayName = _unset,
     bool? visionEnabled,
     Map<String, String>? mmprojFiles,
   }) {
@@ -113,6 +129,9 @@ class ModelDescriptor {
     final nextRevision = identical(revision, _unset)
         ? this.revision
         : revision as String?;
+    final nextDisplayName = identical(displayName, _unset)
+        ? this.displayName
+        : displayName as String?;
     return ModelDescriptor(
       id: id ?? this.id,
       modelName: modelName ?? this.modelName,
@@ -126,6 +145,7 @@ class ModelDescriptor {
       revision: nextRevision,
       visionEnabled: visionEnabled ?? this.visionEnabled,
       mmprojFiles: mmprojFiles ?? this.mmprojFiles,
+      displayName: nextDisplayName,
     );
   }
 }

@@ -662,6 +662,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get modelManagementSettingsTooltip => '设置';
 
   @override
+  String get modelLibraryAliasTitle => '显示名称';
+
+  @override
+  String get modelLibraryAliasHint => '只改列表里显示的名字，文件和服务器用的模型 id 都不变。';
+
+  @override
+  String get modelLibraryAliasAction => '改名显示';
+
+  @override
+  String get modelLibraryAliasClear => '恢复真名';
+
+  @override
+  String get modelLibraryAliasSaved => '显示名称已更新';
+
+  @override
+  String get modelLibraryAliasCleared => '已恢复显示真实名称';
+
+  @override
   String get modelSettingsNameLabel => '模型名称';
 
   @override

@@ -140,6 +140,70 @@ class _ModelManagementViewState extends State<_ModelManagementView> {
     );
   }
 
+  /// Change only the name this model is shown under.
+  ///
+  /// Deliberately not routed through the rename flow: that one renames the
+  /// file and the id the server is launched by. A display name is neither, and
+  /// routing it through rename would make a cosmetic edit move files on disk.
+  Future<void> _editModelAlias(BuildContext context, LibraryModel model) async {
+    final provider = context.read<ModelManagementProvider>();
+    final l10n = context.l10n;
+
+    if (model.hasAlias) {
+      final cleared = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.modelLibraryAliasClear),
+          content: Text(model.name),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.modelLibraryAliasClear),
+            ),
+          ],
+        ),
+      );
+      if (cleared == true) {
+        await provider.setModelAlias(model, null);
+      }
+      return;
+    }
+
+    final controller = TextEditingController(text: model.name);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.modelLibraryAliasTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 64,
+          decoration: InputDecoration(hintText: l10n.modelLibraryAliasHint),
+          onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text),
+            child: Text(l10n.commonSave),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (result != null) {
+      await provider.setModelAlias(model, result);
+    }
+  }
+
   Future<void> _deleteLibraryModel(
     BuildContext context,
     LibraryModel model,
@@ -390,6 +454,8 @@ class _ModelManagementViewState extends State<_ModelManagementView> {
                                             model.id,
                                         onDelete: () =>
                                             _deleteLibraryModel(context, model),
+                                        onAlias: () =>
+                                            _editModelAlias(context, model),
                                         onSettings: () {
                                           final descriptor = _descriptorFor(
                                             provider,
@@ -801,6 +867,7 @@ class _LibraryModelCard extends StatelessWidget {
     required this.hasProjectorDownload,
     required this.onDelete,
     required this.onSettings,
+    required this.onAlias,
   });
 
   final LibraryModel model;
@@ -810,6 +877,7 @@ class _LibraryModelCard extends StatelessWidget {
   final bool hasProjectorDownload;
   final VoidCallback onDelete;
   final VoidCallback onSettings;
+  final VoidCallback onAlias;
 
   @override
   Widget build(BuildContext context) {
@@ -843,13 +911,28 @@ class _LibraryModelCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        model.name,
+                        // The alias when there is one, so the list says what
+                        // the user called it rather than what the file is.
+                        model.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      // With an alias in play the real name is what the server
+                      // is launched by, and hiding it makes that unfindable.
+                      if (model.hasAlias) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          model.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Text(
                         isActive
@@ -897,6 +980,13 @@ class _LibraryModelCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                IconButton(
+                  tooltip: model.hasAlias
+                      ? l10n.modelLibraryAliasClear
+                      : l10n.modelLibraryAliasAction,
+                  onPressed: isActive || isRuntimeBusy ? null : onAlias,
+                  icon: Icon(ClaudeIcons.edit, size: 20),
+                ),
                 IconButton(
                   tooltip: l10n.modelManagementSettingsTooltip,
                   onPressed: isActive || isRuntimeBusy ? null : onSettings,
