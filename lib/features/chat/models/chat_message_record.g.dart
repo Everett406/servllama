@@ -27,13 +27,16 @@ class ChatMessageRecordAdapter extends TypeAdapter<ChatMessageRecord> {
       imageFilePaths: (fields[6] as List).cast<String>(),
       versionIds: (fields[7] as List).cast<String>(),
       currentVersionIndex: fields[8] as int,
+      // Absent before this field existed, which reads as "no tools used".
+      toolResults: decodeToolResults(fields[10] as String?),
+      toolCalls: decodeToolCalls(fields[11] as String?),
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatMessageRecord obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +56,11 @@ class ChatMessageRecordAdapter extends TypeAdapter<ChatMessageRecord> {
       ..writeByte(7)
       ..write(obj.versionIds)
       ..writeByte(8)
-      ..write(obj.currentVersionIndex);
+      ..write(obj.currentVersionIndex)
+      ..writeByte(10)
+      ..write(encodeToolResults(obj.toolResults))
+      ..writeByte(11)
+      ..write(encodeToolCalls(obj.toolCalls));
   }
 
   @override

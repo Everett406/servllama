@@ -11,6 +11,7 @@ import 'package:servllama/features/chat/widgets/token_stats.dart';
 import 'package:servllama/features/chat/widgets/answer_markdown.dart';
 import 'package:servllama/features/chat/widgets/prefill_orb.dart';
 import 'package:servllama/features/chat/widgets/thinking_card.dart';
+import 'package:servllama/features/chat/widgets/tool_call_row.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/app/sheet/vela_sheet.dart';
 
@@ -220,6 +221,18 @@ class _ChatMessageItemState extends State<ChatMessageItem> {
                 promptedAt: widget.promptedAt,
                 answeredAt: message.createdAt,
                 onToggle: _openThinking,
+              ),
+            // Tool calls get their own line rather than joining the thinking
+            // row: one is what the model did, the other is what it was
+            // thinking. Merging them says the model thought about a lookup
+            // when what actually happened is that it performed one.
+            for (var i = 0; i < message.toolCalls.length; i++)
+              ToolCallRow(
+                call: message.toolCalls[i],
+                result: i < message.toolResults.length
+                    ? message.toolResults[i]
+                    : null,
+                running: widget.isStreaming && i >= message.toolResults.length,
               ),
             if (hasContent || widget.isStreaming)
               _AssistantBody(

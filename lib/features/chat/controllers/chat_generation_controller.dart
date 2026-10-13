@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/features/chat/models/chat_tool_call.dart';
+import 'package:servllama/features/chat/services/builtin_tools.dart';
 import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/features/chat/controllers/chat_conversation_controller.dart';
 import 'package:servllama/features/chat/controllers/chat_id_generator.dart';
@@ -28,6 +30,7 @@ class ChatGenerationController extends ChangeNotifier {
     required this.defaultSessionTitle,
     required this.generationParams,
     this.titleGenerator,
+    this.builtinTools,
   }) : _repository = repository,
        _apiClient = apiClient,
        _sessionList = sessionList,
@@ -50,6 +53,13 @@ class ChatGenerationController extends ChangeNotifier {
 
   /// Names a conversation once its first answer is done. Null disables it.
   final SessionTitleGenerator? titleGenerator;
+
+  /// The tools the model may call. Null disables tool use entirely.
+  final BuiltinTools? builtinTools;
+
+  /// How many times one reply may go back for more. A model that keeps asking
+  /// for tools would otherwise never produce an answer.
+  static const int maxToolRounds = 4;
   final StreamingChatMessageNotifier streamingMessages =
       StreamingChatMessageNotifier();
 
@@ -536,6 +546,12 @@ class ChatGenerationController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Tool calls arrive as fragments and have to be stitched by index before
+      // they parse; the JSON arguments usually arrive split mid-token.
+      final toolAccumulators = <int, ChatToolCallAccumulator>{};
+      var toolRound = 0;
+
+      while (true) {
       await for (final delta in _apiClient.streamChatCompletion(
         modelId: model.id,
         messages: promptMessages ?? sessionMessages,
@@ -552,6 +568,13 @@ class ChatGenerationController extends ChangeNotifier {
         final nextContent = delta.content.isEmpty
             ? currentDraft.content
             : '${currentDraft.content}${delta.content}';
+        for (final fragment in delta.toolCalls) {
+          final accumulator = toolAccumulators.putIfAbsent(
+            fragment.index,
+            () => ChatToolCallAccumulator(index: fragment.index),
+          );
+          accumulator.add(fragment);
+        }
         final currentReasoningContent = currentDraft.reasoningContent ?? '';
         final nextReasoningContent = delta.reasoningContent.isEmpty
             ? currentDraft.reasoningContent
@@ -569,6 +592,52 @@ class ChatGenerationController extends ChangeNotifier {
         // Hot path: persist only the draft message (and its version record)
         // per delta. The session record and sibling messages are unchanged.
         await _persistDraftDelta(_draftAssistantMessage!, versionId);
+      }
+
+      // The model stopped to ask for tools. Run them, put the answers back,
+      // and let it continue — bounded, because a model that keeps asking for
+      // tools forever would otherwise never produce an answer.
+      final pendingCalls = toolAccumulators.values
+          .map((accumulator) => accumulator.build())
+          .whereType<ChatToolCall>()
+          .toList();
+      final draft = _draftAssistantMessage;
+      final producedText =
+          draft != null &&
+          (draft.content.trim().isNotEmpty ||
+              (draft.reasoningContent?.trim().isNotEmpty ?? false));
+      if (pendingCalls.isEmpty || producedText || toolRound >= maxToolRounds) {
+        break;
+      }
+      toolRound += 1;
+      final results = await _runToolCalls(pendingCalls);
+
+      final toolDraft = (draft ??
+              ChatMessageRecord(
+                id: _idGenerator.generate('message'),
+                role: ChatRole.assistant,
+                content: '',
+                createdAt: DateTime.now(),
+                sessionId: session.id,
+                modelName: model.displayName,
+              ))
+          .copyWith(toolCalls: pendingCalls, toolResults: results);
+      _draftAssistantMessage = toolDraft;
+      currentMessages = _messagesWithStreamingDraft(
+        currentMessages,
+        toolDraft,
+        appendIfMissing: draftSeed == null,
+      );
+      currentSession = currentSession.copyWith(
+        messageIds: _idsOf(currentMessages),
+        updatedAt: DateTime.now(),
+      );
+      await _commitSession(
+        currentSession,
+        changedMessages: <ChatMessageRecord>[toolDraft],
+        fullMessages: currentMessages,
+      );
+      notifyListeners();
       }
     } catch (error) {
       if (error is DioException && CancelToken.isCancel(error)) {
@@ -689,6 +758,32 @@ class ChatGenerationController extends ChangeNotifier {
   /// Fire-and-forget on purpose: a title is a nicety, and an error surfacing
   /// here would land in the middle of a conversation the user is fine with.
   /// A title the user typed or renamed is never touched.
+  /// Run the calls the model asked for.
+  ///
+  /// Sequential on purpose: these run on the phone, and a calculator plus a
+  /// knowledge search in parallel buys nothing but a chance to interleave two
+  /// writes into the same draft.
+  Future<List<ChatToolResult>> _runToolCalls(List<ChatToolCall> calls) async {
+    final tools = builtinTools ?? const BuiltinTools();
+    final results = <ChatToolResult>[];
+    for (final call in calls) {
+      final result = await tools.run(call);
+      results.add(result);
+      if (_isDisposed) return results;
+      // Show each result as it lands rather than after the last one, so a slow
+      // search does not look like a hang.
+      final draft = _draftAssistantMessage;
+      if (draft != null) {
+        _draftAssistantMessage = draft.copyWith(
+          toolCalls: calls.take(results.length).toList(),
+          toolResults: List<ChatToolResult>.unmodifiable(results),
+        );
+        notifyListeners();
+      }
+    }
+    return results;
+  }
+
   Future<void> _maybeNameSession(ChatSessionRecord session, String modelId) async {
     final generator = titleGenerator;
     if (generator == null) return;

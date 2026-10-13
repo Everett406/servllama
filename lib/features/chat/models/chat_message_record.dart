@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:servllama/features/chat/models/chat_tool_call.dart';
 
 part 'chat_message_record.g.dart';
 
@@ -24,6 +25,8 @@ class ChatMessageRecord {
     this.imageFilePaths = const [],
     this.versionIds = const [],
     this.currentVersionIndex = 0,
+    this.toolResults = const [],
+    this.toolCalls = const [],
   });
 
   @HiveField(0)
@@ -56,6 +59,18 @@ class ChatMessageRecord {
   @HiveField(8)
   final int currentVersionIndex;
 
+  /// Calls the model asked for on this turn, and what came back.
+  ///
+  /// Stored on the message rather than kept beside it, so a reopened
+  /// conversation still shows what it used and a follow-up turn still has the
+  /// results in the prompt — a tool call the model cannot see the answer to is
+  /// a tool call it will repeat.
+  @HiveField(10)
+  final List<ChatToolResult> toolResults;
+
+  @HiveField(11)
+  final List<ChatToolCall> toolCalls;
+
   int get versionCount => versionIds.isEmpty ? 1 : versionIds.length;
 
   bool get hasMultipleVersions => versionIds.length > 1;
@@ -76,6 +91,10 @@ class ChatMessageRecord {
     List<String>? versionIds,
     bool clearVersionIds = false,
     int? currentVersionIndex,
+    List<ChatToolCall>? toolCalls,
+    bool clearToolCalls = false,
+    List<ChatToolResult>? toolResults,
+    bool clearToolResults = false,
   }) {
     return ChatMessageRecord(
       id: id ?? this.id,
@@ -92,6 +111,15 @@ class ChatMessageRecord {
           : imageFilePaths ?? this.imageFilePaths,
       versionIds: clearVersionIds ? const [] : versionIds ?? this.versionIds,
       currentVersionIndex: currentVersionIndex ?? this.currentVersionIndex,
+      // Clearing matters: a regenerated turn must not keep the previous
+      // turn's tool calls and results in the prompt, or the model sees
+      // answers to questions it is no longer asking.
+      toolCalls: clearToolCalls
+          ? const <ChatToolCall>[]
+          : toolCalls ?? this.toolCalls,
+      toolResults: clearToolResults
+          ? const <ChatToolResult>[]
+          : toolResults ?? this.toolResults,
     );
   }
 }

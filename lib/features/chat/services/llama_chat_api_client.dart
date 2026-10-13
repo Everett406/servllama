@@ -7,6 +7,8 @@ import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
 import 'package:servllama/features/chat/models/chat_stream_delta.dart';
+import 'package:servllama/features/chat/models/chat_tool_call.dart';
+import 'package:servllama/features/chat/services/builtin_tools.dart';
 import 'package:servllama/features/chat/services/image_attachment_service.dart';
 
 /// Runs on a background isolate via [compute]. Returns null when the file
@@ -93,6 +95,11 @@ class LlamaChatApiClient {
           // server's command line, so changing one applies to the next
           // message instead of needing a restart.
           ...generationParams.sanitized().toRequestFields(),
+          // Always advertise the tools. Which models actually use them is the
+          // server's business: filtering by a static "supports tools" label
+          // hides them behind a guess, and a model that can call tools will do
+          // so whether or not the UI believed it could.
+          ...BuiltinTools().toRequestFields(),
         },
         cancelToken: cancelToken,
         options: Options(
@@ -206,13 +213,58 @@ class LlamaChatApiClient {
       }
     }
 
-    if (content.isEmpty && reasoningContent.isEmpty) {
+    // A stream puts them in `delta`; a non-streaming reply in `message`.
+    // Prefer `delta` and fall back, since some servers repeat the call in
+    // both and concatenating it twice would corrupt the arguments JSON.
+    var toolCalls = _toolCallDeltas(normalized['delta']);
+    if (toolCalls.isEmpty && message is Map) {
+      toolCalls = _toolCallDeltas(message);
+    }
+
+    if (content.isEmpty && reasoningContent.isEmpty && toolCalls.isEmpty) {
       return null;
     }
 
     return _ParsedSseLine.delta(
-      ChatStreamDelta(content: content, reasoningContent: reasoningContent),
+      ChatStreamDelta(
+        content: content,
+        reasoningContent: reasoningContent,
+        toolCalls: toolCalls,
+      ),
     );
+  }
+
+  /// Pull `tool_calls` out of a delta or a non-streaming message.
+  ///
+  /// llama-server sends them in both places depending on the path, and a
+  /// non-streaming reply puts the whole call in one object while a stream
+  /// sends pieces keyed by index.
+  List<ChatToolCallDelta> _toolCallDeltas(Object? source) {
+    if (source is! Map) return const <ChatToolCallDelta>[];
+    final calls = source['tool_calls'];
+    if (calls is! List) return const <ChatToolCallDelta>[];
+
+    final parsed = <ChatToolCallDelta>[];
+    for (var position = 0; position < calls.length; position++) {
+      final entry = calls[position];
+      if (entry is! Map) continue;
+      final index = entry['index'] is int
+          ? entry['index'] as int
+          : position;
+      final function = entry['function'];
+      final functionMap = function is Map ? function : const <Object?, Object?>{};
+      parsed.add(
+        ChatToolCallDelta(
+          index: index,
+          id: entry['id'] is String ? entry['id'] as String : null,
+          name: functionMap['name'] is String
+              ? functionMap['name'] as String
+              : null,
+          arguments: _coerceContent(functionMap['arguments']),
+        ),
+      );
+    }
+    return parsed;
   }
 
   String _coerceContent(Object? value) {
@@ -323,6 +375,43 @@ class LlamaChatApiClient {
     }
     for (final message in messages) {
       final content = await _buildMessageContent(message);
+      // An assistant turn that only asked for tools has no content at all.
+      // Sending it as an empty message loses the request, so the calls
+      // themselves are sent instead — and without them the `role: tool` reply
+      // below has nothing to refer back to.
+      if (message.role == ChatRole.assistant && message.toolCalls.isNotEmpty) {
+        serialized.add({
+          'role': 'assistant',
+          'content': content.isEmpty ? null : content,
+          'tool_calls': message.toolCalls
+              .map(
+                (call) => <String, dynamic>{
+                  'id': call.id,
+                  'type': 'function',
+                  'function': <String, dynamic>{
+                    'name': call.name,
+                    'arguments': call.arguments,
+                  },
+                },
+              )
+              .toList(),
+        });
+        // Results go back as their own messages, which is the only shape the
+        // API accepts them in.
+        for (final result in message.toolResults) {
+          serialized.add({
+            'role': 'tool',
+            'tool_call_id': result.callId,
+            'name': result.name,
+            'content': result.failed
+                ? jsonEncode(<String, dynamic>{
+                    'error': result.error,
+                  })
+                : result.result,
+          });
+        }
+        continue;
+      }
       serialized.add({'role': message.role.name, 'content': content});
     }
     return serialized;

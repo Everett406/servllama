@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/features/chat/models/chat_tool_call.dart';
 import 'package:servllama/core/models/server_launch_settings.dart';
 import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
@@ -96,6 +97,161 @@ void main() {
       expect(captured.containsKey('temperature'), isFalse);
       expect(captured.containsKey('top_p'), isFalse);
       expect(captured.containsKey('max_tokens'), isFalse);
+    });
+
+    // Tool calling is only real if the request advertises the tools and the
+    // results come back in the shape the API accepts them in. A server that
+    // answers "here is a title" to a `role: tool` message fails in a way only
+    // a request body test catches.
+    test('advertises the built-in tools and tool_choice auto', () async {
+      server.chatResponder = (request) async {
+        request.response.add(utf8.encode('data: [DONE]\n\n'));
+        await request.response.close();
+      };
+
+      await client
+          .streamChatCompletion(
+            modelId: 'alpha',
+            messages: <ChatMessageRecord>[
+              ChatMessageRecord(
+                id: 'm1',
+                role: ChatRole.user,
+                content: 'what time is it',
+                createdAt: DateTime(2026, 3, 25),
+              ),
+            ],
+            cancelToken: CancelToken(),
+          )
+          .toList();
+
+      final body = server.lastChatRequestBody!;
+      expect(body['tool_choice'], 'auto');
+      final tools = body['tools']! as List;
+      expect(tools, hasLength(3));
+      // Not filtered by a "supports tools" label: the server decides.
+      final names = tools
+          .map((spec) => ((spec as Map)['function'] as Map)['name'])
+          .toList();
+      expect(names, contains('calculator'));
+    });
+
+    test('sends an assistant tool-call turn and its results back', () async {
+      server.chatResponder = (request) async {
+        request.response.add(utf8.encode('data: [DONE]\n\n'));
+        await request.response.close();
+      };
+
+      await client
+          .streamChatCompletion(
+            modelId: 'alpha',
+            messages: <ChatMessageRecord>[
+              ChatMessageRecord(
+                id: 'm1',
+                role: ChatRole.user,
+                content: 'what is 2+2',
+                createdAt: DateTime(2026, 3, 25),
+              ),
+              ChatMessageRecord(
+                id: 'm2',
+                role: ChatRole.assistant,
+                content: '',
+                createdAt: DateTime(2026, 3, 25),
+                toolCalls: const <ChatToolCall>[
+                  ChatToolCall(
+                    id: 'call_1',
+                    name: 'calculator',
+                    arguments: '{"expression":"2+2"}',
+                  ),
+                ],
+                toolResults: const <ChatToolResult>[
+                  ChatToolResult(
+                    callId: 'call_1',
+                    name: 'calculator',
+                    arguments: '{"expression":"2+2"}',
+                    result: '{"result":"4"}',
+                  ),
+                ],
+              ),
+            ],
+            cancelToken: CancelToken(),
+          )
+          .toList();
+
+      final roles = (server.lastChatRequestBody!['messages']! as List)
+          .map((message) => (message as Map)['role'])
+          .toList();
+      expect(roles, contains('assistant'));
+      expect(roles, contains('tool'));
+    });
+
+    test('streams tool_calls fragments out of the delta', () async {
+      // Built with jsonEncode rather than a hand-escaped literal: the payload
+      // is JSON inside JSON inside a Dart string, and escaping that by hand is
+      // how a test ends up asserting on a server that was never asked.
+      String sse(Map<String, dynamic> toolCall) {
+        final delta = <String, dynamic>{
+          'choices': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'delta': <String, dynamic>{'tool_calls': <Map<String, dynamic>>[toolCall]},
+            },
+          ],
+        };
+        return 'data: ${jsonEncode(delta)}\n\n';
+      }
+
+      final payload = <String>[
+        sse(<String, dynamic>{
+          'index': 0,
+          'id': 'call_9',
+          'function': <String, dynamic>{
+            'name': 'calculator',
+            'arguments': '{"expression": "(3+4)',
+          },
+        }),
+        sse(<String, dynamic>{
+          'index': 0,
+          'function': <String, dynamic>{'arguments': '*2"}'},
+        }),
+      ].join();
+
+      server.chatResponder = (request) async {
+        request.response.statusCode = 200;
+        request.response.headers.contentType = ContentType(
+          'text',
+          'event-stream',
+        );
+        request.response.add(utf8.encode(payload));
+        request.response.add(utf8.encode('data: [DONE]\n\n'));
+        await request.response.close();
+      };
+
+      final deltas = await client
+          .streamChatCompletion(
+            modelId: 'alpha',
+            messages: <ChatMessageRecord>[
+              ChatMessageRecord(
+                id: 'm1',
+                role: ChatRole.user,
+                content: 'calculate',
+                createdAt: DateTime(2026, 3, 25),
+              ),
+            ],
+            cancelToken: CancelToken(),
+          )
+          .toList();
+
+      final accumulator = ChatToolCallAccumulator(index: 0);
+      for (final delta in deltas) {
+        for (final fragment in delta.toolCalls) {
+          accumulator.add(fragment);
+        }
+      }
+      final call = accumulator.build()!;
+      expect(call.id, 'call_9');
+      expect(call.name, 'calculator');
+      // The arguments arrived split, usually mid-token. Stitching them by
+      // index is the whole job; getting it wrong loses calls silently.
+      expect(call.parsedArguments['expression'], '(3+4)*2');
     });
 
     test('uses 120 seconds receive timeout by default', () {
