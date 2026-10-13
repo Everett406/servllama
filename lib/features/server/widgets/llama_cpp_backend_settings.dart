@@ -111,6 +111,12 @@ class _LlamaCppBackendSettingsState extends State<LlamaCppBackendSettings> {
             if (backend != LlamaCppBackend.cpu) const Divider(height: 1),
             _backendTile(context, provider, backend, probe, probeKnown),
           ],
+          // One note, not one per tile. "Unsupported" and "the loader found no
+          // driver" read identically in a menu, and only one of them is worth
+          // the user's time — repeating it under every accelerator is noise
+          // that also pushes the rest of the page off a phone screen.
+          if (probeKnown && _hasDiagnosableAccelerator(probe))
+            _diagnosisNote(context, probe),
           _detectedDevices(context, probe, probeKnown),
           if (provider.llamaCppBackend != LlamaCppBackend.cpu) ...[
             const Divider(height: 1),
@@ -166,6 +172,76 @@ class _LlamaCppBackendSettingsState extends State<LlamaCppBackendSettings> {
       LlamaCppBackend.opencl => l10n.llamaCppBackendOpencl,
       LlamaCppBackend.hexagon => l10n.llamaCppBackendHexagon,
     };
+  }
+
+  /// Only for an accelerator whose *failure* was diagnosed.
+  ///
+  /// "This phone has no OpenCL device" needs no explanation — the tile
+  /// already says it is unavailable. What is worth three lines is "the loader
+  /// ran and something specific went wrong", which is the case that sends
+  /// people looking at driver problems instead of shopping for a new phone.
+  bool _hasDiagnosableAccelerator(LlamaCppDeviceProbeResult probe) {
+    return ServerLaunchSettings.supportedLlamaCppBackends.any(
+      (backend) =>
+          backend != LlamaCppBackend.cpu &&
+          !probe.isAvailable(backend) &&
+          probe.diagnose(backend).reason != null,
+    );
+  }
+
+  Widget _diagnosisNote(
+    BuildContext context,
+    LlamaCppDeviceProbeResult probe,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final backend in ServerLaunchSettings.supportedLlamaCppBackends)
+            if (backend != LlamaCppBackend.cpu &&
+                !probe.isAvailable(backend) &&
+                probe.diagnose(backend).reason != null)
+              Builder(
+                builder: (context) {
+                  final diagnosis = probe.diagnose(backend);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        backend == LlamaCppBackend.opencl ? 'OpenCL' : 'Hexagon',
+                        style: TextStyle(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (diagnosis.reason != null)
+                        Text(
+                          diagnosis.reason!,
+                          style: TextStyle(
+                            color: colors.error,
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                          ),
+                        ),
+                      if (diagnosis.hint != null)
+                        Text(
+                          diagnosis.hint!,
+                          style: TextStyle(
+                            color: colors.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                      const SizedBox(height: 6),
+                    ],
+                  );
+                },
+              ),
+        ],
+      ),
+    );
   }
 
   String _description(
