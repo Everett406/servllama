@@ -164,6 +164,15 @@ class ChatProvider extends ChangeNotifier {
     _conversation.clearSelection();
   }
 
+  /// Keep a conversation above everything else in the list.
+  ///
+  /// Gated on [canManageSessions] like the rest, so a locked or transient
+  /// session stays untouched rather than half-changing.
+  Future<void> toggleSessionPin(String sessionId) async {
+    if (!canManageSessions) return;
+    await _sessionList.togglePin(sessionId);
+  }
+
   Future<void> renameSession(String sessionId, String title) async {
     if (!canManageSessions) {
       return;

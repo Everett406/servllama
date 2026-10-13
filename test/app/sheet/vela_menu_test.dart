@@ -47,7 +47,7 @@ void main() {
     expect(find.text('panel'), findsOneWidget);
 
     final trigger = tester.getRect(find.byKey(const Key('trigger')));
-    final panel = tester.getRect(find.text('panel'));
+    final panel = tester.getRect(find.byType(VelaMenuPanel));
 
     // The whole point. A panel that opens in the middle of the screen is a
     // dialog; this one has to touch the thing that opened it.
@@ -63,7 +63,7 @@ void main() {
   testWidgets('a trigger low on the screen opens upward', (tester) async {
     await _open(tester, top: 460);
     final trigger = tester.getRect(find.byKey(const Key('trigger')));
-    final panel = tester.getRect(find.text('panel'));
+    final panel = tester.getRect(find.byType(VelaMenuPanel));
 
     expect((panel.bottom - trigger.top).abs(), lessThan(24));
     expect(panel.top, lessThan(trigger.top));
@@ -75,7 +75,7 @@ void main() {
   testWidgets('a trigger high on the screen opens downward', (tester) async {
     await _open(tester, top: 60);
     final trigger = tester.getRect(find.byKey(const Key('trigger')));
-    final panel = tester.getRect(find.text('panel'));
+    final panel = tester.getRect(find.byType(VelaMenuPanel));
 
     expect((panel.top - trigger.bottom).abs(), lessThan(24));
     expect(panel.top, greaterThan(trigger.top));
@@ -84,7 +84,7 @@ void main() {
 
   testWidgets('the panel is a rounded card of menu width', (tester) async {
     await _open(tester);
-    final panel = tester.getRect(find.text('panel'));
+    final panel = tester.getRect(find.byType(VelaMenuPanel));
     final screen = tester.view.physicalSize.width / tester.view.devicePixelRatio;
 
     // The panel is 248 wide unless it has to slide to stay on screen, which

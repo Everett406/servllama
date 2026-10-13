@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
+import 'package:servllama/app/widgets/claude_icons.dart';
+import 'package:servllama/app/sheet/vela_menu.dart';
 import 'package:servllama/features/chat/models/chat_session_record.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/widgets/chat_session_actions.dart';
@@ -119,11 +121,18 @@ class ChatSessionList extends StatelessWidget {
                     enabled: provider.canManageSessions,
                     menuKey: Key('${menuKeyPrefix}_${session.id}'),
                     onTap: () => _open(provider, session.id),
-                    onMore: () => ChatSessionActions.showSessionActions(
-                      context: context,
-                      presentationContext: context,
-                      session: session,
-                    ),
+                    onMore: (rowContext) =>
+                        ChatSessionActions.showSessionActions(
+                          context: context,
+                          presentationContext: context,
+                          // The list's own anchor, not the row's. Inside a
+                          // ListView the row's render object resolves to a
+                          // sliver, which has no rect to anchor to — the menu
+                          // then pushed a route that never built. One anchor
+                          // for the whole list is also what the drawer does.
+                          anchorContext: context,
+                          session: session,
+                        ),
                   ),
               ],
             );
@@ -204,7 +213,7 @@ class _SessionRow extends StatefulWidget {
   final bool enabled;
   final Key menuKey;
   final VoidCallback onTap;
-  final VoidCallback onMore;
+  final void Function(BuildContext row) onMore;
 
   @override
   State<_SessionRow> createState() => _SessionRowState();
@@ -223,59 +232,82 @@ class _SessionRowState extends State<_SessionRow> {
         : Colors.transparent;
     final foreground = widget.selected ? context.accent : context.ink;
 
+    // The row is the anchor for its own menu. Anchoring on the three-dot
+    // button instead meant rebuilding that button's subtree purely to hang a
+    // menu off it, and the rewrite lost the tap target entirely — both the
+    // long-press and the button stopped opening anything. The button sits at
+    // the row's right edge, so the menu lands in the same place either way.
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Material(
-        color: background,
-        borderRadius: radius,
-        child: InkWell(
-          onTap: widget.enabled ? widget.onTap : null,
-          onLongPress: widget.enabled ? widget.onMore : null,
-          borderRadius: radius,
-          child: Padding(
-            // Was 8 vertical on both sides, which put a dozen rows out of
-            // reach. Half that, and the list reads as a list.
-            padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.session.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: foreground,
-                      fontWeight: widget.selected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+      child: VelaAnchor(
+        child: Builder(
+          builder: (rowContext) => Material(
+            color: background,
+            borderRadius: radius,
+            child: InkWell(
+              onTap: widget.enabled ? widget.onTap : null,
+              onLongPress: widget.enabled ? () => widget.onMore(rowContext) : null,
+              borderRadius: radius,
+              child: Padding(
+                // Was 8 vertical on both sides, which put a dozen rows out of
+                // reach. Half that, and the list reads as a list.
+                padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.session.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: foreground,
+                          fontWeight: widget.selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // Always mounted, quiet until hovered. Hiding it on idle is
-                // wrong on touch: there is no hover state, so the row's only
-                // affordance would be a long-press nobody discovers.
-                AnimatedOpacity(
-                  opacity: widget.enabled ? (_hovered ? 1 : 0.45) : 0.3,
-                  duration: ClaudeMotion.fast,
-                  child: IconButton(
-                    key: widget.menuKey,
-                    onPressed: widget.enabled ? widget.onMore : null,
-                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 32,
-                      height: 28,
+                    // Pinned conversations carry the same star the menu uses to
+                    // set it, so the mark and the way to clear it agree.
+                    if (widget.session.pinned)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: ClaudeIcon(
+                          ClaudeIcons.star,
+                          size: 13,
+                          color: context.accent,
+                        ),
+                      ),
+                    // Always mounted, quiet until hovered. Hiding it on idle is
+                    // wrong on touch: there is no hover state, so the row's only
+                    // affordance would be a long-press nobody discovers.
+                    AnimatedOpacity(
+                      opacity: widget.enabled ? (_hovered ? 1 : 0.45) : 0.3,
+                      duration: ClaudeMotion.fast,
+                      child: IconButton(
+                        key: widget.menuKey,
+                        onPressed: widget.enabled
+                            ? () => widget.onMore(rowContext)
+                            : null,
+                        icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 32,
+                          height: 28,
+                        ),
+                        color: context.inkSecondary,
+                      ),
                     ),
-                    color: context.inkSecondary,
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+
   }
 }

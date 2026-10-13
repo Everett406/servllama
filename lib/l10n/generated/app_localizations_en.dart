@@ -1766,4 +1766,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get engineMenuStop => 'Stop';
+
+  @override
+  String get commonPin => 'Pin';
+
+  @override
+  String get commonUnpin => 'Unpin';
 }

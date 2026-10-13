@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/app/sheet/vela_menu.dart';
 import 'package:servllama/features/chat/models/chat_session_record.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
 import 'package:servllama/features/chat/widgets/chat_session_actions.dart';
@@ -26,11 +27,13 @@ class ChatSessionDrawerSection extends StatelessWidget {
 
   Future<void> _showSessionActions(
     BuildContext context,
+    BuildContext anchor,
     ChatSessionRecord session,
   ) async {
     await ChatSessionActions.showSessionActions(
       context: context,
       presentationContext: presentationContext,
+      anchorContext: anchor,
       session: session,
     );
   }
@@ -77,7 +80,17 @@ class ChatSessionDrawerSection extends StatelessWidget {
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 4),
-                          child: Material(
+                          // The row is itself an anchor, so the long-press
+                          // menu hangs off the conversation it acts on. Without
+                          // this the lookup found nothing and the menu simply
+                          // did not open.
+                          child: VelaAnchor(
+                            // A context *inside* the anchor. The enclosing
+                            // build method's context sits above it, so
+                            // VelaAnchor.of() found nothing and the menu
+                            // silently did not open.
+                            child: Builder(
+                              builder: (rowContext) => Material(
                             color: Colors.transparent,
                             child: InkWell(
                               key: Key('chat_session_item_${session.id}'),
@@ -85,8 +98,15 @@ class ChatSessionDrawerSection extends StatelessWidget {
                               onTap: provider.canManageSessions
                                   ? () => _openSession(provider, session.id)
                                   : null,
+                              // Long press has no button of its own, so the
+                              // row is the anchor. The three-dot button is
+                              // the one that gets used.
                               onLongPress: provider.canManageSessions
-                                  ? () => _showSessionActions(context, session)
+                                  ? () => _showSessionActions(
+                                      context,
+                                      rowContext,
+                                      session,
+                                    )
                                   : null,
                               child: Ink(
                                 decoration: BoxDecoration(
@@ -117,6 +137,8 @@ class ChatSessionDrawerSection extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                            ),
+                            ),
                             ),
                           ),
                         );

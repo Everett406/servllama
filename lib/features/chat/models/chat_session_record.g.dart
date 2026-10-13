@@ -22,13 +22,16 @@ class ChatSessionRecordAdapter extends TypeAdapter<ChatSessionRecord> {
       messageIds: (fields[2] as List?)?.cast<String>(),
       createdAt: fields[3] as DateTime,
       updatedAt: fields[4] as DateTime,
+      // Nullable on read: sessions written before pinning existed carry no
+      // field 5, and a hard cast would throw on the first read of an old box.
+      pinned: (fields[5] as bool?) ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatSessionRecord obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +41,9 @@ class ChatSessionRecordAdapter extends TypeAdapter<ChatSessionRecord> {
       ..writeByte(3)
       ..write(obj.createdAt)
       ..writeByte(4)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(5)
+      ..write(obj.pinned);
   }
 
   @override

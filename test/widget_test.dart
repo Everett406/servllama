@@ -91,20 +91,22 @@ void main() {
     expect(find.text('首页'), findsNothing);
     expect(find.text('原型'), findsNothing);
     expect(find.text('聊天'), findsNothing);
-    expect(find.text('模型库'), findsOneWidget);
-    expect(find.text('设置'), findsOneWidget);
+    // The footer entries are icon pills now, so assert the pills rather than
+    // labels that no longer render.
+    expect(find.byKey(const Key('sidebar_models_row')), findsOneWidget);
+    expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
     // About is a settings row now, not a drawer entry.
     expect(find.text('关于'), findsNothing);
     expect(find.byKey(const Key('sidebar_search_button')), findsOneWidget);
-    expect(find.byKey(const Key('drawer_server_action')), findsOneWidget);
     expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
-    // The status dot moved to the sidebar's engine strip when the chat
-    // header was cut down to two buttons.
-    expect(find.byKey(const Key('sidebar_engine_status_badge')), findsOneWidget);
+    // The server has no sidebar row of its own any more. It hangs off the
+    // engine pill in the sidebar header, which is also where its status dot
+    // lives.
+    expect(find.byKey(const Key('sidebar_engine_status')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s1')), findsOneWidget);
     expect(find.byKey(const Key('chat_session_item_s2')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('drawer_server_action')));
+    await tester.tap(find.byKey(const Key('sidebar_engine_status')));
     await tester.pumpAndSettle();
 
     expect(
@@ -188,10 +190,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('暂无对话'), findsOneWidget);
-    expect(find.text('设置'), findsOneWidget);
     expect(find.byKey(const Key('drawer_settings_action')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('drawer_server_action')));
+    await tester.tap(find.byKey(const Key('sidebar_engine_status')));
     await tester.pumpAndSettle();
 
     expect(

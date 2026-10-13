@@ -785,5 +785,7 @@
   "engineMenuRunning": "运行中",
   "engineMenuStart": "启动 {engine}",
   "engineMenuSwitchTo": "切换到 {engine}",
-  "engineMenuStop": "停止"
+  "engineMenuStop": "停止",
+  "commonPin": "置顶",
+  "commonUnpin": "取消置顶"
 }

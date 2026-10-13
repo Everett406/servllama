@@ -3130,6 +3130,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop'**
   String get engineMenuStop;
+
+  /// No description provided for @commonPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get commonPin;
+
+  /// No description provided for @commonUnpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get commonUnpin;
 }
 
 class _AppLocalizationsDelegate

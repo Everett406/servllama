@@ -59,6 +59,12 @@ class ChatHistoryPage extends StatelessWidget {
               builder: (context, provider, _) {
                 // The page owns navigation: tapping a row must close this
                 // route rather than just switching the transcript behind it.
+                //
+                // Deliberately not wrapped in a VelaAnchor: inside this page's
+                // ListView the row anchor's render object resolves to a sliver,
+                // which has no rect for a menu to hang off, and the menu's
+                // route never built. No anchor means showSessionActions falls
+                // back to the sheet, which is what this page used before.
                 return ChatSessionList(
                   itemKeyPrefix: 'history_session_item',
                   menuKeyPrefix: 'history_session_menu',

@@ -1680,4 +1680,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get engineMenuStop => '停止';
+
+  @override
+  String get commonPin => '置顶';
+
+  @override
+  String get commonUnpin => '取消置顶';
 }

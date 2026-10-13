@@ -21,13 +21,37 @@ class ChatSessionListController extends ChangeNotifier {
   List<ChatSessionRecord> get filteredSessions {
     final normalizedQuery = _query.trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
-      return sessions;
+      return _sorted;
     }
-    return _sessions
+    return _sorted
         .where(
           (session) => session.title.toLowerCase().contains(normalizedQuery),
         )
         .toList(growable: false);
+  }
+
+  /// Pinned first, then most recent.
+  ///
+  /// Pinned keeps its own position in the pinned group by update time, so
+  /// pinning four conversations does not freeze them in the order you happened
+  /// to pin them.
+  List<ChatSessionRecord> get _sorted {
+    final next = List<ChatSessionRecord>.from(_sessions)
+      ..sort((a, b) {
+        if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
+    return List<ChatSessionRecord>.unmodifiable(next);
+  }
+
+  /// Flip a session's pin and persist it.
+  Future<void> togglePin(String sessionId) async {
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+    if (index < 0) return;
+    final updated = _sessions[index].copyWith(pinned: !_sessions[index].pinned);
+    _sessions = List<ChatSessionRecord>.from(_sessions)..[index] = updated;
+    notifyListeners();
+    await _repository.saveSession(updated);
   }
 
   Future<void> load() async {

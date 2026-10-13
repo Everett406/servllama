@@ -13,6 +13,7 @@ class ChatSessionRecord {
     List<ChatMessageRecord>? legacyMessages,
     required this.createdAt,
     required this.updatedAt,
+    this.pinned = false,
   }) : messageIds =
            messageIds ??
            messages.map((message) => message.id).toList(growable: false),
@@ -33,6 +34,15 @@ class ChatSessionRecord {
   @HiveField(4)
   final DateTime updatedAt;
 
+  /// Kept above everything else in the list, whatever its last activity was.
+  ///
+  /// A field rather than a separate favourites list: pinning is a property of
+  /// the conversation, and a second list means two places to show and two
+  /// places to forget to unpin. HiveField 5, nullable on read so sessions
+  /// written before this existed come back as not pinned.
+  @HiveField(5)
+  final bool pinned;
+
   final List<ChatMessageRecord> legacyMessages;
 
   ChatSessionRecord copyWith({
@@ -42,6 +52,7 @@ class ChatSessionRecord {
     List<ChatMessageRecord>? legacyMessages,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? pinned,
   }) {
     return ChatSessionRecord(
       id: id ?? this.id,
@@ -50,6 +61,7 @@ class ChatSessionRecord {
       legacyMessages: legacyMessages ?? this.legacyMessages,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      pinned: pinned ?? this.pinned,
     );
   }
 }

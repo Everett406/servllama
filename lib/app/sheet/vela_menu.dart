@@ -34,59 +34,126 @@ class VelaAnchor extends StatefulWidget {
   State<VelaAnchor> createState() => VelaAnchorState();
 }
 
-class VelaAnchorState extends State<VelaAnchor> {
+class VelaAnchorState extends State<VelaAnchor>
+    with WidgetsBindingObserver {
+  /// Gap between the trigger and the panel.
+  static const double gap = 8;
+
   final LayerLink _link = LayerLink();
 
-  /// Space between the trigger and the panel.
-  static const double _gap = 8;
+  /// The trigger's rect, republished whenever it moves.
+  ///
+  /// The panel reads this on every layout. Snapshotting the rect once at open
+  /// time is what made the menu fail to follow: the keyboard came down, the
+  /// composer dropped to the bottom of the screen, and the panel stayed at the
+  /// height the trigger used to have — hanging in the middle of an empty page.
+  final ValueNotifier<Rect?> _trigger = ValueNotifier<Rect?>(null);
+
+  @override
+  void didChangeMetrics() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _remeasure();
+      // A keyboard is the common case, and it moves over ~250ms: re-arm so
+      // the panel keeps pace for the whole animation rather than snapping once
+      // at the end — or not at all, if the tracking loop had already settled.
+      _onTriggerMoved?.call();
+    });
+  }
+
+  /// Re-arms the follow loop. Set for the lifetime of an open menu.
+  VoidCallback? _onTriggerMoved;
+
+  @visibleForTesting
+  void rearmForTest() => _onTriggerMoved?.call();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  void _remeasure() {
+    final render = _key.currentContext?.findRenderObject();
+    if (render is! RenderBox || !render.hasSize || !render.attached) return;
+    final next = render.localToGlobal(Offset.zero) & render.size;
+    // Only publish a real move. A notifier that fires every frame rebuilds the
+    // panel every frame even when nothing changed.
+    if (_trigger.value != next) _trigger.value = next;
+  }
+
+  final GlobalKey _key = GlobalKey();
 
   Future<T?> show<T>({
     required BuildContext context,
     required WidgetBuilder builder,
     double width = 248,
   }) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize || !box.attached) {
+    // Not an `as RenderBox?`: inside a ListView the anchor's render object can
+    // resolve to a sliver, and the cast threw — which took the whole menu down
+    // with it rather than skipping it.
+    final render = context.findRenderObject();
+    if (render is! RenderBox || !render.hasSize || !render.attached) {
       return Future<T?>.value();
     }
+    final box = render;
+
     final media = MediaQuery.of(context);
-    final trigger = box.localToGlobal(Offset.zero) & box.size;
-
-    // Decide the side once, from the room there is right now. After that the
-    // follower keeps the panel attached even if the layout moves; a panel that
-    // needs its side re-deciding every frame is a panel that flickers between
-    // two positions as the keyboard animates.
-    final roomAbove = trigger.top - media.padding.top - 8;
-    final roomBelow = media.size.height - trigger.bottom - media.padding.bottom - 8;
-    const estimated = 220.0;
-
+    _trigger.value = box.localToGlobal(Offset.zero) & box.size;
+    // A guess, refined by the delegate once the real height is known. It has
+    // to exist here because the entrance scales from the corner facing the
+    // trigger, and that corner depends on which side was chosen.
+    // Which side, decided once and used by both the delegate and the entrance
+    // animation. When these two disagreed the delegate placed the panel below
+    // the trigger while the scale still grew from the top-left corner, so the
+    // panel visibly slid as it opened.
+    const estimate = 220.0;
+    final triggerTop = box.localToGlobal(Offset.zero).dy;
+    final roomAbove = triggerTop - media.padding.top - VelaAnchorState.gap;
     final preferUp = widget.prefer == AxisDirection.up;
-    final roomPreferred = preferUp ? roomAbove : roomBelow;
-    final roomOther = preferUp ? roomBelow : roomAbove;
-    // Symmetric. The two branches used to differ: the upward-preferred one
-    // could fall back to the other side, the downward-preferred one could not.
-    // An engine button at the bottom of the composer asked for "open below",
-    // found no room, and opened below anyway — the panel landed at y 899..1099
-    // on a 900pt screen, entirely off it.
-    final openAbove = switch (roomPreferred) {
-      final r when r >= estimated => preferUp,
-      _ when roomOther >= estimated => !preferUp,
-      _ => roomAbove >= roomBelow,
-    };
-
-    // Keep the panel's left edge on the trigger's left edge, and slide it back
-    // in if that would run it off the right of the screen. The vertical side
-    // is the follower's job; horizontal is not something it can express,
-    // because the panel's width is only known after layout.
-    final desiredLeft = trigger.left;
-    final maxLeft = media.size.width - width - 8;
-    final horizontalShift = desiredLeft > maxLeft
-        ? (maxLeft - desiredLeft).clamp(-desiredLeft + 8, 0.0)
-        : 0.0;
+    final openAbove = preferUp
+        ? roomAbove >= estimate
+        : roomAbove < estimate && triggerTop < media.size.height / 2;
 
     // Opening a menu from a focused field should not be a way to close it, and
     // closing the menu should not be a way to open it.
     final keyboardWasUp = keyboardVisible(context);
+
+    // Track the trigger every frame while the menu is open.
+    //
+    // `didChangeMetrics` fires once when the keyboard starts moving, not once
+    // per frame of its ~250ms animation. Measuring on that single event left
+    // the panel 270pt behind the trigger — it moved a little, which looked
+    // like it was following when it was really only agreeing to the first
+    // frame. A post-frame chain tracks it properly.
+    // Track, but stop once the trigger settles.
+    //
+    // A post-frame callback that reschedules itself forever leaves the
+    // scheduler permanently busy: `pumpAndSettle` never returns, the entrance
+    // animation is abandoned part-way, and every measurement taken afterwards
+    // is off by whatever the scale had reached. Stopping after the rect holds
+    // still for two frames fixes that and stops the loop costing a frame a
+    // second while a menu sits open and nothing moves.
+    var tracking = true;
+    var armed = false;
+    void arm() {
+      if (!tracking || !mounted || armed) return;
+      armed = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        armed = false;
+        if (!tracking || !mounted) return;
+        final before = _trigger.value;
+        _remeasure();
+        // Only keep going while something is still moving. A loop that
+        // reschedules itself unconditionally leaves the scheduler permanently
+        // busy, and the entrance animation is then abandoned part-way with
+        // every later measurement carrying whatever scale it reached. Stopping
+        // on "nothing moved" is both correct and free.
+        if (_trigger.value != before) arm();
+      });
+    }
+
+    _onTriggerMoved = arm;
+    arm();
 
     return showGeneralDialog<T>(
       context: context,
@@ -98,64 +165,136 @@ class VelaAnchorState extends State<VelaAnchor> {
       barrierColor: Colors.transparent,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder: (dialogContext, animation, _) => Center(
-        // The follower's child must be the panel itself, not a full-screen
-        // box with the panel inside it.
-        //
-        // `followerAnchor` names a point on the child's own rect. Give it a
-        // screen-filling box and `topLeft` means the *screen's* top-left, so
-        // aligning that to the trigger's bottom shifts the whole 900pt box
-        // down by the trigger's height and the panel — parked at the bottom of
-        // that box — lands hundreds of points off screen.
-        //
-        // The page does not fill the screen on purpose: the transparent
-        // barrier below it is what has to catch the outside tap.
-        child: CompositedTransformFollower(
-          link: _link,
-          // Corner to corner: the panel's edge and the trigger's edge end up
-          // one gap apart, without the panel ever needing to know its height.
-          // Opening above: the panel's *bottom* edge meets the trigger's
-          // *top* edge. Opening below: the panel's top meets the trigger's
-          // bottom. These were the wrong way round, which put the panel's top
-          // on the trigger's bottom and sent it downward off the screen.
-          targetAnchor: openAbove ? Alignment.topLeft : Alignment.bottomLeft,
-          followerAnchor: openAbove ? Alignment.bottomLeft : Alignment.topLeft,
-          offset: Offset(horizontalShift, openAbove ? -_gap : _gap),
-          child: Transform.scale(
-            scale: 0.86 + 0.14 * animation.value,
-            // Origin at the corner facing the trigger. Without it the panel
-            // scales around its centre and reads as a small dialog that
-            // happened to be nearby — the easiest thing to get wrong here.
-            alignment: openAbove
-                ? Alignment.bottomLeft
-                : Alignment.topLeft,
-            child: FadeTransition(
-              opacity: animation,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight:
-                      media.size.height -
-                      media.padding.top -
-                      media.padding.bottom -
-                      16,
-                ),
-                child: VelaMenuPanel(
-                  width: width,
-                  child: Builder(builder: builder),
-                ),
+      pageBuilder: (dialogContext, animation, _) => ValueListenableBuilder<Rect?>(
+        valueListenable: _trigger,
+        builder: (context, trigger, _) => CustomSingleChildLayout(
+        // The follower knows where the trigger is but not how tall the panel
+        // turned out to be, and picking a side needs both — guessing the
+        // height from a constant is what put a panel at y -89 on an 800x600
+        // screen.
+        delegate: _AnchoredMenuDelegate(
+          trigger: trigger,
+          openAbove: openAbove,
+          safeTop: media.padding.top,
+          safeBottom: media.padding.bottom,
+        ),
+        child: Transform.scale(
+          scale: 0.86 + 0.14 * animation.value,
+          // Origin at the corner facing the trigger. This is what makes the
+          // panel look like it grew out of the pill; left at the default
+          // (centre) it scales in place and reads as a small dialog that
+          // happened to be nearby — and it shifts the panel off its own
+          // anchor by a quarter of its width.
+          alignment: openAbove
+              ? Alignment.bottomLeft
+              : Alignment.topLeft,
+          child: FadeTransition(
+            opacity: animation,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight:
+                    media.size.height -
+                    media.padding.top -
+                    media.padding.bottom -
+                    16,
+              ),
+              child: VelaMenuPanel(
+                width: width,
+                child: Builder(builder: builder),
               ),
             ),
           ),
         ),
+        ),
       ),
     ).whenComplete(() {
+      tracking = false;
+      _onTriggerMoved = null;
       if (keyboardWasUp) FocusManager.instance.primaryFocus?.requestFocus();
     });
   }
 
   @override
   Widget build(BuildContext context) =>
-      CompositedTransformTarget(link: _link, child: widget.child);
+      CompositedTransformTarget(link: _link, child: KeyedSubtree(key: _key, child: widget.child));
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _trigger.dispose();
+    super.dispose();
+  }
+}
+
+/// Places the panel against its trigger, live, and keeps it on screen.
+class _AnchoredMenuDelegate extends SingleChildLayoutDelegate {
+  _AnchoredMenuDelegate({
+    required this.trigger,
+    required this.openAbove,
+    required this.safeTop,
+    required this.safeBottom,
+  });
+
+  final Rect? trigger;
+  final bool openAbove;
+  final double safeTop;
+  final double safeBottom;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
+      constraints.loosen();
+
+  @override
+  Size getSize(BoxConstraints constraints) => constraints.biggest;
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    // Republished by the anchor whenever it moves, so the panel follows the
+    // trigger instead of where the trigger used to be.
+    final trigger = this.trigger;
+    if (trigger == null) return Offset.zero;
+
+    const gap = VelaAnchorState.gap;
+    final roomAbove = trigger.top - safeTop - gap;
+    final roomBelow = size.height - trigger.bottom - safeBottom - gap;
+
+    // The side was chosen by the caller so the entrance could scale from the
+    // matching corner. Here it is only corrected if that side genuinely cannot
+    // hold the panel, and the result is clamped either way — a panel whose
+    // bottom hangs off the screen cannot be scrolled to, which is the same as
+    // not being there.
+    final actualAbove = switch (openAbove ? roomAbove : roomBelow) {
+      final r when r >= childSize.height => openAbove,
+      _ when (openAbove ? roomBelow : roomAbove) >= childSize.height => !openAbove,
+      _ => openAbove,
+    };
+
+    // ignore: avoid_print
+    // ignore: avoid_print
+    final rawTop = actualAbove
+        ? trigger.top - gap - childSize.height
+        : trigger.bottom + gap;
+    final top = rawTop.clamp(
+      safeTop,
+      (size.height - childSize.height - safeBottom).clamp(
+        safeTop.toDouble(),
+        double.infinity,
+      ),
+    );
+    final left = trigger.left.clamp(
+      gap.toDouble(),
+      (size.width - childSize.width - gap).clamp(gap.toDouble(), double.infinity),
+    );
+    // ignore: avoid_print
+    return Offset(left, top);
+  }
+
+  @override
+  bool shouldRelayout(covariant _AnchoredMenuDelegate old) =>
+      old.trigger != trigger ||
+      old.openAbove != openAbove ||
+      old.safeTop != safeTop ||
+      old.safeBottom != safeBottom;
 }
 
 /// The panel itself: a rounded card, menu width, soft shadow.
