@@ -1,3 +1,10 @@
+# The vendored gpt_markdown copy is upstream code. Its deprecation
+# notices are not this repository's to fix, and they would drown out
+# our own.
+analyzer:
+  exclude:
+    - packages/**
+
 # This file configures the analyzer, which statically analyzes Dart code to
 # check for errors, warnings, and lints.
 #

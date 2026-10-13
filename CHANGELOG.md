@@ -1,3 +1,27 @@
+## 1.15.0
+
+吐字动画现在是真逐字了。
+
+- **中文逐字模糊淡入。** 根因是 `gpt_markdown` 的 reveal 只在**空白字符**处分组，
+  而中文没有空格——所以一整段中文是一个 reveal group，其中所有字符共用**第一个字符**的
+  进度：段落糊一次，然后整段同时变清晰，之后每段都是已落定的字。这就是"只有段落开头才有模糊"。
+- 把 `gpt_markdown` vendor 进 `packages/gpt_markdown`（path 依赖）并打了补丁：
+  `_groupEnd` 遇到 CJK 字符就在其后断开，`_wordStart` 遇到 CJK 边界就停下。
+  表意文字没有 kerning、连字和字宽问题——这正是上游坚持拉丁文按词的原因——所以逐字切分
+  在排版上不付代价，却换来了真正的逐字进场。**英文、URL、中英混排的分组行为完全不变。**
+- 补了 `revealGroupEnd` / `revealGroupStart` 两个 `@visibleForTesting` 出口，
+  以及 9 个测试把「中文逐字、英文按词」这个契约锁住。
+- 调了 reveal 参数：`charactersPerSecond` 150 → 45，`revealFadeSeconds` 0.62 → 0.16。
+  尾巴长度是两者相乘：原来 150×0.62 意味着**同时有 93 个字是糊的**，
+  那是一道涂抹而不是逐字进场；现在留一道短促的波峰。
+- `analysis_options.yaml` 排除 `packages/**`——vendor 进来的上游代码里那些
+  deprecation 提示不是本仓库该修的，而且会把我们自己的淹掉。
+
+vendor 的是 1.3.0 而不是 1.3.4：1.3.4 的依赖换成了 `val_latex_flutter`，
+而它调用的 `SemanticsService.sendAnnouncement` 在 Flutter 3.35 里已经不存在，编译不过。
+
+除 chat_page 外的全量测试 433 通过，3 个失败是既有的。
+
 ## 1.14.0
 
 会话可以置顶了，侧边栏也按 Z2–Z6 重排过一遍。

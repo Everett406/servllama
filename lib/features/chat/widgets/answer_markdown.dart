@@ -33,35 +33,30 @@ class AnswerMarkdown extends StatelessWidget {
       animation: isStreaming
           ? GptMarkdownAnimation.blurIn
           : GptMarkdownAnimation.none,
-      // blurIn is a *block* effect. `animatesPerCharacter` is true for `wave`
-      // alone, so there is no per-character blur to ask for — a line arrives
-      // as a line, resolving out of focus and fading up together. Which means
-      // the entrance has to be long enough to actually watch, since it is the
-      // only one on screen.
-      // Per block, not per character: this is what makes lines arrive one at
-      // a time. growIn was too quick to read as a line arriving — a
-      // three-line paragraph resolved as one gesture.
+      // blurIn reveals per group, and a group is a word in Latin text but a
+      // single ideograph in Chinese — see the CJK split in the vendored
+      // gpt_markdown. Before that patch a whole paragraph was one group, all
+      // of its characters shared the first character's progress, and the
+      // paragraph blurred once and then snapped sharp together. That is the
+      // whole of "the blur only shows up at the start of each paragraph".
       blockAnimation: GptMarkdownBlockAnimation.fadeIn,
       isStreaming: isStreaming,
-      // 900 was so far above the model's own pace that a whole paragraph
-      // revealed inside a single frame, which is why it looked like an
-      // instant dump with no typewriter at all. Slow enough that a
-      // paragraph assembles; still comfortably above a local model's typical
-      // output rate, so the trail still leads rather than lags.
-      // Block pacing, not per-character: how fast a line becomes eligible to
-      // render. Well above a model's output rate so the trail leads rather
-      // than lags behind.
-      charactersPerSecond: 150,
-      // How long one character keeps resolving after the head passes. A long
-      // trail reads as the sentence assembling itself; a short one reads as
-      // a stutter.
-      // How long a block spends resolving. The curves are alpha = t and
-      // sigma = 3 * (1 - easeOut(t)), so at t = 0.4 a line is 40% opaque and
-      // already down to sigma 0.48 — past the point where blur reads. A long
-      // window keeps the blurred part of the entrance on screen long enough
-      // to notice; a short one just looks like a fade.
-      revealFadeSeconds: 0.62,
-      // Lines arrive a beat apart rather than all at once.
+      // Pacing, not a typewriter's own speed. It only has to be fast enough
+      // that the reveal head stays ahead of the model — a reply that waits on
+      // the animation looks broken. 45 is comfortably above what a local model
+      // on a phone actually emits (~15-40 characters/s in Chinese) while still
+      // being slow enough that roughly two characters land per frame. At 150,
+      // six or seven characters arrived in the same frame and the per-character
+      // entrance smeared into a streak no eye could separate.
+      charactersPerSecond: 45,
+      // How long a character keeps resolving after the head passes it. The
+      // trail is this multiplied by the pacing above, and that product is what
+      // decides whether the blur reads as one character coming into focus or as
+      // a smear: 0.62 at 150 left 93 characters blurred at once, which is a
+      // streak, not an entrance. This leaves a short crest.
+      revealFadeSeconds: 0.16,
+      // Lines arrive a beat apart rather than all at once. Prose reveals per
+      // character now, so this only governs what a fence or a table does.
       blockAnimationDuration: const Duration(milliseconds: 520),
       blockAnimationCurve: Curves.easeOutCubic,
       // The package gives every heading level the same padding, so a second

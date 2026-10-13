@@ -209,6 +209,9 @@ class _ChatViewState extends State<_ChatView>
     final library = context.read<ModelManagementProvider>();
     unawaited(library.load());
 
+    // Without an anchor the caller is the empty state's model chip, which only
+    // renders before a server is running — the line above has already returned
+    // for that case, so reaching here without an anchor would be a real bug.
     final anchorState = anchor == null ? null : VelaAnchor.of(anchor);
     if (anchorState == null) return;
 

@@ -166,3 +166,6 @@ example/
 # Prebuilt llama-server / ggml backends. Copy from a Snapdragon WSL build or
 # a GitHub release bundle; see example/snapdragon/wsl2-build-guide.md.
 android/app/src/main/jniLibs/**/*.so
+
+# Vendored gpt_markdown is a path dependency, not a fetch.
+packages/**/pubspec.lock
