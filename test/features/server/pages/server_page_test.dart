@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:servllama/app/design/tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -85,6 +86,49 @@ void main() {
 
       await tester.pumpWidget(_TestApp(serverProvider: serverProvider));
       await tester.pumpAndSettle();
+
+      // Every row lines up on the same left edge. Three different paddings on
+      // one screen is what made the page feel unstructured rather than merely
+      // busy.
+      final groupFinder = find.byKey(const Key('server_page_menu_group'));
+      expect(groupFinder, findsOneWidget);
+      final groupBox = tester.getRect(groupFinder);
+
+      // Matched by the row's own key rather than by "any text inside the
+      // group": a trailing value is right-aligned inside the same card, so
+      // measuring it against the left edge is how this check ended up
+      // comparing 44 against 711 and failing for the wrong reason.
+      final rows = find.byWidgetPredicate(
+        (widget) =>
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith(
+                  'server_page_menu_item_',
+                ),
+      );
+      expect(rows, findsWidgets);
+
+      // The key sits on the row's opacity wrapper, which spans the full
+      // width; the padding is inside it. So the thing that actually carries
+      // the indent is the row's own content.
+      final insets = <double>[];
+      for (final row in rows.evaluate()) {
+        final inner = find.descendant(
+          of: find.byWidget(row.widget),
+          matching: find.byType(Row),
+        );
+        expect(inner, findsOneWidget);
+        insets.add(tester.getRect(inner.first).left - groupBox.left);
+      }
+
+      for (final inset in insets) {
+        expect(
+          inset,
+          closeTo(insets.first, 0.5),
+          reason: 'menu rows are not on a common left edge',
+        );
+      }
+      // And that edge is the shared spacing token, not a number typed here.
+      expect(insets.first, closeTo(ClaudeSpacing.lg, 0.5));
 
       expect(find.byKey(const Key('server_page_status_card')), findsOneWidget);
       expect(find.byKey(const Key('server_page_menu_group')), findsOneWidget);

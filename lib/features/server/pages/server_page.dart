@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/app_palette.dart';
 import 'package:servllama/core/models/inference_engine.dart';
 import 'package:servllama/core/models/library_model.dart';
@@ -86,7 +87,12 @@ class _ServerPageState extends State<ServerPage> {
       body: SafeArea(
         top: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          padding: const EdgeInsets.fromLTRB(
+            ClaudeSpacing.lg,
+            ClaudeSpacing.sm,
+            ClaudeSpacing.lg,
+            ClaudeSpacing.xl,
+          ),
           children: [
             EngineSelector(
               selected: state.engine,
@@ -324,11 +330,14 @@ class _MenuGroupCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
 
+    // One frame, not a frame inside a frame. The radius follows the rest of
+    // the app rather than inventing its own 28: a page with its own corner
+    // language reads as a different app than the one you just left.
     return DecoratedBox(
       key: const Key('server_page_menu_group'),
       decoration: BoxDecoration(
         color: isLight ? Colors.white : colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(ClaudeRadius.lg),
         border: Border.all(color: colorScheme.outlineVariant.withAlpha(110)),
       ),
       child: Column(
@@ -336,11 +345,10 @@ class _MenuGroupCard extends StatelessWidget {
           for (var index = 0; index < items.length; index++) ...[
             _MenuCard(item: items[index]),
             if (index != items.length - 1)
-              Divider(
+              const Divider(
                 height: 1,
-                indent: 20,
-                endIndent: 20,
-                color: colorScheme.outlineVariant.withAlpha(90),
+                indent: ClaudeSpacing.lg,
+                endIndent: ClaudeSpacing.lg,
               ),
           ],
         ],
@@ -395,23 +403,29 @@ class _MenuCardState extends State<_MenuCard> {
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOut,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(
+              horizontal: ClaudeSpacing.lg,
+              vertical: ClaudeSpacing.md,
+            ),
             child: Row(
               children: [
                 SizedBox(
-                  width: 24,
+                  width: 20,
                   child: Icon(
                     widget.item.icon,
-                    size: 22,
+                    size: 19,
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: ClaudeSpacing.sm),
                 Expanded(
                   child: Text(
                     widget.item.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    // bodyLarge, not titleMedium. This is a list row, and a
+                    // title scale on every row is what made the page read as
+                    // a stack of headings.
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -427,7 +441,7 @@ class _MenuCardState extends State<_MenuCard> {
                 Icon(
                   Icons.chevron_right_rounded,
                   color: colorScheme.onSurfaceVariant,
-                  size: 24,
+                  size: 20,
                 ),
               ],
             ),
