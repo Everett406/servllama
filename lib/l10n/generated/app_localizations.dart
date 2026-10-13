@@ -1343,6 +1343,96 @@ abstract class AppLocalizations {
   /// **'Showing the real name again'**
   String get modelLibraryAliasCleared;
 
+  /// No description provided for @generationParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation'**
+  String get generationParamsTitle;
+
+  /// No description provided for @generationParamsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Left empty means the model decides. A value you did not choose is never sent.'**
+  String get generationParamsHint;
+
+  /// No description provided for @generationParamsTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get generationParamsTemperature;
+
+  /// No description provided for @generationParamsTemperatureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher is looser. Low is more predictable and more repetitive.'**
+  String get generationParamsTemperatureHint;
+
+  /// No description provided for @generationParamsTopP.
+  ///
+  /// In en, this message translates to:
+  /// **'Top P'**
+  String get generationParamsTopP;
+
+  /// No description provided for @generationParamsTopPHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nucleus sampling: how far down the ranked list to look.'**
+  String get generationParamsTopPHint;
+
+  /// No description provided for @generationParamsTopK.
+  ///
+  /// In en, this message translates to:
+  /// **'Top K'**
+  String get generationParamsTopK;
+
+  /// No description provided for @generationParamsTopKHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only consider the K most likely next tokens.'**
+  String get generationParamsTopKHint;
+
+  /// No description provided for @generationParamsRepeatPenalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat penalty'**
+  String get generationParamsRepeatPenalty;
+
+  /// No description provided for @generationParamsRepeatPenaltyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Discourages the model from repeating itself.'**
+  String get generationParamsRepeatPenaltyHint;
+
+  /// No description provided for @generationParamsMaxTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Max tokens'**
+  String get generationParamsMaxTokens;
+
+  /// No description provided for @generationParamsMaxTokensHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cap on a reply. Empty lets a long answer finish.'**
+  String get generationParamsMaxTokensHint;
+
+  /// No description provided for @generationParamsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all'**
+  String get generationParamsReset;
+
+  /// No description provided for @generationParamsUnsetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Model decides'**
+  String get generationParamsUnsetHint;
+
+  /// No description provided for @generationParamsEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation parameters'**
+  String get generationParamsEntry;
+
   /// No description provided for @modelSettingsNameLabel.
   ///
   /// In en, this message translates to:

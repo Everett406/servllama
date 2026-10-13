@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/providers/system_prompt_provider.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
@@ -9,6 +10,7 @@ import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/features/about/pages/about_page.dart';
 import 'package:servllama/features/server/pages/model_management_page.dart';
+import 'package:servllama/features/settings/pages/generation_params_page.dart';
 import 'package:servllama/features/settings/pages/system_prompt_page.dart';
 import 'package:servllama/features/settings/widgets/download_settings_section.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
@@ -117,6 +119,22 @@ class SettingsPage extends StatelessWidget {
                             ? l10n.systemPromptEmpty
                             : systemPromptProvider.prompt,
                         onTap: () => _push(context, const SystemPromptPage()),
+                      ),
+                      SettingsMenuTile(
+                        key: const Key('settings_generation_params_tile'),
+                        icon: ClaudeIcons.sliders,
+                        title: l10n.generationParamsEntry,
+                        subtitle: context
+                                .watch<GenerationParamsProvider>()
+                                .params
+                                .isEmpty
+                            ? l10n.generationParamsHint
+                            : context
+                                      .watch<GenerationParamsProvider>()
+                                      .params
+                                      .toString(),
+                        onTap: () =>
+                            _push(context, const GenerationParamsPage()),
                       ),
                     ],
                   ),

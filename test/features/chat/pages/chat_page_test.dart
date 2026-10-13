@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/core/models/inference_engine.dart';
 import 'package:servllama/core/models/server_launch_settings.dart';
@@ -2086,6 +2087,7 @@ class _FakeLlamaChatApiClient extends LlamaChatApiClient {
     required String modelId,
     required List<ChatMessageRecord> messages,
     required CancelToken cancelToken,
+    GenerationParams generationParams = const GenerationParams(),
   }) {
     final controller = streamController;
     if (controller != null) {

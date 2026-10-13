@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/core/models/server_launch_settings.dart';
 import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
@@ -27,6 +28,74 @@ void main() {
 
     tearDown(() async {
       await server.close();
+    });
+
+    // The point of the whole feature: settings typed into a page have to turn
+    // up in the request. A page that renders them beautifully and sends
+    // nothing looks exactly the same as one that works.
+    test('sends the set generation parameters in the request body', () async {
+      server.chatResponder = (request) async {
+        request.response.add(utf8.encode('data: [DONE]\n\n'));
+        await request.response.close();
+      };
+
+      await client
+          .streamChatCompletion(
+            modelId: 'alpha',
+            messages: <ChatMessageRecord>[
+              ChatMessageRecord(
+                id: 'm1',
+                role: ChatRole.user,
+                content: 'hello',
+                createdAt: DateTime(2026, 3, 25),
+              ),
+            ],
+            cancelToken: CancelToken(),
+            generationParams: const GenerationParams(
+              temperature: 0.6,
+              topP: 0.9,
+              topK: 40,
+              repeatPenalty: 1.1,
+              maxTokens: 512,
+            ),
+          )
+          .toList();
+
+      final captured = server.lastChatRequestBody!;
+      expect(captured['temperature'], 0.6);
+      expect(captured['top_p'], 0.9);
+      expect(captured['top_k'], 40);
+      expect(captured['repeat_penalty'], 1.1);
+      expect(captured['max_tokens'], 512);
+      expect(captured['model'], 'alpha');
+      expect(captured['stream'], isTrue);
+    });
+
+    test('omits unset parameters rather than sending nulls', () async {
+      server.chatResponder = (request) async {
+        request.response.add(utf8.encode('data: [DONE]\n\n'));
+        await request.response.close();
+      };
+
+      await client
+          .streamChatCompletion(
+            modelId: 'alpha',
+            messages: <ChatMessageRecord>[
+              ChatMessageRecord(
+                id: 'm1',
+                role: ChatRole.user,
+                content: 'hello',
+                createdAt: DateTime(2026, 3, 25),
+              ),
+            ],
+            cancelToken: CancelToken(),
+          )
+          .toList();
+
+      final captured = server.lastChatRequestBody!;
+      expect(captured.containsKey('temperature'), isFalse);
+      expect(captured.containsKey('top_p'), isFalse);
+      expect(captured.containsKey('max_tokens'), isFalse);
     });
 
     test('uses 120 seconds receive timeout by default', () {

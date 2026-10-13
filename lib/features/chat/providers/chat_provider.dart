@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/models/inference_engine.dart';
 import 'package:servllama/features/chat/controllers/chat_conversation_controller.dart';
 import 'package:servllama/features/chat/controllers/chat_generation_controller.dart';
@@ -18,6 +20,7 @@ class ChatProvider extends ChangeNotifier {
   ChatProvider({
     ChatSessionRepository? repository,
     LlamaChatApiClient? apiClient,
+    GenerationParamsProvider? generationParamsProvider,
   }) : _repository = repository ?? ChatSessionRepository(),
        _apiClient = apiClient ?? LlamaChatApiClient() {
     _idGenerator = ChatIdGenerator();
@@ -36,6 +39,8 @@ class ChatProvider extends ChangeNotifier {
       models: _models,
       idGenerator: _idGenerator,
       defaultSessionTitle: defaultSessionTitle,
+      generationParams: () =>
+          generationParamsProvider?.params ?? const GenerationParams(),
     );
 
     _sessionList.addListener(_notify);

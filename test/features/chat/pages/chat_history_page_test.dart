@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/core/models/server_launch_settings.dart';
 import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
@@ -339,6 +340,7 @@ class _FakeLlamaChatApiClient extends LlamaChatApiClient {
     required String modelId,
     required List<ChatMessageRecord> messages,
     required CancelToken cancelToken,
+    GenerationParams generationParams = const GenerationParams(),
   }) {
     return const Stream<ChatStreamDelta>.empty();
   }

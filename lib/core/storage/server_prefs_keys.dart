@@ -21,4 +21,9 @@ class ServerPrefsKeys {
   static const String mnnThreadNum = 'server.mnn_thread_num';
   static const String foregroundNotificationPermissionPrompted =
       'server.foreground_notification_permission_prompted';
+
+  /// Sampling settings, stored as one JSON blob rather than five keys: they
+  /// are written and read together, and a half-written set of five preferences
+  /// is harder to reason about than one document that is either there or not.
+  static const String generationParams = 'chat.generation_params';
 }

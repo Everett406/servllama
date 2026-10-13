@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/storage/kv_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:servllama/app/providers/chat_timeout_provider.dart';
@@ -210,6 +212,11 @@ class _TestHost extends StatelessWidget {
         ChangeNotifierProvider<AppLocaleProvider>.value(value: localeProvider),
         ChangeNotifierProvider<ChatTimeoutProvider>.value(
           value: chatTimeoutProvider,
+        ),
+        ChangeNotifierProvider<GenerationParamsProvider>.value(
+          value: GenerationParamsProvider(
+            loader: GenerationParamsLoader(kvStorage: KvStorage()),
+          ),
         ),
         ChangeNotifierProvider<SystemPromptProvider>.value(
           value: systemPromptProvider,

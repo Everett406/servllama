@@ -702,6 +702,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modelLibraryAliasCleared => 'Showing the real name again';
 
   @override
+  String get generationParamsTitle => 'Generation';
+
+  @override
+  String get generationParamsHint =>
+      'Left empty means the model decides. A value you did not choose is never sent.';
+
+  @override
+  String get generationParamsTemperature => 'Temperature';
+
+  @override
+  String get generationParamsTemperatureHint =>
+      'Higher is looser. Low is more predictable and more repetitive.';
+
+  @override
+  String get generationParamsTopP => 'Top P';
+
+  @override
+  String get generationParamsTopPHint =>
+      'Nucleus sampling: how far down the ranked list to look.';
+
+  @override
+  String get generationParamsTopK => 'Top K';
+
+  @override
+  String get generationParamsTopKHint =>
+      'Only consider the K most likely next tokens.';
+
+  @override
+  String get generationParamsRepeatPenalty => 'Repeat penalty';
+
+  @override
+  String get generationParamsRepeatPenaltyHint =>
+      'Discourages the model from repeating itself.';
+
+  @override
+  String get generationParamsMaxTokens => 'Max tokens';
+
+  @override
+  String get generationParamsMaxTokensHint =>
+      'Cap on a reply. Empty lets a long answer finish.';
+
+  @override
+  String get generationParamsReset => 'Reset all';
+
+  @override
+  String get generationParamsUnsetHint => 'Model decides';
+
+  @override
+  String get generationParamsEntry => 'Generation parameters';
+
+  @override
   String get modelSettingsNameLabel => 'Model name';
 
   @override

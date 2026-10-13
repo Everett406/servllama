@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/features/chat/controllers/chat_conversation_controller.dart';
 import 'package:servllama/features/chat/controllers/chat_id_generator.dart';
 import 'package:servllama/features/chat/controllers/chat_model_controller.dart';
@@ -22,6 +23,7 @@ class ChatGenerationController extends ChangeNotifier {
     required ChatModelController models,
     required ChatIdGenerator idGenerator,
     required this.defaultSessionTitle,
+    required this.generationParams,
   }) : _repository = repository,
        _apiClient = apiClient,
        _sessionList = sessionList,
@@ -36,6 +38,11 @@ class ChatGenerationController extends ChangeNotifier {
   final ChatModelController _models;
   final ChatIdGenerator _idGenerator;
   final String defaultSessionTitle;
+
+  /// Read at the moment a request goes out rather than captured once. Holding
+  /// a copy from construction would mean changing a sampling setting has no
+  /// effect until the provider is rebuilt.
+  final GenerationParams Function() generationParams;
   final StreamingChatMessageNotifier streamingMessages =
       StreamingChatMessageNotifier();
 
@@ -526,6 +533,7 @@ class ChatGenerationController extends ChangeNotifier {
         modelId: model.id,
         messages: promptMessages ?? sessionMessages,
         cancelToken: _activeCancelToken!,
+        generationParams: generationParams(),
       )) {
         if (_isDisposed) {
           return;

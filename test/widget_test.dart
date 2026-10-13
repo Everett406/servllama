@@ -5,6 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/providers/generation_params_provider.dart';
+import 'package:servllama/core/storage/kv_storage.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/app/main_scaffold.dart';
@@ -397,6 +400,11 @@ class _TestApp extends StatelessWidget {
         ChangeNotifierProvider<ChatTimeoutProvider>(
           create: (_) => ChatTimeoutProvider(),
         ),
+        ChangeNotifierProvider<GenerationParamsProvider>(
+          create: (_) => GenerationParamsProvider(
+            loader: GenerationParamsLoader(kvStorage: KvStorage()),
+          ),
+        ),
         ChangeNotifierProvider<SystemPromptProvider>(
           create: (_) => SystemPromptProvider(),
         ),
@@ -550,6 +558,7 @@ class _FakeLlamaChatApiClient extends LlamaChatApiClient {
     required String modelId,
     required List<ChatMessageRecord> messages,
     required CancelToken cancelToken,
+    GenerationParams generationParams = const GenerationParams(),
   }) {
     return const Stream<ChatStreamDelta>.empty();
   }

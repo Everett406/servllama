@@ -11,6 +11,7 @@ import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/main_scaffold.dart';
+import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
@@ -43,6 +44,15 @@ class ServLlamaApp extends StatelessWidget {
           ChangeNotifierProvider(
             create: (_) {
               final provider = ChatTimeoutProvider();
+              unawaited(provider.load());
+              return provider;
+            },
+          ),
+          // Above ChatProvider so the chat path can read the current sampling
+          // settings at the moment a request goes out.
+          ChangeNotifierProvider(
+            create: (_) {
+              final provider = GenerationParamsProvider();
               unawaited(provider.load());
               return provider;
             },
@@ -104,7 +114,10 @@ class ServLlamaApp extends StatelessWidget {
             SystemPromptProvider,
             ChatProvider
           >(
-            create: (_) => ChatProvider(),
+            create: (_) => ChatProvider(
+              generationParamsProvider: context
+                  .read<GenerationParamsProvider>(),
+            ),
             update:
                 (
                   _,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/core/services/server_launch_settings_loader.dart';
 import 'package:servllama/features/chat/models/chat_message_record.dart';
 import 'package:servllama/features/chat/models/chat_stream_delta.dart';
@@ -77,6 +78,8 @@ class LlamaChatApiClient {
     required String modelId,
     required List<ChatMessageRecord> messages,
     required CancelToken cancelToken,
+    // Omitted from the body entirely when unset — see GenerationParams.
+    GenerationParams generationParams = const GenerationParams(),
   }) async* {
     Response<ResponseBody> response;
     try {
@@ -86,6 +89,10 @@ class LlamaChatApiClient {
           'model': modelId,
           'stream': true,
           'messages': await _serializeMessages(messages),
+          // Sampling parameters ride on the request rather than on the
+          // server's command line, so changing one applies to the next
+          // message instead of needing a restart.
+          ...generationParams.sanitized().toRequestFields(),
         },
         cancelToken: cancelToken,
         options: Options(

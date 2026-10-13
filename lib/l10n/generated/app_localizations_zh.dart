@@ -680,6 +680,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get modelLibraryAliasCleared => '已恢复显示真实名称';
 
   @override
+  String get generationParamsTitle => '生成参数';
+
+  @override
+  String get generationParamsHint => '留空即由模型自己决定。没有被你设置过的数值不会被发送。';
+
+  @override
+  String get generationParamsTemperature => '温度';
+
+  @override
+  String get generationParamsTemperatureHint => '越高越发散。调低更稳定，也更容易重复。';
+
+  @override
+  String get generationParamsTopP => 'Top P';
+
+  @override
+  String get generationParamsTopPHint => '核采样：在排序后的候选里往下看多远。';
+
+  @override
+  String get generationParamsTopK => 'Top K';
+
+  @override
+  String get generationParamsTopKHint => '只考虑最可能的 K 个候选 token。';
+
+  @override
+  String get generationParamsRepeatPenalty => '重复惩罚';
+
+  @override
+  String get generationParamsRepeatPenaltyHint => '抑制模型重复自己。';
+
+  @override
+  String get generationParamsMaxTokens => '最大 token 数';
+
+  @override
+  String get generationParamsMaxTokensHint => '回复长度上限。留空则让长回答能写完。';
+
+  @override
+  String get generationParamsReset => '全部重置';
+
+  @override
+  String get generationParamsUnsetHint => '由模型决定';
+
+  @override
+  String get generationParamsEntry => '生成参数';
+
+  @override
   String get modelSettingsNameLabel => '模型名称';
 
   @override
