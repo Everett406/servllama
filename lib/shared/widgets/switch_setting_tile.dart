@@ -10,6 +10,7 @@ class SwitchSettingTile extends StatelessWidget {
     this.subtitle,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final String title;
@@ -17,12 +18,16 @@ class SwitchSettingTile extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
+  /// False greys the row out. The callback is still required so the tile keeps
+  /// one shape; callers pass a no-op.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => onChanged(!value),
+        onTap: enabled ? () => onChanged(!value) : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: ClaudeSpacing.lg,
@@ -55,7 +60,10 @@ class SwitchSettingTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: ClaudeSpacing.md),
-              Switch(value: value, onChanged: onChanged),
+              Switch(
+                value: value,
+                onChanged: enabled ? onChanged : null,
+              ),
             ],
           ),
         ),

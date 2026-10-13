@@ -1439,6 +1439,78 @@ abstract class AppLocalizations {
   /// **'Generating a table · {count} rows so far'**
   String streamingTableBuilding(Object count);
 
+  /// No description provided for @knowledgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge base'**
+  String get knowledgeTitle;
+
+  /// No description provided for @knowledgeRetrievalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Let chat look things up'**
+  String get knowledgeRetrievalTitle;
+
+  /// No description provided for @knowledgeRetrievalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When on, the model can search your documents before answering.'**
+  String get knowledgeRetrievalHint;
+
+  /// No description provided for @knowledgeModelDecidesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Model decides when to search'**
+  String get knowledgeModelDecidesTitle;
+
+  /// No description provided for @knowledgeModelDecidesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off means every question searches first.'**
+  String get knowledgeModelDecidesHint;
+
+  /// No description provided for @knowledgeEmbeddingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{dimensions} dimensions · {tokens}-token window'**
+  String knowledgeEmbeddingNote(Object dimensions, Object tokens);
+
+  /// No description provided for @knowledgeRebuildRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The embedding model changed. The existing index cannot be compared with new vectors and has to be rebuilt.'**
+  String get knowledgeRebuildRequired;
+
+  /// No description provided for @knowledgeRebuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild index'**
+  String get knowledgeRebuild;
+
+  /// No description provided for @knowledgeDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get knowledgeDocumentsTitle;
+
+  /// No description provided for @knowledgeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing indexed yet. Markdown and plain text files are supported.'**
+  String get knowledgeEmpty;
+
+  /// No description provided for @knowledgeDocumentIndexed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} chunks indexed'**
+  String knowledgeDocumentIndexed(Object count);
+
+  /// No description provided for @knowledgeDocumentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to index'**
+  String get knowledgeDocumentFailed;
+
   /// No description provided for @generationParamsEntry.
   ///
   /// In en, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/core/models/generation_params.dart';
+import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
 import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
@@ -220,6 +221,9 @@ class _TestHost extends StatelessWidget {
             apiClient: LlamaChatApiClient(),
             kvStorage: KvStorage(),
           ),
+        ),
+        ChangeNotifierProvider<KnowledgeBaseProvider>(
+          create: (_) => KnowledgeBaseProvider(),
         ),
         ChangeNotifierProvider<GenerationParamsProvider>.value(
           value: GenerationParamsProvider(

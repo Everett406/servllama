@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
 import 'package:servllama/app/sheet/vela_menu.dart';
 import 'package:servllama/app/sheet/vela_sheet.dart';
@@ -17,6 +18,7 @@ import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/features/about/pages/about_page.dart';
 import 'package:servllama/features/server/pages/model_management_page.dart';
+import 'package:servllama/features/knowledge/pages/knowledge_base_page.dart';
 import 'package:servllama/features/settings/pages/generation_params_page.dart';
 import 'package:servllama/features/settings/pages/system_prompt_page.dart';
 import 'package:servllama/features/settings/widgets/download_settings_section.dart';
@@ -144,6 +146,15 @@ class SettingsPage extends StatelessWidget {
                                       .toString(),
                         onTap: () =>
                             _push(context, const GenerationParamsPage()),
+                      ),
+                      SettingsMenuTile(
+                        key: const Key('settings_knowledge_base_tile'),
+                        icon: ClaudeIcons.chip,
+                        title: l10n.knowledgeTitle,
+                        subtitle: context.watch<KnowledgeBaseProvider>().documents.isEmpty
+                            ? l10n.knowledgeEmpty
+                            : l10n.knowledgeDocumentsTitle,
+                        onTap: () => _push(context, const KnowledgeBasePage()),
                       ),
                       SwitchSettingTile(
                         key: const Key('settings_title_generation_tile'),

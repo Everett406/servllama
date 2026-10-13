@@ -758,6 +758,50 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get knowledgeTitle => 'Knowledge base';
+
+  @override
+  String get knowledgeRetrievalTitle => 'Let chat look things up';
+
+  @override
+  String get knowledgeRetrievalHint =>
+      'When on, the model can search your documents before answering.';
+
+  @override
+  String get knowledgeModelDecidesTitle => 'Model decides when to search';
+
+  @override
+  String get knowledgeModelDecidesHint =>
+      'Off means every question searches first.';
+
+  @override
+  String knowledgeEmbeddingNote(Object dimensions, Object tokens) {
+    return '$dimensions dimensions · $tokens-token window';
+  }
+
+  @override
+  String get knowledgeRebuildRequired =>
+      'The embedding model changed. The existing index cannot be compared with new vectors and has to be rebuilt.';
+
+  @override
+  String get knowledgeRebuild => 'Rebuild index';
+
+  @override
+  String get knowledgeDocumentsTitle => 'Documents';
+
+  @override
+  String get knowledgeEmpty =>
+      'Nothing indexed yet. Markdown and plain text files are supported.';
+
+  @override
+  String knowledgeDocumentIndexed(Object count) {
+    return '$count chunks indexed';
+  }
+
+  @override
+  String get knowledgeDocumentFailed => 'Failed to index';
+
+  @override
   String get generationParamsEntry => 'Generation parameters';
 
   @override

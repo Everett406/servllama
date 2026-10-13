@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
+import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/core/storage/kv_storage.dart';
 import 'package:servllama/core/models/generation_params.dart';
 import 'package:servllama/app/providers/app_locale_provider.dart';
@@ -408,6 +409,9 @@ class _TestApp extends StatelessWidget {
             apiClient: LlamaChatApiClient(),
             kvStorage: KvStorage(),
           ),
+        ),
+        ChangeNotifierProvider<KnowledgeBaseProvider>(
+          create: (_) => KnowledgeBaseProvider(),
         ),
         ChangeNotifierProvider<GenerationParamsProvider>(
           create: (_) => GenerationParamsProvider(

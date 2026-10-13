@@ -11,9 +11,11 @@ import 'package:servllama/app/providers/app_locale_provider.dart';
 import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/main_scaffold.dart';
+import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
+import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
 import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
 import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
@@ -52,6 +54,13 @@ class ServLlamaApp extends StatelessWidget {
           ),
           // Above ChatProvider so the chat path can read the current sampling
           // settings at the moment a request goes out.
+          ChangeNotifierProvider(
+            create: (_) {
+              final provider = KnowledgeBaseProvider();
+              unawaited(provider.load());
+              return provider;
+            },
+          ),
           // One client, shared. The title generator has to reach the same
           // llama-server the conversation is talking to; a second instance
           // would keep its own base URL and start its own doomed requests
@@ -137,6 +146,14 @@ class ServLlamaApp extends StatelessWidget {
               generationParamsProvider: context
                   .read<GenerationParamsProvider>(),
               titleGenerator: context.read<SessionTitleGenerator>(),
+              // Null when the library is empty or retrieval is off, which
+              // leaves the other two tools in place. Advertising a search that
+              // always comes back empty teaches the model to call a tool that
+              // does nothing.
+              builtinTools: context.read<KnowledgeBaseProvider>().toolsFor(
+                context.read<EngineRuntimeProvider>(),
+                EmbeddingModelDescriptor.defaultModel,
+              ),
             ),
             update:
                 (

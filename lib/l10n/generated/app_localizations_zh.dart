@@ -730,6 +730,46 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get knowledgeTitle => '知识库';
+
+  @override
+  String get knowledgeRetrievalTitle => '允许对话检索';
+
+  @override
+  String get knowledgeRetrievalHint => '开启后，模型回答前可以先检索你的文档。';
+
+  @override
+  String get knowledgeModelDecidesTitle => '由模型决定何时检索';
+
+  @override
+  String get knowledgeModelDecidesHint => '关闭则每个问题都先检索。';
+
+  @override
+  String knowledgeEmbeddingNote(Object dimensions, Object tokens) {
+    return '$dimensions 维 · $tokens token 窗口';
+  }
+
+  @override
+  String get knowledgeRebuildRequired => '嵌入模型换了。已有索引和新向量不在同一个空间，必须重建。';
+
+  @override
+  String get knowledgeRebuild => '重建索引';
+
+  @override
+  String get knowledgeDocumentsTitle => '文档';
+
+  @override
+  String get knowledgeEmpty => '还没有索引任何内容。目前支持 Markdown 和纯文本。';
+
+  @override
+  String knowledgeDocumentIndexed(Object count) {
+    return '已索引 $count 个片段';
+  }
+
+  @override
+  String get knowledgeDocumentFailed => '索引失败';
+
+  @override
   String get generationParamsEntry => '生成参数';
 
   @override
