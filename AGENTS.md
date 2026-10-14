@@ -1,5 +1,11 @@
 # ServLlama AGENTS Guide
 
+> **The app is Vela.** `ServLlama` is the upstream project name and the Flutter package
+> name; the user-facing name, the repository and the Android identity are Vela.
+>
+> Read `HANDOFF.md` before starting: it records which parts are verified on hardware,
+> which are not, and which are deliberately not done.
+
 ## Project Overview
 
 - `ServLlama` is a Flutter application for managing and using local LLM inference API services powered by `llama-server`.
@@ -38,7 +44,11 @@
 - Keep `packaging.jniLibs.useLegacyPackaging = true` in `android/app/build.gradle.kts`. The server runs as a child process and must exist as a real file on disk.
 - OpenCL (`libggml-opencl.so`) and Hexagon (`libggml-hexagon.so` + `libggml-htp-v*.so`) are part of the Snapdragon bundle. Do not NDK-strip the HTP kernels.
 - Hexagon empty-device fix is a project patch on llama.cpp **v0.4.1**: `patches/llama.cpp/0001-hexagon-skip-unsupported-devices.patch`.
-- Offered llama.cpp backends are `ServerLaunchSettings.supportedLlamaCppBackends` (currently CPU and Hexagon). OpenCL stays compiled but is not offered. The device probe only enables or disables entries in that list.
+- Offered llama.cpp backends are `ServerLaunchSettings.supportedLlamaCppBackends`, which currently lists CPU, OpenCL and Hexagon. The device probe only enables or disables entries in that list.
+- **Whether OpenCL and Hexagon actually work on a given device is unverified.** The release
+  APK has never been unpacked intact, so it has never been confirmed whether the shipped
+  `lib/arm64-v8a/` contains a real OpenCL driver or the NDK stub. See `HANDOFF.md`. Do not
+  write in any doc or commit message that either works, or that either does not.
 - When updating llama-server, replace the `.so` files AND sync the version in `assets/bin/llama_server_manifest.json`. The manifest is display-only (About page) and is not validated against the binaries.
 
 ## Development Practices

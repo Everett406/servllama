@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/app_icon.svg" alt="Vela icon" width="112" />
   <h1>Vela</h1>
-  <p><strong>Turn your phone into a powerful local LLM server with one tap</strong></p>
+  <p><strong>Your phone is the server. Nothing leaves the device.</strong></p>
 
   <p>
     <a href="https://github.com/Everett406/servllama/releases/latest">
@@ -11,7 +11,8 @@
 
 <p align="center">
   <strong>English</strong> |
-  <a href="./README_ZH.md">简体中文</a>
+  <a href="./README_ZH.md">简体中文</a> |
+  <a href="./HANDOFF.md">Handoff notes</a>
 </p>
 
 <p align="center">
@@ -27,58 +28,108 @@
 
 </div>
 
-## Vela
+## What Vela is
 
-A fork of [ArkaneFans/servllama](https://github.com/ArkaneFans/servllama), re-skinned around
-a Claude-inspired interface. The inference kernel is upstream's and untouched; the UI, the
-release pipeline and the Android identity are this repository's. Named after *Vela*, the
-brightest of the eighty-eight constellations and a sail in Latin — which is exactly what a
-local model is: it turns the wind you give it into motion, and it goes nowhere on its own.
+Vela turns an Android phone into a self-contained local LLM server. It runs the inference
+itself, serves an OpenAI-compatible API, and other apps on the same phone or local network
+can call it.
 
-Vela turns your Android device into a self-contained local LLM server, combining model discovery and downloads, switching between the llama.cpp and MNN inference engines, server controls, log viewing, and chat in a single app. Model inference runs directly on the device, and other apps on the same phone or local network can call it through an OpenAI-compatible API.
+It is a fork of [ArkaneFans/servllama](https://github.com/ArkaneFans/servllama). **The
+inference kernel is upstream's and stays untouched** — `libllama-server.so`, the model
+catalog, and the download logic are ArkaneFans's work. What this fork owns is the interface,
+the release pipeline, the Android identity, and everything listed under
+[What this fork added](#what-this-fork-added).
 
-## Features
+Named after *Vela*, the brightest of the eighty-eight constellations and a sail in Latin —
+which is what a local model is: it turns the wind you give it into motion, and it goes
+nowhere on its own.
 
-- Dual inference engines: run GGUF models with [llama.cpp](https://github.com/ggml-org/llama.cpp) or MNN models with [MNN](https://github.com/alibaba/MNN).
-- In-app model discovery: browse featured models, or search Hugging Face and ModelScope at the same time.
-- Reliable download management: download GGUF / MNN models with support for pausing, resuming, retrying, and switching sources; tasks persist across page and app state changes.
-- OpenAI-compatible API serving: core support for `GET /v1/models` and `POST /v1/chat/completions`, including streaming responses and optional API-key authentication, with the service kept alive in the background (if the service drops after the app goes to the background, see Usage Notes).
-- Complete chat experience: streaming output, collapsible reasoning, Markdown and code blocks, image input for compatible vision models, message editing and regeneration, and conversation history and search.
-- Practical server controls: switch between local-only and LAN access, configure the port and API key, tune llama.cpp inference parameters, and view, filter, copy, or export logs.
-- Android integration: foreground service notifications, light and dark themes, and Chinese and English interfaces.
+---
 
-## Inference Engines
+## What this fork added
 
-| Engine | Model format | Compatibility / ecosystem |
-| --- | --- | --- |
-| llama.cpp | A single `.gguf` file, with an optional `mmproj` file for vision | GGUF is the most widely adopted format for community model distribution — most popular open-source models on Hugging Face ship ready-made quantized GGUF builds, so choices are plentiful. |
-| MNN | MNN model | Open-sourced and actively maintained by Alibaba, with deep optimization for mobile ARM CPU / GPU and strong performance; models must be exported through the MNN conversion toolchain. |
+Everything here is work on top of upstream, not a rewrite of it.
 
-Both engines require a model to be selected before startup. Only one engine runs at a time and owns the configured server port. Both engines expose the core endpoints above; other llama-server-specific features are available only while the llama.cpp engine is active.
+### Interface
 
-Use the Vision control on a GGUF download card to choose whether to download a projector with the model. Model settings let you open the original repository, download or delete projector versions, and select one installed version to use. Turning vision off keeps the files. Deleting the selected version selects another installed version, or turns vision off when none remain. Locally imported models support importing a compatible projector and toggling vision separately.
+- **Claude-inspired design system.** Warm off-white canvas, brick-orange accent, low-contrast
+  greys, generous radii. `lib/app/design/tokens.dart` is the single source for spacing,
+  radius and ink colour. The whole app is rounded; a square corner is a bug.
+- **Per-character Chinese text reveal.** Upstream's `gpt_markdown` breaks reveal groups on
+  whitespace, and Chinese has none — so an entire paragraph was one group and blurred once
+  then snapped sharp together. Vendored and patched to break on CJK boundaries.
+- **Real LaTeX.** `useDollarSignsForLatex` was left at its upstream default of `false`, so
+  `$x^2$` — the spelling a model reaches for first — rendered as literal source. Now on.
+- **Tables that scroll instead of collapsing.** A `FlexColumnWidth` divides available width
+  proportionally and measures nothing; five columns on a 360dp screen is one glyph per line.
+  Columns are measured to their content and the table exceeds the viewport, which already
+  scrolls. Rounded, and a stream-time placeholder so a half-written table does not reflow
+  the rows above it on every keystroke.
+
+### Features
+
+- **Tool calling, end to end.** OpenAI-style `tools` / `tool_calls` / `role: tool`. Three
+  built-ins — current time, calculator, knowledge search — each with its own switch in
+  settings. The calculator is a safe recursive-descent interpreter with JS-shaped syntax
+  (`**`, `Math.sin()`, `let`), not an `eval`: it has a numeric symbol table and no object,
+  property chain, `require`, `globalThis` or host method reachable.
+- **A knowledge base that actually runs.** Embeddings come from a **second**
+  `libllama-server.so` process on port 8099 loading an embedding GGUF. The chat server
+  cannot supply them: `llama-server --model` is single-model mode and ignores the `model`
+  field of a request. The embedding model is picked from the **same model library** the chat
+  page uses — no presets, no second model world. Documents are indexed to a JSON file;
+  four retrieval knobs (result count, similarity floor, total and per-passage character
+  budget) with three presets, because three passages and eight is the difference between an
+  answer and a shrug.
+- **Generation parameters** that go into the request body, not the server's launch flags. An
+  unset value omits its key entirely rather than sending `null`.
+- **Title generation.** A separate request after the first reply completes, never in
+  parallel with it. A title you edited by hand is never overwritten.
+- **Model display aliases.** Rename what a model is called in the UI without moving a file
+  or a directory.
+- **Anchored menus and floating sheets.** Model, engine and session menus follow their
+  trigger through keyboard changes; bottom sheets float with margins on all four sides, a
+  soft scrim, and drag-to-dismiss from the handle only.
+
+---
 
 ## Requirements
 
 - Android 9 (API 28) or later
 - 64-bit ARM device (`arm64-v8a`)
-- Enough free storage and memory for the selected model
+- Enough free storage and memory for the model
 
-Actual speed and memory usage depend on the model, quantization, context length, and device. Start with a smaller model if you are unsure what your phone can handle.
+Speed and memory depend on the model, quantization, context length and device. Start with a
+smaller model if unsure.
 
-## Quick Start
+---
 
-1. Download the latest APK from [GitHub Releases](https://github.com/ArkaneFans/Servllama/releases/latest) and install it.
-2. Open the model library. Download a model from Hugging Face or ModelScope, or import a local GGUF or MNN model.
-3. Choose an inference engine and model from the Chat or Server page.
-4. Start the server and chat in Vela, or copy the API Base URL into another AI client.
-5. For access from another device, select **Listen on all** in Server config and set an API key.
+## Quick start
 
-The default server address is `http://127.0.0.1:8080`, which is accessible only from the Android device itself.
+1. Install the latest APK from
+   [GitHub Releases](https://github.com/Everett406/servllama/releases/latest).
+2. Open the model library. Download from Hugging Face or ModelScope, or import a local GGUF
+   or MNN model.
+3. Pick an engine and a model from the Chat or Server page.
+4. Start the server. Chat inside Vela, or point another client at it.
+5. For other devices: **Listen on all** in the server config, and set an API key.
+
+Default address is `http://127.0.0.1:8080` — reachable from the phone only.
+
+### Knowledge base
+
+1. Download or import an **embedding** GGUF (for example `Qwen3-Embedding-0.6B-Q8_0.gguf`)
+   into the model library, the same as any chat model.
+2. Knowledge base → **Embedding model** → pick it from the library.
+3. Documents → import `.md` or `.txt`.
+4. Index, then turn on **Allow chat search**.
+
+Swapping the embedding model invalidates the stored vectors and says so; rebuild from the
+same page.
+
+---
 
 ## API
-
-Use the model ID returned by `/v1/models` in chat requests:
 
 ```bash
 curl http://<device-ip>:8080/v1/models
@@ -94,44 +145,105 @@ curl -N http://<device-ip>:8080/v1/chat/completions \
   }'
 ```
 
-If an API key is configured, add `-H "Authorization: Bearer <api-key>"`. For same-device clients, replace `<device-ip>` with `127.0.0.1`.
+With an API key configured, add `-H "Authorization: Bearer <api-key>"`. Same-device clients
+use `127.0.0.1`.
 
-## Build from Source
+---
 
-You need a Flutter SDK compatible with Dart 3.9, Android SDK, and JDK 17.
+## Inference engines
+
+| Engine | Model format | Notes |
+| --- | --- | --- |
+| llama.cpp | one `.gguf`, optional `mmproj` for vision | The format the community ships in. Most models on Hugging Face have ready-made quantized GGUF builds. |
+| MNN | MNN model | Alibaba's mobile-optimised runtime. Strong on ARM CPU/GPU; must go through the MNN conversion toolchain. |
+
+Both need a model selected before startup. **One engine runs at a time** and owns the port.
+Switching stops the current engine before starting the next — they are never parallel.
+
+llama.cpp backends are CPU, OpenCL and Hexagon
+(`ServerLaunchSettings.supportedLlamaCppBackends`). Whether OpenCL or Hexagon actually works
+on a given device is a separate question this project has **not** verified on hardware — see
+`HANDOFF.md`.
+
+> `AGENTS.md` still says OpenCL is compiled but not offered. That is out of date: all three
+> are in the offered list as of v1.27.0. The file needs the same edit.
+
+---
+
+## Build from source
+
+Flutter with Dart 3.9, Android SDK, JDK 17.
 
 ```bash
-git clone https://github.com/ArkaneFans/Servllama.git
-cd Servllama
+git clone https://github.com/Everett406/servllama.git
+cd servllama
 flutter pub get
 flutter build apk --release
 ```
 
-MNN native artifacts are provided by the `mnn_engine` package. llama-server is a prebuilt Snapdragon bundle (CPU variants + OpenCL + Hexagon) that is **not** stored in git. Copy the `.so` files into `android/app/src/main/jniLibs/arm64-v8a/` from a release extra, the GitHub Actions artifact, or a local WSL build before compiling the APK. See `patches/llama.cpp/README.md`.
+**The `llama-server` binaries are not in git.** Copy the `.so` files into
+`android/app/src/main/jniLibs/arm64-v8a/` from a release extra, the GitHub Actions artifact,
+or a local WSL build. See `patches/llama.cpp/README.md`.
 
-For development verification, run `flutter analyze` and `flutter test`.
+Two constraints that are easy to break:
 
-The GitHub workflow `.github/workflows/build-llama-server-android.yml` builds that bundle. It checks out the selected llama.cpp tag, applies `patches/llama.cpp/0001-hexagon-skip-unsupported-devices.patch`, and compiles CPU variants, OpenCL, and Hexagon inside `ghcr.io/snapdragon-toolchain/arm64-android:v0.7`. The patch matches v0.4.1; other tags fail the job when it does not apply.
+- `packaging.jniLibs.useLegacyPackaging = true` in `android/app/build.gradle.kts`. The server
+  is a child process and must exist as a real file on disk.
+- `ndk.abiFilters += "arm64-v8a"`.
 
-## Usage Notes
+Every bundled file must be named `lib*.so`, or AGP silently drops it from the APK.
 
-- Listening on all network interfaces exposes the server to the current Wi-Fi, hotspot, and VPN networks. Use an API key and a trusted network.
-- Some Android vendors restrict long-running background services. If requests stop after the app enters the background, allow Vela to auto-start and run in the background, and disable battery optimization for it.
-- Models can consume several gigabytes of storage and memory. Choose models that fit your device.
+The release workflow verifies the arm64 native libraries, the signature,
+`extractNativeLibs(0x010104ea)=true` and the APK contents before publishing.
 
-## Related Projects
+### Version numbers
+
+`pubspec.yaml` is the only source. `versionCode` and `versionName` are read from it. Do not
+edit them anywhere else.
+
+---
+
+## Notes
+
+- **Listen on all** exposes the server to the current Wi-Fi, hotspot and VPN networks. Use an
+  API key on a network you trust.
+- Some Android vendors restrict long-running background services. If requests stop after
+  backgrounding, allow auto-start and exempt Vela from battery optimisation.
+- Models take gigabytes of storage and memory.
+
+---
+
+## Documentation
+
+| File | What it is |
+| --- | --- |
+| [`AGENTS.md`](AGENTS.md) | Architecture and the rules a change is expected to follow. Read this first. |
+| [`HANDOFF.md`](HANDOFF.md) | Current state, what is unverified, and what is deliberately not done. |
+| [`CHANGELOG.md`](CHANGELOG.md) | Every version, in the user's terms. |
+| [`docs/SIGNING.md`](docs/SIGNING.md) | Release signing setup. |
+| [`llama-server-README.md`](llama-server-README.md) | Upstream's notes on the bundled server. |
+
+---
+
+## Related projects
 
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [MNN](https://github.com/alibaba/MNN)
 - [mnn_engine](https://pub.dev/packages/mnn_engine)
+- [ArkaneFans/servllama](https://github.com/ArkaneFans/servllama) — upstream
+
+---
 
 ## License
 
-Vela is released under the [GNU Affero General Public License v3.0](LICENSE), inherited from
-upstream ServLlama. The inference kernel, model catalog and download logic are ArkaneFans's;
-everything under `lib/app/` and `lib/features/chat/widgets/` is this fork's work on top of
-them. AGPL-3.0 requires that anyone who offers this over a network releases the corresponding
-source — including your modifications.
+GNU Affero General Public License v3.0, inherited from upstream ServLlama.
+
+The inference kernel, model catalog and download logic are ArkaneFans's. Everything under
+`lib/app/` and `lib/features/chat/widgets/` is this fork's work on top of them.
+
+AGPL-3.0 requires that anyone offering this over a network releases the corresponding
+source, including your modifications.
 
 ---
+
 Acknowledgements [`Linux DO Community`](https://linux.do/).
