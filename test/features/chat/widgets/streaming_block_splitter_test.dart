@@ -33,9 +33,39 @@ void main() {
       expect(segments.single.markdown, content);
     });
 
-    test('a table closed by the trailing newline is settled', () {
-      const content = '| a | b |\n| --- | --- |\n| 1 | 2 |\n';
-      expect(splitStreamingBlocks(content).where((s) => s.isOpenTable), isEmpty);
+    test('a trailing newline is not a finishing line, so the table stays open', () {
+      // The bug this locks down: `'a\n'.split('\n')` is `['a', '']`, so the
+      // newline the model just typed left a blank element that looked like the
+      // blank line that closes a table. The table flickered between finished
+      // and unfinished on nearly every row.
+      const rows = '| a | b |\n| --- | --- |\n| 1 | 2 |\n';
+      final segments = splitStreamingBlocks(rows);
+      expect(segments.where((s) => s.isOpenTable), hasLength(1));
+
+      // A genuinely typed blank line has its own trailing newline, so the
+      // table really is finished.
+      final closed = splitStreamingBlocks('$rows\n');
+      expect(closed.where((s) => s.isOpenTable), isEmpty);
+
+      // And a blank line followed by more text closes it too.
+      final followed = splitStreamingBlocks('$rows\n后面还有一句。');
+      expect(followed.where((s) => s.isOpenTable), isEmpty);
+    });
+
+    // The split is now monotone in the common case, which is what removed the
+    // flicker. AnswerMarkdown still latches, because "usually" is not a
+    // guarantee and a table that blinks is very visible.
+    test('a table stays open for every row it gains', () {
+      const head = '说明。\n\n| a | b |\n| --- | --- |';
+      const rows = <String>['| 1 | 2 |', '| 3 | 4 |', '| 5 | 6 |'];
+      var openedAfterFirst = false;
+      for (var i = 0; i < rows.length; i++) {
+        final held = splitStreamingBlocks('$head\n${rows[i]}\n')
+            .where((s) => s.isOpenTable);
+        expect(held, hasLength(1), reason: 'row ${i + 1} should be held back');
+        openedAfterFirst = true;
+      }
+      expect(openedAfterFirst, isTrue);
     });
 
     test('no table at all is untouched', () {

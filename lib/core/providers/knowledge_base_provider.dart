@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:servllama/core/storage/kv_storage.dart';
+import 'package:servllama/core/storage/server_prefs_keys.dart';
 import 'package:servllama/features/chat/services/builtin_tools.dart';
+import 'package:servllama/shared/widgets/tool_settings.dart';
 import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
 import 'package:servllama/features/knowledge/models/retrieval_settings.dart';
 import 'package:servllama/features/knowledge/services/embedding_model_store.dart';
@@ -24,12 +28,15 @@ class KnowledgeBaseProvider extends ChangeNotifier {
     EmbeddingModelStore? modelStore,
     EmbeddingServer? embeddingServer,
     RetrievalSettingsStore? settingsStore,
+    KvStorage? kvStorage,
   }) : _service = service,
        _modelStore = modelStore ?? EmbeddingModelStore(),
        _embeddingServer = embeddingServer ?? EmbeddingServer(),
-       _settingsStore = settingsStore ?? RetrievalSettingsStore();
+       _settingsStore = settingsStore ?? RetrievalSettingsStore(),
+       _kvStorage = kvStorage ?? KvStorage.instance;
 
   KnowledgeBaseService? _service;
+  final KvStorage _kvStorage;
   final EmbeddingModelStore _modelStore;
   final EmbeddingServer _embeddingServer;
   final RetrievalSettingsStore _settingsStore;
@@ -81,6 +88,38 @@ class KnowledgeBaseProvider extends ChangeNotifier {
 
   EmbeddingModelStore get modelStore => _modelStore;
   EmbeddingServer get embeddingServer => _embeddingServer;
+
+  /// Which tools the model is allowed to call.
+  ///
+  /// All three default on. A tool that silently stops working is worse than
+  /// one that was never there, and a switch nobody asked for is not worth
+  /// being the default.
+  ToolSettings _toolSettings = const ToolSettings();
+  ToolSettings get toolSettings => _toolSettings;
+
+  /// Tools offered to the model right now.
+  ///
+  /// Reported separately from [toolSettings] so the settings page can show a
+  /// search that is switched on but has nothing behind it, instead of a
+  /// switch that silently does nothing.
+  Set<BuiltinTool> get activeTools => <BuiltinTool>{
+    if (_toolSettings.clock) BuiltinTool.clock,
+    if (_toolSettings.calculator) BuiltinTool.calculator,
+    if (_toolSettings.knowledgeSearch &&
+        _retrievalEnabled &&
+        hasIndexedDocuments &&
+        hasModel)
+      BuiltinTool.knowledgeSearch,
+  };
+
+  Future<void> setToolEnabled(BuiltinTool tool, bool enabled) async {
+    _toolSettings = _toolSettings.copyWith(tool: tool, enabled: enabled);
+    notifyListeners();
+    await _kvStorage.setString(
+      ServerPrefsKeys.builtinToolsEnabled,
+      _toolSettings.encode(),
+    );
+  }
 
   List<InstalledEmbeddingModel> _models = const <InstalledEmbeddingModel>[];
   List<InstalledEmbeddingModel> get models => _models;
@@ -192,6 +231,20 @@ class KnowledgeBaseProvider extends ChangeNotifier {
   Future<void> applyPreset(RetrievalPreset preset) =>
       updateSettings(preset.settings);
 
+  Future<ToolSettings> _loadToolSettings() async {
+    final raw = await _kvStorage.getString(ServerPrefsKeys.builtinToolsEnabled);
+    if (raw == null || raw.isEmpty) return const ToolSettings();
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const ToolSettings();
+      return ToolSettings.fromJson(decoded.cast<String, dynamic>());
+    } catch (_) {
+      // A corrupt blob should cost the user their tool preferences, not the
+      // app's ability to start a conversation.
+      return const ToolSettings();
+    }
+  }
+
   Future<void> load() async {
     if (_service == null) {
       final directory = await rootDirectory();
@@ -206,6 +259,7 @@ class KnowledgeBaseProvider extends ChangeNotifier {
     _models = await _modelStore.installed();
     _settings = await _settingsStore.load();
     _service!.applySettings(_settings);
+    _toolSettings = await _loadToolSettings();
     _loaded = true;
     notifyListeners();
   }
@@ -338,13 +392,22 @@ class KnowledgeBaseProvider extends ChangeNotifier {
     }
   }
 
-  /// A tool wired to this library, or null when there is nothing to search.
+  /// The tools the model may call.
   ///
-  /// Null rather than a tool that returns nothing: advertising a search that
-  /// always comes back empty teaches the model to call a useless tool.
-  BuiltinTools? toolsFor() {
-    if (!_retrievalEnabled || !hasIndexedDocuments || !hasModel) return null;
-    return BuiltinTools(searchKnowledge: (query) => search(query));
+  /// Assembled from what is actually switched on. The knowledge search is
+  /// omitted when there is nothing to search — advertising a tool that always
+  /// comes back empty teaches the model to call a useless one — but the clock
+  /// and the calculator are independent of all of that. They used to live
+  /// behind this same check, which meant choosing no embedding model took the
+  /// calculator away with it.
+  BuiltinTools toolsFor() {
+    return BuiltinTools(
+      searchKnowledge:
+          (_retrievalEnabled && hasIndexedDocuments && hasModel)
+          ? (query) => search(query)
+          : null,
+      enabled: toolSettings,
+    );
   }
 
   /// Stop the embedding server now, rather than waiting out its idle timer.

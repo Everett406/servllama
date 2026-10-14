@@ -3,6 +3,7 @@ import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:servllama/features/chat/widgets/streaming_block_splitter.dart';
 import 'package:servllama/features/chat/widgets/streaming_table_placeholder.dart';
 import 'package:servllama/app/app_theme.dart';
+import 'package:servllama/app/design/tokens.dart';
 
 
 /// Answer body.
@@ -14,7 +15,7 @@ import 'package:servllama/app/app_theme.dart';
 /// screen until the reply ended — and the hand-rolled fade was a gradient
 /// over the last line, not a per-character reveal, which is a different
 /// effect entirely.
-class AnswerMarkdown extends StatelessWidget {
+class AnswerMarkdown extends StatefulWidget {
   const AnswerMarkdown({
     super.key,
     required this.content,
@@ -27,28 +28,80 @@ class AnswerMarkdown extends StatelessWidget {
   final bool isStreaming;
 
   @override
+  State<AnswerMarkdown> createState() => _AnswerMarkdownState();
+}
+
+class _AnswerMarkdownState extends State<AnswerMarkdown> {
+  /// How many characters at the front of the reply have been shown as
+  /// settled Markdown.
+  ///
+  /// The whole flicker fix. Judging "is that table finished?" from the text
+  /// alone is not monotone — fed one character at a time the split calls the
+  /// same table open, then closed, then open again, and every flip is a blink
+  /// the reader sees. A reply only grows, so a character count is the one
+  /// thing that cannot go backwards: once the first N characters are on
+  /// screen as final text they stay there.
+  ///
+  /// A block is held back when it starts at or after this point. Anything
+  /// before it is settled by construction.
+  int _settledThrough = 0;
+
+  bool get isStreaming => widget.isStreaming;
+  String get content => widget.content;
+  TextStyle get style => widget.style;
+
+  @override
   Widget build(BuildContext context) {
-    // While the reply is still arriving, a table that has not closed is held
-    // back behind a placeholder. gpt_markdown already keeps a half-row from
-    // forming, so this is not about a broken table — it is that a table grows
-    // row by row while the reader is in the middle of the rows already there,
-    // and each new row reflows the ones above it.
-    if (isStreaming) {
-      final segments = splitStreamingBlocks(content);
-      if (segments.any((segment) => segment.isOpenTable)) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final segment in segments)
-              if (segment.isOpenTable)
-                StreamingTablePlaceholder(segment: segment)
-              else if (segment.markdown!.trim().isNotEmpty)
-                _markdown(context, segment.markdown!),
-          ],
-        );
+    if (!widget.isStreaming) {
+      // A finished reply is the whole document, whatever the stream did.
+      _settledThrough = content.length;
+      return _markdown(context, content);
+    }
+
+    final segments = splitStreamingBlocks(content);
+
+    // Advance, never retreat. A fresh reply — a new message, a regenerated
+    // one — starts from zero; the latch from the previous document must not
+    // carry over, and a shorter document cannot be settled further than it
+    // goes.
+    if (content.length < _settledThrough) _settledThrough = 0;
+
+    var cursor = 0;
+    var firstHeld = -1;
+    for (var index = 0; index < segments.length; index++) {
+      final segment = segments[index];
+      final text = segment.markdown ?? segment.table!;
+      if (segment.isOpenTable || cursor >= _settledThrough) {
+        // Not settled: the splitter says the block is still arriving, or it
+        // starts beyond what has already been committed.
+        if (firstHeld < 0) firstHeld = index;
+        cursor += text.length;
+      } else {
+        cursor += text.length;
       }
     }
-    return _markdown(context, content);
+
+    if (firstHeld < 0) {
+      _settledThrough = content.length;
+      return _markdown(context, content);
+    }
+
+    // Only an open table has something to stand in for. Anything else past the
+    // settled point is ordinary text that has not been reached yet, so it
+    // renders as itself.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < segments.length; index++)
+          if (index >= firstHeld && segments[index].isOpenTable)
+            StreamingTablePlaceholder(segment: segments[index])
+          else
+            _markdown(
+              context,
+              segments[index].markdown ?? segments[index].table!,
+            ),
+      ],
+    );
   }
 
   Widget _markdown(BuildContext context, String source) {
@@ -56,6 +109,14 @@ class AnswerMarkdown extends StatelessWidget {
       source,
       style: style,
       styleSheet: _sheet(context),
+      // On. Without it a reply full of maths renders as the raw `$x^2$`
+      // source, because `$…$` is the spelling a model reaches for first and
+      // the parser only treats it as maths when asked to.
+      //
+      // A price like $5 stays text: the block parser only turns `$…$` into a
+      // formula when the content between the dollars looks like one, and this
+      // is the same rule the upstream package uses.
+      useDollarSignsForLatex: true,
       animation: isStreaming
           ? GptMarkdownAnimation.blurIn
           : GptMarkdownAnimation.none,
@@ -197,8 +258,11 @@ class AnswerMarkdown extends StatelessWidget {
         // 360dp and each gets one glyph per line. Left unset, the package
         // measures each column to its content and lets the table exceed the
         // viewport, which already scrolls horizontally.
-        // No outer frame and no header fill: a boxed table reads as a dialog.
-        borderRadius: Radius.zero,
+        // Rounded, and no header fill. Zero radius left the table as the one
+        // square-edged thing in an app where everything else is a soft card —
+        // and at this corner size the grid's own cells still read as cells,
+        // so the rounding does not cost the structure.
+        borderRadius: const Radius.circular(ClaudeRadius.md),
         cellPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         headerBackground: Colors.transparent,
         headerTextStyle: TextStyle(

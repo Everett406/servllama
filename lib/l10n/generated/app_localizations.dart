@@ -3526,6 +3526,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retrieval'**
   String get knowledgeRetrievalTitle;
+
+  /// No description provided for @toolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get toolsTitle;
+
+  /// No description provided for @toolsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The model can call these before answering. All on by default.'**
+  String get toolsHint;
+
+  /// No description provided for @toolsClock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current time'**
+  String get toolsClock;
+
+  /// No description provided for @toolsClockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The model can ask what time it is.'**
+  String get toolsClockHint;
+
+  /// No description provided for @toolsCalculator.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculator'**
+  String get toolsCalculator;
+
+  /// No description provided for @toolsCalculatorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expressions, with **, Math.sin() and let variables. Not real JavaScript.'**
+  String get toolsCalculatorHint;
+
+  /// No description provided for @toolsKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge search'**
+  String get toolsKnowledge;
+
+  /// No description provided for @toolsKnowledgeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The model can look through your documents first.'**
+  String get toolsKnowledgeHint;
+
+  /// No description provided for @toolsKnowledgeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs an embedding model chosen and some documents imported.'**
+  String get toolsKnowledgeUnavailable;
 }
 
 class _AppLocalizationsDelegate

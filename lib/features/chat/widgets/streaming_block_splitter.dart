@@ -30,7 +30,13 @@ class StreamSegment {
   /// delimiter row. Shown so the placeholder says something better than
   /// "working" — the reader can see it filling up.
   int get openRowCount {
-    final rows = table!.split('\n').where((line) => line.trim().isNotEmpty);
+    final rows = table!
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        // A line that is just the leading `|` of a row that is still arriving
+        // is not a row yet. Counting it would make the placeholder's number
+        // jump around while the reader watches it fill.
+        .where((line) => line.trim() != '|');
     return rows.length < 2 ? 0 : rows.length - 2;
   }
 
@@ -92,8 +98,20 @@ List<StreamSegment> splitStreamingBlocks(String content) {
     return <StreamSegment>[StreamSegment.markdown(content)];
   }
 
-  // Closed if a blank line follows it — the model has moved on.
-  final closed = endsWithNewline && end < lines.length;
+  // Closed if a real blank line follows it — the model has moved on.
+  //
+  // Not merely "the text ends with a newline". `'a\n'.split('\n')` is
+  // `['a', '']`, so the trailing newline always leaves a blank element at
+  // `end` and any table would look closed the instant a row finished
+  // arriving. That is not a finishing line, it is the carriage return on the
+  // way to the next row, and treating it as one made a table blink: closed,
+  // then open again on the next character.
+  //
+  // A blank line the model actually typed leaves its own trailing newline
+  // behind it, so `a\n\n` has an empty element that is not the split's
+  // artefact. Otherwise the blank line must be followed by more content.
+  final closed = end < lines.length && lines[end].trim().isEmpty &&
+      (end + 1 < lines.length || content.endsWith('\n\n'));
   if (closed) {
     return <StreamSegment>[StreamSegment.markdown(content)];
   }

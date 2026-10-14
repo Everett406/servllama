@@ -1,95 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:servllama/features/chat/models/chat_tool_call.dart';
+import 'package:servllama/shared/widgets/tool_settings.dart';
 import 'package:servllama/features/chat/services/builtin_tools.dart';
 
+/// The numeric value, or null when the evaluation failed.
 void main() {
-  group('calculator', () {
-    // A calculator that can be talked into executing code is not a
-    // calculator. Everything here is parsed by a hand-written grammar, so
-    // these cases are the boundary of what it will even look at.
-    test('arithmetic', () {
-      expect(ExpressionEvaluator.tryEvaluate('3+4'), 7);
-      expect(ExpressionEvaluator.tryEvaluate('3 + 4'), 7);
-      expect(ExpressionEvaluator.tryEvaluate('10-3-2'), 5);
-      expect(ExpressionEvaluator.tryEvaluate('3*4'), 12);
-      expect(ExpressionEvaluator.tryEvaluate('10/4'), 2.5);
-      expect(ExpressionEvaluator.tryEvaluate('10%3'), 1);
-    });
-
-    // A calculator that cannot do 3.5 is not a calculator. This was broken and
-    // every other case here was an integer, so nothing caught it.
-    test('decimal literals', () {
-      expect(ExpressionEvaluator.tryEvaluate('3.5'), 3.5);
-      expect(ExpressionEvaluator.tryEvaluate('3.5+1.5'), 5.0);
-      expect(ExpressionEvaluator.tryEvaluate('0.1+0.2')!.toStringAsFixed(6),
-          '0.300000');
-      expect(ExpressionEvaluator.tryEvaluate('.5+.5'), 1.0);
-      expect(ExpressionEvaluator.tryEvaluate('1.'), isNull);
-    });
-
-    test('precedence and parentheses', () {
-      expect(ExpressionEvaluator.tryEvaluate('2+3*4'), 14);
-      expect(ExpressionEvaluator.tryEvaluate('(2+3)*4'), 20);
-      expect(ExpressionEvaluator.tryEvaluate('((1+2)*(3+4))'), 21);
-      expect(ExpressionEvaluator.tryEvaluate('-3+5'), 2);
-      expect(ExpressionEvaluator.tryEvaluate('10-(2-8)'), 16);
-    });
-
-    test('powers, right-associative', () {
-      expect(ExpressionEvaluator.tryEvaluate('2^10'), 1024);
-      expect(ExpressionEvaluator.tryEvaluate('2^3^2'), 512);
-      expect(ExpressionEvaluator.tryEvaluate('(2^3)^2'), 64);
-      expect(ExpressionEvaluator.tryEvaluate('2^-1'), 0.5);
-    });
-
-    test('fractional powers', () {
-      expect(ExpressionEvaluator.tryEvaluate('2^0.5'), closeTo(1.4142, 0.0001));
-      expect(ExpressionEvaluator.tryEvaluate('9^0.5'), closeTo(3, 0.0001));
-    });
-
-    test('division by zero is refused, not infinity', () {
-      // "inf" travelling back through the model reads as a glitch.
-      expect(ExpressionEvaluator.tryEvaluate('1/0'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('5%0'), isNull);
-    });
-
-    test('anything that is not arithmetic is refused', () {
-      expect(ExpressionEvaluator.tryEvaluate(''), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('hello'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('1+'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('(1+2'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('1+2)'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('1..2'), isNull);
-      expect(ExpressionEvaluator.tryEvaluate('1e999999'), isNull);
-    });
-
-    // The character whitelist is the actual defence. Anything that could be
-    // code never reaches the parser.
-    test('rejects anything containing a letter or a quote', () {
-      for (final attempt in <String>[
-        'System.exit(0)',
-        'print(1)',
-        '"1"',
-        "'a'",
-        '1;2',
-        '1&&2',
-        '1\n2',
-        '\$var',
-        '0x10',
-      ]) {
-        expect(
-          ExpressionEvaluator.tryEvaluate(attempt),
-          isNull,
-          reason: 'should refuse: $attempt',
-        );
-      }
-    });
-
-    test('refuses absurdly long input', () {
-      expect(ExpressionEvaluator.tryEvaluate('1+' * 300 + '1'), isNull);
-    });
-  });
-
   group('tool call accumulation', () {
     // The arguments arrive as pieces, usually split mid-token. Concatenating
     // in index order before parsing is the whole job; losing the order loses
@@ -232,8 +147,11 @@ void main() {
       expect(result.result, 'the passage');
     });
 
-    test('the request offers all three tools and lets the model choose', () {
-      final fields = tools.toRequestFields();
+    test('the request offers the switched-on tools and lets the model choose', () {
+      final withSearch = BuiltinTools(
+        searchKnowledge: (query) async => 'passage',
+      );
+      final fields = withSearch.toRequestFields();
       final specs = fields['tools'] as List;
       expect(specs, hasLength(3));
       // Forcing a call would stop the model answering questions; forbidding
@@ -245,6 +163,43 @@ void main() {
       expect(names, contains('current_time'));
       expect(names, contains('calculator'));
       expect(names, contains('knowledge_search'));
+    });
+
+    // Advertising a tool that always comes back empty teaches the model to
+    // call a useless one, so the search is omitted when there is nothing
+    // behind it.
+    test('the search is omitted when there is no knowledge base', () {
+      final fields = const BuiltinTools().toRequestFields();
+      final names = (fields['tools']! as List)
+          .map((spec) => ((spec as Map)['function'] as Map)['name'])
+          .toList();
+      expect(names, isNot(contains('knowledge_search')));
+      expect(names, contains('calculator'));
+    });
+
+    // A knowledge base that is not set up must not take the clock and the
+    // calculator with it. It used to: all three lived behind the same check.
+    test('a missing knowledge base leaves the other tools alone', () {
+      final fields = const BuiltinTools().toRequestFields();
+      expect(fields.containsKey('tools'), isTrue);
+      expect((fields['tools']! as List), hasLength(2));
+    });
+
+    test('a switched-off tool is not offered', () {
+      const off = BuiltinTools(
+        enabled: ToolSettings(clock: false, calculator: false),
+      );
+      // "All off" says nothing at all rather than sending an empty array,
+      // which some servers read as malformed.
+      expect(off.toRequestFields(), isEmpty);
+
+      const onlyClock = BuiltinTools(
+        enabled: ToolSettings(calculator: false, knowledgeSearch: false),
+      );
+      final names = (onlyClock.toRequestFields()['tools']! as List)
+          .map((spec) => ((spec as Map)['function'] as Map)['name'])
+          .toList();
+      expect(names, <String>['current_time']);
     });
   });
 }

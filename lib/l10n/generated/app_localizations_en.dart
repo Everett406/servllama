@@ -1990,4 +1990,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeRetrievalTitle => 'Retrieval';
+
+  @override
+  String get toolsTitle => 'Tools';
+
+  @override
+  String get toolsHint =>
+      'The model can call these before answering. All on by default.';
+
+  @override
+  String get toolsClock => 'Current time';
+
+  @override
+  String get toolsClockHint => 'The model can ask what time it is.';
+
+  @override
+  String get toolsCalculator => 'Calculator';
+
+  @override
+  String get toolsCalculatorHint =>
+      'Expressions, with **, Math.sin() and let variables. Not real JavaScript.';
+
+  @override
+  String get toolsKnowledge => 'Knowledge search';
+
+  @override
+  String get toolsKnowledgeHint =>
+      'The model can look through your documents first.';
+
+  @override
+  String get toolsKnowledgeUnavailable =>
+      'Needs an embedding model chosen and some documents imported.';
 }

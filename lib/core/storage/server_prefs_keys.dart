@@ -41,6 +41,11 @@ class ServerPrefsKeys {
   /// rather than compiled in.
   static const String retrievalSettings = 'kb.retrieval_settings';
 
+  /// Which built-in tools are on. Kept out of the retrieval blob: turning off
+  /// a tool and re-tuning a search are different decisions and should not
+  /// overwrite each other.
+  static const String builtinToolsEnabled = 'chat.builtin_tools_enabled';
+
   /// Whether to spend a request naming a conversation. On by default: without
   /// it every conversation is named by the first line of the user's message,
   /// which is usually a question rather than a topic.

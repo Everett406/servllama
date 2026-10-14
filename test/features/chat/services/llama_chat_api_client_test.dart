@@ -125,14 +125,16 @@ void main() {
           .toList();
 
       final body = server.lastChatRequestBody!;
-      expect(body['tool_choice'], 'auto');
+      // Two, not three: there is no knowledge base in this test, and a tool
+      // that always comes back empty teaches the model to call a useless one.
       final tools = body['tools']! as List;
-      expect(tools, hasLength(3));
-      // Not filtered by a "supports tools" label: the server decides.
+      expect(tools, hasLength(2));
       final names = tools
           .map((spec) => ((spec as Map)['function'] as Map)['name'])
           .toList();
       expect(names, contains('calculator'));
+      expect(names, contains('current_time'));
+      expect(names, isNot(contains('knowledge_search')));
     });
 
     test('sends an assistant tool-call turn and its results back', () async {

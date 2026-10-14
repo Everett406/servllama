@@ -1886,4 +1886,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeRetrievalTitle => '检索';
+
+  @override
+  String get toolsTitle => '工具调用';
+
+  @override
+  String get toolsHint => '模型可以在回答前调用这些工具。所有开关默认开启。';
+
+  @override
+  String get toolsClock => '获取时间';
+
+  @override
+  String get toolsClockHint => '模型可以问现在是几点。';
+
+  @override
+  String get toolsCalculator => '计算器';
+
+  @override
+  String get toolsCalculatorHint =>
+      '可以写表达式，支持 **、Math.sin()、let 变量这些写法。不是真的执行 JS。';
+
+  @override
+  String get toolsKnowledge => '检索知识库';
+
+  @override
+  String get toolsKnowledgeHint => '模型可以先查你的文档再回答。';
+
+  @override
+  String get toolsKnowledgeUnavailable => '需要先选好嵌入模型并导入文档。';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/features/chat/widgets/streaming_block_splitter.dart';
+import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
 
 /// Stands in for a table that is still being written.
@@ -22,6 +23,20 @@ class StreamingTablePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final rows = segment.openRowCount;
+    // Keyed so a test — and a screen reader — can tell one frame of a
+    // held-back table from the next. Without it the placeholder is
+    // indistinguishable from the real table it stands in for.
+    return KeyedSubtree(
+      key: const Key('streaming_table_placeholder'),
+      child: _placeholder(context, l10n, rows),
+    );
+  }
+
+  Widget _placeholder(
+    BuildContext context,
+    AppLocalizations l10n,
+    int rows,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: ClaudeSpacing.sm),
       child: Container(

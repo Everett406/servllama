@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/core/providers/knowledge_base_provider.dart';
+import 'package:servllama/shared/widgets/tool_settings.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
 import 'package:servllama/app/sheet/vela_menu.dart';
 import 'package:servllama/app/sheet/vela_sheet.dart';
@@ -147,6 +148,7 @@ class SettingsPage extends StatelessWidget {
                         onTap: () =>
                             _push(context, const GenerationParamsPage()),
                       ),
+                      _ToolsSection(),
                       SettingsMenuTile(
                         key: const Key('settings_knowledge_base_tile'),
                         icon: ClaudeIcons.chip,
@@ -609,6 +611,78 @@ class _ChatTimeoutSheetState extends State<_ChatTimeoutSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// The three built-in tools, each on its own switch.
+///
+/// They live in settings rather than only in the knowledge page because two
+/// of the three have nothing to do with the knowledge base. They used to sit
+/// behind the knowledge base's "is there anything to search" check, which
+/// meant choosing no embedding model took the calculator away with it.
+class _ToolsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final provider = context.watch<KnowledgeBaseProvider>();
+    final settings = provider.toolSettings;
+    final active = provider.activeTools;
+
+    Widget row(BuiltinTool tool, String title, String hint) {
+      final on = settings.isEnabled(tool);
+      // A switch that is on but cannot fire is the worst kind: it says the
+      // tool is available and then nothing happens. Said outright instead.
+      final unavailable =
+          tool == BuiltinTool.knowledgeSearch &&
+          on &&
+          !active.contains(BuiltinTool.knowledgeSearch);
+      return SwitchSettingTile(
+        key: Key('tool_switch_${tool.wireName}'),
+        title: title,
+        subtitle: unavailable ? l10n.toolsKnowledgeUnavailable : hint,
+        value: on,
+        onChanged: (value) => provider.setToolEnabled(tool, value),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(
+              l10n.toolsTitle,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              l10n.toolsHint,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          row(BuiltinTool.clock, l10n.toolsClock, l10n.toolsClockHint),
+          row(
+            BuiltinTool.calculator,
+            l10n.toolsCalculator,
+            l10n.toolsCalculatorHint,
+          ),
+          row(
+            BuiltinTool.knowledgeSearch,
+            l10n.toolsKnowledge,
+            l10n.toolsKnowledgeHint,
+          ),
+        ],
       ),
     );
   }

@@ -852,5 +852,14 @@
   "knowledgePerChunkChars": "每段字数",
   "knowledgePerChunkCharsHint": "一段内容取多少再截断。",
   "knowledgeAddDocuments": "添加文档",
-  "knowledgeNeedModelFirst": "先选一个嵌入模型。"
+  "knowledgeNeedModelFirst": "先选一个嵌入模型。",
+  "toolsTitle": "工具调用",
+  "toolsHint": "模型可以在回答前调用这些工具。所有开关默认开启。",
+  "toolsClock": "获取时间",
+  "toolsClockHint": "模型可以问现在是几点。",
+  "toolsCalculator": "计算器",
+  "toolsCalculatorHint": "可以写表达式，支持 **、Math.sin()、let 变量这些写法。不是真的执行 JS。",
+  "toolsKnowledge": "检索知识库",
+  "toolsKnowledgeHint": "模型可以先查你的文档再回答。",
+  "toolsKnowledgeUnavailable": "需要先选好嵌入模型并导入文档。"
 }
