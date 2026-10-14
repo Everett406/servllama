@@ -1445,17 +1445,155 @@ abstract class AppLocalizations {
   /// **'Knowledge base'**
   String get knowledgeTitle;
 
-  /// No description provided for @knowledgeRetrievalTitle.
+  /// No description provided for @knowledgeModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedding model'**
+  String get knowledgeModelTitle;
+
+  /// No description provided for @knowledgeModelNoneSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No embedding model chosen. Retrieval cannot work until there is one.'**
+  String get knowledgeModelNoneSelected;
+
+  /// No description provided for @knowledgeModelUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get knowledgeModelUse;
+
+  /// No description provided for @knowledgeModelInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get knowledgeModelInUse;
+
+  /// No description provided for @knowledgeModelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get knowledgeModelDownload;
+
+  /// No description provided for @knowledgeModelUnknownSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Vector width unknown until it is measured against an index.'**
+  String get knowledgeModelUnknownSize;
+
+  /// No description provided for @knowledgeModelMayNotEmbed.
+  ///
+  /// In en, this message translates to:
+  /// **'This file does not look like an embedding model. Pointing a chat GGUF at /v1/embeddings produces errors or zeros, and both read as \"the search found nothing\".'**
+  String get knowledgeModelMayNotEmbed;
+
+  /// No description provided for @knowledgeUseOwnModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my own GGUF'**
+  String get knowledgeUseOwnModel;
+
+  /// No description provided for @knowledgeUseOwnModelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Any GGUF an embedding model was converted to. It is copied into the app so moving the original later cannot break the index.'**
+  String get knowledgeUseOwnModelHint;
+
+  /// No description provided for @knowledgeAllowLookup.
   ///
   /// In en, this message translates to:
   /// **'Let chat look things up'**
-  String get knowledgeRetrievalTitle;
+  String get knowledgeAllowLookup;
 
-  /// No description provided for @knowledgeRetrievalHint.
+  /// No description provided for @knowledgeAllowLookupHint.
   ///
   /// In en, this message translates to:
   /// **'When on, the model can search your documents before answering.'**
-  String get knowledgeRetrievalHint;
+  String get knowledgeAllowLookupHint;
+
+  /// No description provided for @knowledgePresetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How much to retrieve'**
+  String get knowledgePresetTitle;
+
+  /// No description provided for @knowledgePresetPrecise.
+  ///
+  /// In en, this message translates to:
+  /// **'Precise'**
+  String get knowledgePresetPrecise;
+
+  /// No description provided for @knowledgePresetBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get knowledgePresetBalanced;
+
+  /// No description provided for @knowledgePresetExhaustive.
+  ///
+  /// In en, this message translates to:
+  /// **'Exhaustive'**
+  String get knowledgePresetExhaustive;
+
+  /// No description provided for @knowledgeMaxChunks.
+  ///
+  /// In en, this message translates to:
+  /// **'Passages'**
+  String get knowledgeMaxChunks;
+
+  /// No description provided for @knowledgeMaxChunksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How many passages come back at all.'**
+  String get knowledgeMaxChunksHint;
+
+  /// No description provided for @knowledgeMinScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevance floor'**
+  String get knowledgeMinScore;
+
+  /// No description provided for @knowledgeMinScoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Below this a passage is noise. Higher means fewer but safer answers.'**
+  String get knowledgeMinScoreHint;
+
+  /// No description provided for @knowledgeCharBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Total characters'**
+  String get knowledgeCharBudget;
+
+  /// No description provided for @knowledgeCharBudgetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters handed to the model in total. Has to fit the context window.'**
+  String get knowledgeCharBudgetHint;
+
+  /// No description provided for @knowledgePerChunkChars.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters per passage'**
+  String get knowledgePerChunkChars;
+
+  /// No description provided for @knowledgePerChunkCharsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How much of one passage to include before it gets cut.'**
+  String get knowledgePerChunkCharsHint;
+
+  /// No description provided for @knowledgeAddDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Add documents'**
+  String get knowledgeAddDocuments;
+
+  /// No description provided for @knowledgeNeedModelFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an embedding model first.'**
+  String get knowledgeNeedModelFirst;
 
   /// No description provided for @knowledgeModelDecidesTitle.
   ///
@@ -3382,6 +3520,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unpin'**
   String get commonUnpin;
+
+  /// No description provided for @knowledgeRetrievalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrieval'**
+  String get knowledgeRetrievalTitle;
 }
 
 class _AppLocalizationsDelegate

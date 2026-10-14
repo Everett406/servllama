@@ -225,7 +225,12 @@ class KnowledgeIndex {
 
 /// Ranks chunks against a query embedding.
 class KnowledgeRetriever {
-  const KnowledgeRetriever({this.minScore = 0.28, this.maxChunks = 4});
+  const KnowledgeRetriever({
+    this.minScore = 0.28,
+    this.maxChunks = 4,
+    this.charBudget = 2000,
+    this.perChunkChars = 600,
+  });
 
   /// Below this, the passage is noise. Set deliberately high: handing a model
   /// a paragraph that has nothing to do with the question produces a confident
@@ -235,6 +240,12 @@ class KnowledgeRetriever {
   /// How many passages to return. Four is enough to cover a question with
   /// facets and few enough that they fit the prompt without crowding it.
   final int maxChunks;
+
+  /// Total characters across every passage.
+  final int charBudget;
+
+  /// Characters from one passage before it is cut.
+  final int perChunkChars;
 
   /// Rank [chunks] by cosine similarity to [query].
   ///
@@ -268,23 +279,31 @@ class KnowledgeRetriever {
   /// not fit an 8K window, and the ones that get truncated are chosen by
   /// position rather than by relevance. Two thousand characters is roughly a
   /// quarter of that window, leaving room for the question and the answer.
-  String formatForPrompt(
-    List<KnowledgeChunk> chunks, {
-    int charBudget = 2000,
-  }) {
+  String formatForPrompt(List<KnowledgeChunk> chunks) {
     final buffer = StringBuffer();
     var used = 0;
     for (var i = 0; i < chunks.length; i++) {
       final text = chunks[i].text.trim();
       if (text.isEmpty) continue;
-      // Always take at least something for a passage that would otherwise be
-      // entirely over budget: dropping the best match because it was the
-      // longest throws away the answer.
-      final remaining = charBudget - used;
-      final slice = text.length <= remaining ? text : text.substring(0, remaining);
+
+      // Each passage is cut at its own limit first, so one long chunk cannot
+      // eat the whole budget and leave the rest of the list unrepresented.
+      final slice = text.length <= perChunkChars
+          ? text
+          : text.substring(0, perChunkChars);
       if (slice.trim().isEmpty) break;
-      buffer.write('[${i + 1}] $slice\n\n');
-      used += slice.length;
+
+      // ...and then the total is respected. The first passage always gets at
+      // least something: dropping the best match because it was the longest
+      // throws away the answer.
+      final remaining = charBudget - used;
+      final finalSlice = slice.length <= remaining
+          ? slice
+          : slice.substring(0, remaining.clamp(0, slice.length));
+      if (finalSlice.trim().isEmpty) break;
+
+      buffer.write('[${i + 1}] $finalSlice\n\n');
+      used += finalSlice.length;
       if (used >= charBudget) break;
     }
     return buffer.toString().trim();

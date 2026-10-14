@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:servllama/features/knowledge/models/retrieval_settings.dart';
 import 'package:servllama/features/knowledge/services/knowledge_index.dart';
 import 'package:servllama/features/knowledge/services/text_chunker.dart';
 
@@ -24,6 +25,7 @@ class EmbeddingClient {
     String? apiKey,
     CancelToken? cancelToken,
     int batchSize = 8,
+    void Function(int chunksDone)? onBatch,
   }) async {
     if (inputs.isEmpty) return const <List<double>>[];
 
@@ -67,6 +69,7 @@ class EmbeddingClient {
         final vector = byIndex[i];
         if (vector != null) results.add(normalizeEmbedding(vector));
       }
+      onBatch?.call(results.length);
     }
     return results;
   }
@@ -120,9 +123,25 @@ class KnowledgeBaseService {
   final KnowledgeIndex _index;
   final EmbeddingClient _embeddings;
   final TextChunker _chunker;
-  final KnowledgeRetriever _retriever;
+
+  KnowledgeRetriever _retriever;
 
   KnowledgeRetriever get retriever => _retriever;
+
+  /// Swap the retrieval knobs.
+  ///
+  /// The retriever is built from settings rather than passed in, because the
+  /// settings are the user's and can change at any time; a retriever captured
+  /// at construction would keep answering with the values from before.
+  void applySettings(RetrievalSettings settings) {
+    final safe = settings.sanitized();
+    _retriever = KnowledgeRetriever(
+      minScore: safe.minScore,
+      maxChunks: safe.maxChunks,
+      charBudget: safe.charBudget,
+      perChunkChars: safe.perChunkChars,
+    );
+  }
 
   List<KnowledgeDocument> _documents = const <KnowledgeDocument>[];
   bool _loaded = false;
@@ -161,6 +180,7 @@ class KnowledgeBaseService {
     required String baseUrl,
     String? apiKey,
     CancelToken? cancelToken,
+    void Function(String title, int done, int total)? onProgress,
   }) async {
     final now = DateTime.now();
     final id = 'doc_${now.microsecondsSinceEpoch}';
@@ -190,6 +210,9 @@ class KnowledgeBaseService {
         baseUrl: baseUrl,
         apiKey: apiKey,
         cancelToken: cancelToken,
+        onBatch: onProgress == null
+            ? null
+            : (done) => onProgress(title, done, chunks.length),
       );
       if (vectors.length != chunks.length) {
         throw StateError(

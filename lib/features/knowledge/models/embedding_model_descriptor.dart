@@ -107,6 +107,16 @@ class EmbeddingModelDescriptor {
 
   static const defaultModel = bgeSmallZh;
 
+  /// Look a descriptor up by the file it installs as, so a file the user
+  /// already has on disk can be recognised as one of the built-ins rather
+  /// than being filed as an unknown custom model.
+  static EmbeddingModelDescriptor? byFileName(String fileName) {
+    for (final model in all) {
+      if (model.fileName == fileName) return model;
+    }
+    return null;
+  }
+
   static EmbeddingModelDescriptor? byId(String id) {
     for (final model in all) {
       if (model.id == id) return model;

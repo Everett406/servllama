@@ -27,6 +27,20 @@ class ServerPrefsKeys {
   /// is harder to reason about than one document that is either there or not.
   static const String generationParams = 'chat.generation_params';
 
+  /// Which embedding GGUF is in use. Path rather than id alone, because the
+  /// user's own file has no id — the app did not ship it.
+  static const String embeddingModelId = 'kb.embedding_model_id';
+  static const String embeddingModelPath = 'kb.embedding_model_path';
+
+  /// Recorded when known so a mismatch against the stored vectors can be
+  /// caught before the search silently returns nothing.
+  static const String embeddingModelDimensions = 'kb.embedding_model_dimensions';
+
+  /// Retrieval knobs. The defaults are not the only sensible settings — a
+  /// large library and a small one want different ones — so they are stored
+  /// rather than compiled in.
+  static const String retrievalSettings = 'kb.retrieval_settings';
+
   /// Whether to spend a request naming a conversation. On by default: without
   /// it every conversation is named by the first line of the user's message,
   /// which is usually a question rather than a topic.

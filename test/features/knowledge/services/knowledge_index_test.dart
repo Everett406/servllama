@@ -183,20 +183,36 @@ void main() {
     // Four passages of a kilobyte each will not fit an 8K window, and the
     // ones that get cut are chosen by position rather than by relevance.
     test('respects the character budget', () {
+      final small = KnowledgeRetriever(charBudget: 1200, perChunkChars: 600);
       final chunks = <KnowledgeChunk>[
         for (var i = 0; i < 10; i++)
           chunk('a', i, 'x' * 500, <double>[1, 0]),
       ];
-      final text = retriever.formatForPrompt(chunks, charBudget: 1200);
+      final text = small.formatForPrompt(chunks);
       expect(text.length, lessThan(1300));
+    });
+
+    // Each passage is cut at its own limit first, so one long chunk cannot
+    // eat the whole budget and leave the rest of the list unrepresented.
+    test('each passage is cut at its own limit', () {
+      final tuned = KnowledgeRetriever(charBudget: 8000, perChunkChars: 100);
+      final chunks = <KnowledgeChunk>[
+        for (var i = 0; i < 5; i++) chunk('a', i, 'y' * 900, <double>[1, 0]),
+      ];
+      final text = tuned.formatForPrompt(chunks);
+      // Five passages of 100 characters each, not one of 900 and four of
+      // whatever was left.
+      expect('[5]'.contains('[5]'), isTrue);
+      expect(text, contains('[5]'));
+      expect(text.length, lessThan(5 * 120 + 40));
     });
 
     // Dropping the best match because it was the longest throws away the
     // answer. A passage that does not fit still gets truncated, not skipped.
     test('truncates an over-budget passage rather than dropping it', () {
-      final text = retriever.formatForPrompt(
+      final tiny = KnowledgeRetriever(charBudget: 100, perChunkChars: 8000);
+      final text = tiny.formatForPrompt(
         <KnowledgeChunk>[chunk('a', 0, 'y' * 5000, <double>[1, 0])],
-        charBudget: 100,
       );
       expect(text, isNotEmpty);
       expect(text, contains('[1]'));

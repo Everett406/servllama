@@ -761,11 +761,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeTitle => 'Knowledge base';
 
   @override
-  String get knowledgeRetrievalTitle => 'Let chat look things up';
+  String get knowledgeModelTitle => 'Embedding model';
 
   @override
-  String get knowledgeRetrievalHint =>
+  String get knowledgeModelNoneSelected =>
+      'No embedding model chosen. Retrieval cannot work until there is one.';
+
+  @override
+  String get knowledgeModelUse => 'Use';
+
+  @override
+  String get knowledgeModelInUse => 'In use';
+
+  @override
+  String get knowledgeModelDownload => 'Download';
+
+  @override
+  String get knowledgeModelUnknownSize =>
+      'Vector width unknown until it is measured against an index.';
+
+  @override
+  String get knowledgeModelMayNotEmbed =>
+      'This file does not look like an embedding model. Pointing a chat GGUF at /v1/embeddings produces errors or zeros, and both read as \"the search found nothing\".';
+
+  @override
+  String get knowledgeUseOwnModel => 'Use my own GGUF';
+
+  @override
+  String get knowledgeUseOwnModelHint =>
+      'Any GGUF an embedding model was converted to. It is copied into the app so moving the original later cannot break the index.';
+
+  @override
+  String get knowledgeAllowLookup => 'Let chat look things up';
+
+  @override
+  String get knowledgeAllowLookupHint =>
       'When on, the model can search your documents before answering.';
+
+  @override
+  String get knowledgePresetTitle => 'How much to retrieve';
+
+  @override
+  String get knowledgePresetPrecise => 'Precise';
+
+  @override
+  String get knowledgePresetBalanced => 'Balanced';
+
+  @override
+  String get knowledgePresetExhaustive => 'Exhaustive';
+
+  @override
+  String get knowledgeMaxChunks => 'Passages';
+
+  @override
+  String get knowledgeMaxChunksHint => 'How many passages come back at all.';
+
+  @override
+  String get knowledgeMinScore => 'Relevance floor';
+
+  @override
+  String get knowledgeMinScoreHint =>
+      'Below this a passage is noise. Higher means fewer but safer answers.';
+
+  @override
+  String get knowledgeCharBudget => 'Total characters';
+
+  @override
+  String get knowledgeCharBudgetHint =>
+      'Characters handed to the model in total. Has to fit the context window.';
+
+  @override
+  String get knowledgePerChunkChars => 'Characters per passage';
+
+  @override
+  String get knowledgePerChunkCharsHint =>
+      'How much of one passage to include before it gets cut.';
+
+  @override
+  String get knowledgeAddDocuments => 'Add documents';
+
+  @override
+  String get knowledgeNeedModelFirst => 'Choose an embedding model first.';
 
   @override
   String get knowledgeModelDecidesTitle => 'Model decides when to search';
@@ -1911,4 +1987,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonUnpin => 'Unpin';
+
+  @override
+  String get knowledgeRetrievalTitle => 'Retrieval';
 }

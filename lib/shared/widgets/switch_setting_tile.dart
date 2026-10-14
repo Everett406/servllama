@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 
 /// A label + description + switch row. The whole row toggles, which matters
@@ -18,53 +19,53 @@ class SwitchSettingTile extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  /// False greys the row out. The callback is still required so the tile keeps
-  /// one shape; callers pass a no-op.
+  /// False greys the row out and the row stops taking taps.
   final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: enabled ? () => onChanged(!value) : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: ClaudeSpacing.lg,
-            vertical: 12,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (subtitle != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          subtitle!,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelSmall?.copyWith(height: 1.4),
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? () => onChanged(!value) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: ClaudeSpacing.lg,
+              vertical: 12,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                  ],
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: context.inkTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: ClaudeSpacing.md),
-              Switch(
-                value: value,
-                onChanged: enabled ? onChanged : null,
-              ),
-            ],
+                const SizedBox(width: ClaudeSpacing.md),
+                Switch(
+                  value: value,
+                  onChanged: enabled ? onChanged : null,
+                ),
+              ],
+            ),
           ),
         ),
       ),

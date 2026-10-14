@@ -733,10 +733,81 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeTitle => '知识库';
 
   @override
-  String get knowledgeRetrievalTitle => '允许对话检索';
+  String get knowledgeModelTitle => '嵌入模型';
 
   @override
-  String get knowledgeRetrievalHint => '开启后，模型回答前可以先检索你的文档。';
+  String get knowledgeModelNoneSelected => '还没选嵌入模型。没选之前检索跑不起来。';
+
+  @override
+  String get knowledgeModelUse => '使用';
+
+  @override
+  String get knowledgeModelInUse => '使用中';
+
+  @override
+  String get knowledgeModelDownload => '下载';
+
+  @override
+  String get knowledgeModelUnknownSize => '向量宽度未知，要等实际跑一次才知道。';
+
+  @override
+  String get knowledgeModelMayNotEmbed =>
+      '这个文件看起来不是嵌入模型。把聊天 GGUF 指向 /v1/embeddings 会报错或者返回全零，而这两者看起来都像「搜不到」。';
+
+  @override
+  String get knowledgeUseOwnModel => '用我自己的 GGUF';
+
+  @override
+  String get knowledgeUseOwnModelHint =>
+      '任何被转换成 GGUF 的嵌入模型。会被复制进应用，这样之后移动原文件不会把索引搞坏。';
+
+  @override
+  String get knowledgeAllowLookup => '允许对话检索';
+
+  @override
+  String get knowledgeAllowLookupHint => '开启后，模型回答前可以先检索你的文档。';
+
+  @override
+  String get knowledgePresetTitle => '检索多少';
+
+  @override
+  String get knowledgePresetPrecise => '只给准的';
+
+  @override
+  String get knowledgePresetBalanced => '均衡';
+
+  @override
+  String get knowledgePresetExhaustive => '尽量多给';
+
+  @override
+  String get knowledgeMaxChunks => '结果条数';
+
+  @override
+  String get knowledgeMaxChunksHint => '最多返回几段。';
+
+  @override
+  String get knowledgeMinScore => '相关度下限';
+
+  @override
+  String get knowledgeMinScoreHint => '低于这个值的段落算噪声。调高 = 更少但更准。';
+
+  @override
+  String get knowledgeCharBudget => '总字数';
+
+  @override
+  String get knowledgeCharBudgetHint => '一共给模型多少字符。必须塞得进上下文窗口。';
+
+  @override
+  String get knowledgePerChunkChars => '每段字数';
+
+  @override
+  String get knowledgePerChunkCharsHint => '一段内容取多少再截断。';
+
+  @override
+  String get knowledgeAddDocuments => '添加文档';
+
+  @override
+  String get knowledgeNeedModelFirst => '先选一个嵌入模型。';
 
   @override
   String get knowledgeModelDecidesTitle => '由模型决定何时检索';
@@ -1812,4 +1883,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonUnpin => '取消置顶';
+
+  @override
+  String get knowledgeRetrievalTitle => '检索';
 }

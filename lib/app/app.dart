@@ -15,7 +15,6 @@ import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/core/providers/generation_params_provider.dart';
 import 'package:servllama/core/providers/engine_runtime_provider.dart';
 import 'package:servllama/core/providers/model_management_provider.dart';
-import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
 import 'package:servllama/features/chat/services/llama_chat_api_client.dart';
 import 'package:servllama/features/chat/services/session_title_generator.dart';
 import 'package:servllama/features/chat/providers/chat_provider.dart';
@@ -150,10 +149,9 @@ class ServLlamaApp extends StatelessWidget {
               // leaves the other two tools in place. Advertising a search that
               // always comes back empty teaches the model to call a tool that
               // does nothing.
-              builtinTools: context.read<KnowledgeBaseProvider>().toolsFor(
-                context.read<EngineRuntimeProvider>(),
-                EmbeddingModelDescriptor.defaultModel,
-              ),
+              builtinTools: context
+                  .read<KnowledgeBaseProvider>()
+                  .toolsFor(),
             ),
             update:
                 (

@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:servllama/app/app_theme.dart';
@@ -5,15 +6,24 @@ import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
+import 'package:servllama/features/knowledge/models/retrieval_settings.dart';
+import 'package:servllama/features/knowledge/services/embedding_model_store.dart';
 import 'package:servllama/features/knowledge/services/knowledge_index.dart';
+import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
 import 'package:servllama/shared/widgets/switch_setting_tile.dart';
 
-/// The knowledge base: what is in it, and whether chat may look.
+/// The knowledge base: the embedding model, the documents, and how much of
+/// both to use.
 ///
-/// Retrieval is on by default and the model decides when to search. Both
-/// defaults are visible and reversible here, because a feature that silently
-/// reads someone's documents is not one to bury in a submenu.
+/// Three things this page has to make obvious, because each one used to be
+/// invisible and each made the feature look broken:
+///   - **No model is chosen.** Embeddings come from a second llama-server
+///     running an embedding GGUF, and the chat server cannot supply them: in
+///     single-model mode it ignores the `model` field of a request.
+///   - **No documents.** A library with nothing in it searches nothing.
+///   - **How much is retrieved.** Three passages or eight, and a floor of
+///     0.18 or 0.45, is the difference between an answer and a shrug.
 class KnowledgeBasePage extends StatefulWidget {
   const KnowledgeBasePage({super.key});
 
@@ -32,11 +42,45 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
   }
 
   @override
+  void dispose() {
+    // The embedding server has an idle timer, but a page the user just closed
+    // is a stronger signal than a timer.
+    context.read<KnowledgeBaseProvider>().shutdown();
+    super.dispose();
+  }
+
+  Future<void> _pickDocument() async {
+    final provider = context.read<KnowledgeBaseProvider>();
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: true,
+    );
+    if (picked == null) return;
+
+    for (final platformFile in picked.files) {
+      final path = platformFile.path;
+      if (path == null) continue;
+      await provider.importFile(path: path);
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickModelFile() async {
+    final provider = context.read<KnowledgeBaseProvider>();
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+    );
+    final path = picked?.files.single.path;
+    if (path == null) return;
+    await provider.adoptModelFile(path);
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final provider = context.watch<KnowledgeBaseProvider>();
     final documents = provider.documents;
-    const model = EmbeddingModelDescriptor.defaultModel;
 
     return Scaffold(
       backgroundColor: context.canvas,
@@ -63,62 +107,15 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
             ClaudeSpacing.xl,
           ),
           children: [
-            SwitchSettingTile(
-              key: const Key('knowledge_retrieval_switch'),
-              title: l10n.knowledgeRetrievalTitle,
-              subtitle: l10n.knowledgeRetrievalHint,
-              value: provider.retrievalEnabled,
-              onChanged: (value) => provider.setRetrievalEnabled(value),
-            ),
-            SwitchSettingTile(
-              key: const Key('knowledge_model_decides_switch'),
-              title: l10n.knowledgeModelDecidesTitle,
-              subtitle: l10n.knowledgeModelDecidesHint,
-              value: provider.modelDecides,
-              // The switch is disabled with an empty library: there is
-              // nothing for either setting to decide.
-              onChanged: provider.hasIndexedDocuments
-                  ? (value) => provider.setModelDecides(value)
-                  : (_) {},
-            ),
-            const SizedBox(height: ClaudeSpacing.sm),
-            _EmbeddingNote(model: model, provider: provider),
+            _ModelSection(provider: provider, onPickFile: _pickModelFile),
             const SizedBox(height: ClaudeSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.knowledgeDocumentsTitle,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (provider.isBusy)
-                  const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-              ],
+            _RetrievalSection(provider: provider),
+            const SizedBox(height: ClaudeSpacing.lg),
+            _DocumentsSection(
+              provider: provider,
+              documents: documents,
+              onPick: _pickDocument,
             ),
-            const SizedBox(height: ClaudeSpacing.sm),
-            if (documents.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: ClaudeSpacing.lg),
-                child: Text(
-                  l10n.knowledgeEmpty,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context.inkTertiary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-            for (final document in documents)
-              _DocumentTile(
-                document: document,
-                onRemove: () => provider.remove(document.id),
-              ),
             if (provider.lastError != null)
               Padding(
                 padding: const EdgeInsets.only(top: ClaudeSpacing.md),
@@ -136,67 +133,463 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
   }
 }
 
-class _EmbeddingNote extends StatelessWidget {
-  const _EmbeddingNote({required this.model, required this.provider});
+// ---- embedding model ----------------------------------------------------
 
-  final EmbeddingModelDescriptor model;
+class _ModelSection extends StatelessWidget {
+  const _ModelSection({required this.provider, required this.onPickFile});
+
+  final KnowledgeBaseProvider provider;
+  final VoidCallback onPickFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final selected = provider.selectedModel;
+
+    return _Card(
+      title: l10n.knowledgeModelTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (selected == null)
+            Text(
+              l10n.knowledgeModelNoneSelected,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.accent),
+            )
+          else
+            _SelectedModelRow(model: selected, provider: provider),
+          const SizedBox(height: ClaudeSpacing.sm),
+          for (final descriptor in EmbeddingModelDescriptor.all)
+            _BuiltInModelRow(
+              descriptor: descriptor,
+              provider: provider,
+              onPickFile: onPickFile,
+            ),
+          const SizedBox(height: ClaudeSpacing.xs),
+          OutlinedButton.icon(
+            key: const Key('knowledge_use_own_model_button'),
+            onPressed: provider.isBusy ? null : onPickFile,
+            icon: ClaudeIcon(ClaudeIcons.chip, size: 16),
+            label: Text(l10n.knowledgeUseOwnModel),
+          ),
+          Text(
+            l10n.knowledgeUseOwnModelHint,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedModelRow extends StatelessWidget {
+  const _SelectedModelRow({required this.model, required this.provider});
+
+  final InstalledEmbeddingModel model;
   final KnowledgeBaseProvider provider;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final needsRebuild = provider.needsRebuild(model);
-
-    return Container(
-      padding: const EdgeInsets.all(ClaudeSpacing.md),
-      decoration: BoxDecoration(
-        color: context.surface,
-        borderRadius: BorderRadius.circular(ClaudeRadius.sm),
-        border: Border.all(color: context.border),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ClaudeSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              ClaudeIcon(ClaudeIcons.chip, size: 15),
+              ClaudeIcon(ClaudeIcons.star, size: 14, color: context.accent),
               const SizedBox(width: ClaudeSpacing.sm),
               Expanded(
                 child: Text(
                   model.name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+              ),
+              TextButton(
+                key: const Key('knowledge_clear_model_button'),
+                onPressed: () => provider.selectModel(model).then((_) {}),
+                child: Text(l10n.commonClear),
               ),
             ],
           ),
-          const SizedBox(height: 4),
           Text(
-            l10n.knowledgeEmbeddingNote(model.dimensions, model.maxTokens),
+            model.dimensions == null
+                // Unknown width, said out loud: guessing it is exactly how an
+                // index becomes silently unsearchable.
+                ? l10n.knowledgeModelUnknownSize
+                : l10n.knowledgeEmbeddingNote(model.dimensions!, model.maxTokens),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
           ),
-          // Vectors from two models are not comparable, so a model change is
-          // not a preference — it invalidates the index.
-          if (needsRebuild) ...[
-            const SizedBox(height: ClaudeSpacing.sm),
-            Text(
-              l10n.knowledgeRebuildRequired,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: context.accent),
+          // The one combination that is definitely wrong, called out rather
+          // than left for the user to discover through a search that never
+          // finds anything.
+          if (!model.looksLikeEmbeddingModel)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                l10n.knowledgeModelMayNotEmbed,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: context.accent),
+              ),
             ),
-            const SizedBox(height: ClaudeSpacing.xs),
+          if (provider.needsRebuild)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                l10n.knowledgeRebuildRequired,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: context.accent),
+              ),
+            ),
+          if (provider.needsRebuild)
             OutlinedButton(
               key: const Key('knowledge_rebuild_button'),
-              onPressed: provider.isBusy
-                  ? null
-                  : () => provider.rebuild(model),
+              onPressed: provider.isBusy ? null : provider.rebuild,
               child: Text(l10n.knowledgeRebuild),
             ),
-          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BuiltInModelRow extends StatelessWidget {
+  const _BuiltInModelRow({
+    required this.descriptor,
+    required this.provider,
+    required this.onPickFile,
+  });
+
+  final EmbeddingModelDescriptor descriptor;
+  final KnowledgeBaseProvider provider;
+  final VoidCallback onPickFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final installed = provider.models
+        .where((model) => model.id == descriptor.id)
+        .firstOrNull;
+    final isSelected = provider.selectedModel?.id == descriptor.id;
+    final progress = provider.downloadProgress;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ClaudeSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      descriptor.name,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      '${descriptor.dimensions} 维 · '
+                      '${(descriptor.approxBytes / 1024 / 1024).round()} MB',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.inkTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Text(
+                  l10n.knowledgeModelInUse,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: context.accent),
+                )
+              else if (installed != null)
+                TextButton(
+                  key: Key('knowledge_select_${descriptor.id}'),
+                  onPressed: () => provider.selectModel(installed),
+                  child: Text(l10n.knowledgeModelUse),
+                )
+              else
+                TextButton(
+                  key: Key('knowledge_download_${descriptor.id}'),
+                  onPressed: provider.isBusy
+                      ? null
+                      : () => provider.downloadModel(descriptor),
+                  child: Text(l10n.knowledgeModelDownload),
+                ),
+              if (installed != null)
+                IconButton(
+                  tooltip: l10n.commonDelete,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => provider.deleteModel(installed),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                ),
+            ],
+          ),
+          if (progress != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: LinearProgressIndicator(value: progress),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---- retrieval ----------------------------------------------------------
+
+class _RetrievalSection extends StatelessWidget {
+  const _RetrievalSection({required this.provider});
+
+  final KnowledgeBaseProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final settings = provider.settings;
+
+    return _Card(
+      title: l10n.knowledgeRetrievalTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchSettingTile(
+            key: const Key('knowledge_retrieval_switch'),
+            title: l10n.knowledgeAllowLookup,
+            subtitle: l10n.knowledgeAllowLookupHint,
+            value: provider.retrievalEnabled,
+            enabled: provider.hasModel,
+            onChanged: (value) => provider.setRetrievalEnabled(value),
+          ),
+          const Divider(height: ClaudeSpacing.lg),
+          SwitchSettingTile(
+            key: const Key('knowledge_model_decides_switch'),
+            title: l10n.knowledgeModelDecidesTitle,
+            subtitle: l10n.knowledgeModelDecidesHint,
+            value: provider.modelDecides,
+            enabled: provider.hasIndexedDocuments,
+            onChanged: (value) => provider.setModelDecides(value),
+          ),
+          const Divider(height: ClaudeSpacing.lg),
+          Text(
+            l10n.knowledgePresetTitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: ClaudeSpacing.xs),
+          Wrap(
+            spacing: ClaudeSpacing.xs,
+            children: [
+              for (final preset in RetrievalPreset.values)
+                ChoiceChip(
+                  key: Key('knowledge_preset_${preset.name}'),
+                  label: Text(_presetLabel(l10n, preset)),
+                  selected: settings.effectivePreset == preset,
+                  onSelected: (_) => provider.applyPreset(preset),
+                ),
+            ],
+          ),
+          const SizedBox(height: ClaudeSpacing.md),
+          _SliderRow(
+            label: l10n.knowledgeMaxChunks,
+            hint: l10n.knowledgeMaxChunksHint,
+            value: settings.maxChunks.toDouble(),
+            min: 1,
+            max: 16,
+            divisions: 15,
+            format: (value) => value.round().toString(),
+            onChanged: (value) => provider.updateSettings(
+              settings.copyWith(maxChunks: value.round()),
+            ),
+          ),
+          _SliderRow(
+            label: l10n.knowledgeMinScore,
+            hint: l10n.knowledgeMinScoreHint,
+            value: settings.minScore,
+            min: 0.05,
+            max: 0.8,
+            divisions: 15,
+            format: (value) => value.toStringAsFixed(2),
+            onChanged: (value) =>
+                provider.updateSettings(settings.copyWith(minScore: value)),
+          ),
+          _SliderRow(
+            label: l10n.knowledgeCharBudget,
+            hint: l10n.knowledgeCharBudgetHint,
+            value: settings.charBudget.toDouble(),
+            min: 200,
+            max: 4000,
+            divisions: 19,
+            format: (value) => value.round().toString(),
+            onChanged: (value) => provider.updateSettings(
+              settings.copyWith(charBudget: value.round()),
+            ),
+          ),
+          _SliderRow(
+            label: l10n.knowledgePerChunkChars,
+            hint: l10n.knowledgePerChunkCharsHint,
+            value: settings.perChunkChars.toDouble(),
+            min: 100,
+            max: 1200,
+            divisions: 11,
+            format: (value) => value.round().toString(),
+            onChanged: (value) => provider.updateSettings(
+              settings.copyWith(perChunkChars: value.round()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _presetLabel(AppLocalizations l10n, RetrievalPreset preset) =>
+    switch (preset) {
+      RetrievalPreset.precise => l10n.knowledgePresetPrecise,
+      RetrievalPreset.balanced => l10n.knowledgePresetBalanced,
+      RetrievalPreset.exhaustive => l10n.knowledgePresetExhaustive,
+    };
+
+class _SliderRow extends StatelessWidget {
+  const _SliderRow({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.format,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String hint;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String Function(double) format;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    // The value is shown next to the label rather than in a bubble: a bubble
+    // anchored to a slider on a narrow screen is its own overflow problem,
+    // and the number is two inches from where the thumb is anyway.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ClaudeSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+              ),
+              Text(
+                format(value),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.accent,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            key: Key('knowledge_slider_$label'),
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            divisions: divisions,
+                        onChanged: onChanged,
+          ),
+          Text(
+            hint,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---- documents ----------------------------------------------------------
+
+class _DocumentsSection extends StatelessWidget {
+  const _DocumentsSection({
+    required this.provider,
+    required this.documents,
+    required this.onPick,
+  });
+
+  final KnowledgeBaseProvider provider;
+  final List<KnowledgeDocument> documents;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _Card(
+      title: l10n.knowledgeDocumentsTitle,
+      trailing: provider.isBusy
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FilledButton.icon(
+            key: const Key('knowledge_add_documents_button'),
+            onPressed: provider.isBusy || !provider.hasModel ? null : onPick,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: Text(l10n.knowledgeAddDocuments),
+          ),
+          if (!provider.hasModel)
+            Padding(
+              padding: const EdgeInsets.only(top: ClaudeSpacing.xs),
+              child: Text(
+                l10n.knowledgeNeedModelFirst,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
+              ),
+            ),
+          const SizedBox(height: ClaudeSpacing.md),
+          if (documents.isEmpty)
+            Text(
+              l10n.knowledgeEmpty,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(
+                color: context.inkTertiary,
+                height: 1.6,
+              ),
+            ),
+          for (final document in documents)
+            _DocumentTile(
+              document: document,
+              onRemove: () => provider.remove(document.id),
+            ),
         ],
       ),
     );
@@ -246,6 +639,51 @@ class _DocumentTile extends StatelessWidget {
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline_rounded, size: 18),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A titled group. One frame, consistent radius, no nesting.
+class _Card extends StatelessWidget {
+  const _Card({
+    required this.title,
+    required this.child,
+    this.trailing,
+  });
+
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(ClaudeSpacing.md),
+      decoration: BoxDecoration(
+        color: context.surface,
+        borderRadius: BorderRadius.circular(ClaudeRadius.lg),
+        border: Border.all(color: context.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
+          ),
+          const SizedBox(height: ClaudeSpacing.sm),
+          child,
         ],
       ),
     );
