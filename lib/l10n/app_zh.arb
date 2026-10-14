@@ -861,5 +861,27 @@
   "toolsCalculatorHint": "可以写表达式，支持 **、Math.sin()、let 变量这些写法。不是真的执行 JS。",
   "toolsKnowledge": "检索知识库",
   "toolsKnowledgeHint": "模型可以先查你的文档再回答。",
-  "toolsKnowledgeUnavailable": "需要先选好嵌入模型并导入文档。"
+  "toolsKnowledgeUnavailable": "需要先选好嵌入模型并导入文档。",
+  "knowledgeDocumentsAction": "管理",
+  "knowledgeDocumentsEmpty": "还没有文档",
+  "knowledgeDocumentsEmptyHint": "导入 md 或 txt。进来之前，先选好嵌入模型并完成索引。",
+  "knowledgeImportDocuments": "导入文档",
+  "knowledgeDeleteDocument": "删除",
+  "knowledgeDocumentNotIndexed": "未索引",
+  "knowledgeDocumentChunks": "{count} 段",
+  "knowledgeDocumentsCount": "{count} 份文档",
+  "@knowledgeDocumentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@knowledgeDocumentChunks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

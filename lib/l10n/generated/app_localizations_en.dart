@@ -2021,4 +2021,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get toolsKnowledgeUnavailable =>
       'Needs an embedding model chosen and some documents imported.';
+
+  @override
+  String get knowledgeDocumentsAction => 'Manage';
+
+  @override
+  String get knowledgeDocumentsEmpty => 'No documents yet';
+
+  @override
+  String get knowledgeDocumentsEmptyHint =>
+      'Import an md or txt. Choose an embedding model and index first.';
+
+  @override
+  String get knowledgeImportDocuments => 'Import documents';
+
+  @override
+  String get knowledgeDeleteDocument => 'Delete';
+
+  @override
+  String get knowledgeDocumentNotIndexed => 'Not indexed';
+
+  @override
+  String knowledgeDocumentChunks(int count) {
+    return '$count chunks';
+  }
+
+  @override
+  String knowledgeDocumentsCount(int count) {
+    return '$count documents';
+  }
 }

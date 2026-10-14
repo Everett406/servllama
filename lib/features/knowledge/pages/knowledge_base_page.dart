@@ -8,9 +8,11 @@ import 'package:servllama/core/providers/knowledge_base_provider.dart';
 import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
 import 'package:servllama/features/knowledge/models/retrieval_settings.dart';
 import 'package:servllama/features/knowledge/services/embedding_model_store.dart';
+import 'package:servllama/features/knowledge/pages/knowledge_documents_page.dart';
 import 'package:servllama/features/knowledge/services/knowledge_index.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
+import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/switch_setting_tile.dart';
 
 /// The knowledge base: the embedding model, the documents, and how much of
@@ -43,8 +45,8 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
 
   @override
   void dispose() {
-    // The embedding server has an idle timer, but a page the user just closed
-    // is a stronger signal than a timer.
+    // The embedding server has an idle timer, but the last page this feature
+    // owns being closed is a stronger signal than a timer.
     context.read<KnowledgeBaseProvider>().shutdown();
     super.dispose();
   }
@@ -111,10 +113,15 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
             const SizedBox(height: ClaudeSpacing.lg),
             _RetrievalSection(provider: provider),
             const SizedBox(height: ClaudeSpacing.lg),
-            _DocumentsSection(
+            _DocumentsEntry(
               provider: provider,
               documents: documents,
               onPick: _pickDocument,
+              onOpen: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const KnowledgeDocumentsPage(),
+                ),
+              ),
             ),
             if (provider.lastError != null)
               Padding(
@@ -530,132 +537,73 @@ class _SliderRow extends StatelessWidget {
   }
 }
 
-// ---- documents ----------------------------------------------------------
-
-class _DocumentsSection extends StatelessWidget {
-  const _DocumentsSection({
+/// A row into the document list, not the list itself.
+///
+/// A library of fifty files is not a settings screen. It used to be one: the
+/// documents lived inline under the model picker and the sliders, so the
+/// page grew without limit and every scroll started at the configuration you
+/// came to change.
+class _DocumentsEntry extends StatelessWidget {
+  const _DocumentsEntry({
     required this.provider,
     required this.documents,
     required this.onPick,
+    required this.onOpen,
   });
 
   final KnowledgeBaseProvider provider;
   final List<KnowledgeDocument> documents;
   final VoidCallback onPick;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return _Card(
       title: l10n.knowledgeDocumentsTitle,
-      trailing: provider.isBusy
-          ? const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FilledButton.icon(
-            key: const Key('knowledge_add_documents_button'),
-            onPressed: provider.isBusy || !provider.hasModel ? null : onPick,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: Text(l10n.knowledgeAddDocuments),
+          SettingsMenuTile(
+            key: const Key('knowledge_open_documents'),
+            icon: ClaudeIcons.fileText,
+            title: documents.isEmpty
+                ? l10n.knowledgeDocumentsEmpty
+                : l10n.knowledgeDocumentsCount(documents.length),
+            value: l10n.knowledgeDocumentsAction,
+            onTap: onOpen,
           ),
-          if (!provider.hasModel)
+          if (provider.lastError != null)
             Padding(
-              padding: const EdgeInsets.only(top: ClaudeSpacing.xs),
+              padding: const EdgeInsets.only(top: ClaudeSpacing.sm),
               child: Text(
-                l10n.knowledgeNeedModelFirst,
+                provider.lastError!,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
+                ).textTheme.bodySmall?.copyWith(color: context.accent),
               ),
             ),
-          const SizedBox(height: ClaudeSpacing.md),
-          if (documents.isEmpty)
-            Text(
-              l10n.knowledgeEmpty,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(
-                color: context.inkTertiary,
-                height: 1.6,
-              ),
-            ),
-          for (final document in documents)
-            _DocumentTile(
-              document: document,
-              onRemove: () => provider.remove(document.id),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentTile extends StatelessWidget {
-  const _DocumentTile({required this.document, required this.onRemove});
-
-  final KnowledgeDocument document;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: ClaudeSpacing.sm),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  document.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  document.error != null
-                      ? l10n.knowledgeDocumentFailed
-                      : l10n.knowledgeDocumentIndexed(document.chunkCount),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: document.error != null
-                        ? context.accent
-                        : context.inkTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            key: Key('knowledge_remove_${document.id}'),
-            tooltip: l10n.commonDelete,
-            visualDensity: VisualDensity.compact,
-            onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
+          const SizedBox(height: ClaudeSpacing.sm),
+          FilledButton.tonalIcon(
+            key: const Key('knowledge_import_documents'),
+            onPressed: onPick,
+            icon: const Icon(Icons.add_rounded, size: 19),
+            label: Text(l10n.knowledgeImportDocuments),
           ),
         ],
       ),
     );
   }
 }
+
+// ---- documents ----------------------------------------------------------
 
 /// A titled group. One frame, consistent radius, no nesting.
 class _Card extends StatelessWidget {
-  const _Card({
-    required this.title,
-    required this.child,
-    this.trailing,
-  });
+  const _Card({required this.title, required this.child});
 
   final String title;
   final Widget child;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -679,7 +627,6 @@ class _Card extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: ClaudeSpacing.sm),

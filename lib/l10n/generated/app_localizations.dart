@@ -3580,6 +3580,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Needs an embedding model chosen and some documents imported.'**
   String get toolsKnowledgeUnavailable;
+
+  /// No description provided for @knowledgeDocumentsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get knowledgeDocumentsAction;
+
+  /// No description provided for @knowledgeDocumentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents yet'**
+  String get knowledgeDocumentsEmpty;
+
+  /// No description provided for @knowledgeDocumentsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Import an md or txt. Choose an embedding model and index first.'**
+  String get knowledgeDocumentsEmptyHint;
+
+  /// No description provided for @knowledgeImportDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Import documents'**
+  String get knowledgeImportDocuments;
+
+  /// No description provided for @knowledgeDeleteDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get knowledgeDeleteDocument;
+
+  /// No description provided for @knowledgeDocumentNotIndexed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not indexed'**
+  String get knowledgeDocumentNotIndexed;
+
+  /// No description provided for @knowledgeDocumentChunks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} chunks'**
+  String knowledgeDocumentChunks(int count);
+
+  /// No description provided for @knowledgeDocumentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} documents'**
+  String knowledgeDocumentsCount(int count);
 }
 
 class _AppLocalizationsDelegate

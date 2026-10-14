@@ -7,12 +7,19 @@ import 'package:servllama/app/design/tokens.dart';
 class SwitchSettingTile extends StatelessWidget {
   const SwitchSettingTile({
     super.key,
+    this.icon,
     required this.title,
     this.subtitle,
     required this.value,
     required this.onChanged,
     this.enabled = true,
   });
+
+  /// Optional, and the point of making it so: a switch row sitting beside a
+  /// menu row used to have no icon and bolder text, so the same column looked
+  /// like two designs. Pass the same icon the neighbour uses and the rows
+  /// line up.
+  final IconData? icon;
 
   final String title;
   final String? subtitle;
@@ -37,14 +44,21 @@ class SwitchSettingTile extends StatelessWidget {
             ),
             child: Row(
               children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: context.inkSecondary),
+                  const SizedBox(width: ClaudeSpacing.md),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
+                        // w500, matching SettingsMenuTile. w600 here made
+                        // every switch in the same list look bolder than the
+                        // menu rows above and below it.
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       if (subtitle != null) ...[

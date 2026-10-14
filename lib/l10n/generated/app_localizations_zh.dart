@@ -1914,4 +1914,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toolsKnowledgeUnavailable => '需要先选好嵌入模型并导入文档。';
+
+  @override
+  String get knowledgeDocumentsAction => '管理';
+
+  @override
+  String get knowledgeDocumentsEmpty => '还没有文档';
+
+  @override
+  String get knowledgeDocumentsEmptyHint => '导入 md 或 txt。进来之前，先选好嵌入模型并完成索引。';
+
+  @override
+  String get knowledgeImportDocuments => '导入文档';
+
+  @override
+  String get knowledgeDeleteDocument => '删除';
+
+  @override
+  String get knowledgeDocumentNotIndexed => '未索引';
+
+  @override
+  String knowledgeDocumentChunks(int count) {
+    return '$count 段';
+  }
+
+  @override
+  String knowledgeDocumentsCount(int count) {
+    return '$count 份文档';
+  }
 }

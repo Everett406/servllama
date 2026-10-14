@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:servllama/core/models/model_descriptor.dart';
+import 'package:servllama/core/repositories/local_model_repository.dart';
 import 'package:servllama/core/storage/kv_storage.dart';
 import 'package:servllama/core/storage/server_prefs_keys.dart';
 import 'package:servllama/features/downloads/models/download_task.dart';
@@ -62,10 +64,28 @@ class EmbeddingModelStore {
   EmbeddingModelStore({
     ModelDownloadService? downloader,
     KvStorage? kvStorage,
+    LocalModelRepository? modelLibrary,
+    Future<List<ModelDescriptor>> Function()? listLibraryModels,
+    Future<Directory> Function()? embeddingDirectory,
   }) : _downloader = downloader ?? ModelDownloadService(),
-       _kvStorage = kvStorage ?? KvStorage.instance;
+       _embeddingDirectory = embeddingDirectory,
+       _kvStorage = kvStorage ?? KvStorage.instance,
+       _modelLibrary = modelLibrary ?? LocalModelRepository(),
+       _listLibraryModels = listLibraryModels;
 
   final ModelDownloadService _downloader;
+  final LocalModelRepository _modelLibrary;
+
+  /// Reads the chat model library.
+  ///
+  /// A function rather than a hard call so the one case that matters here —
+  /// the library being unreadable — can be exercised instead of assumed.
+  final Future<List<ModelDescriptor>> Function()? _listLibraryModels;
+
+  /// Where this tool's own downloads land. Injectable for the same reason as
+  /// [listLibraryModels]: the unit under test is which files get offered, not
+  /// where the platform says to put them.
+  final Future<Directory> Function()? _embeddingDirectory;
   final KvStorage _kvStorage;
 
   String? _selectedId;
@@ -85,6 +105,8 @@ class EmbeddingModelStore {
   /// the model list is not cluttered with a 26 MB BERT the chat server can
   /// never load.
   Future<Directory> modelsDirectory() async {
+    final override = _embeddingDirectory;
+    if (override != null) return override();
     final base = await getApplicationSupportDirectory();
     final directory = Directory(
       '${base.path}/kb/models',
@@ -130,35 +152,86 @@ class EmbeddingModelStore {
   /// What is on disk right now: the built-ins the user downloaded, plus any
   /// GGUF they pointed at.
   Future<List<InstalledEmbeddingModel>> installed() async {
-    final directory = await modelsDirectory();
-    if (!await directory.exists()) return const <InstalledEmbeddingModel>[];
     final models = <InstalledEmbeddingModel>[];
-    await for (final entity in directory.list()) {
-      if (entity is! File) continue;
-      final name = entity.path.split('/').last;
-      if (!name.toLowerCase().endsWith('.gguf')) continue;
-      final builtIn = EmbeddingModelDescriptor.byFileName(name);
-      final size = await entity.length();
-      models.add(
-        InstalledEmbeddingModel(
-          id: builtIn?.id ?? 'custom:${size}_${name.hashCode}',
-          name: builtIn?.name ?? name,
-          path: entity.path,
-          sizeBytes: size,
-          // A built-in keeps its declared width. A user's file has none, and
-          // inventing one is exactly the guess that makes an index silently
-          // unsearchable.
-          dimensions: builtIn?.dimensions,
-          maxTokens: builtIn?.maxTokens ?? 512,
-          custom: builtIn == null,
-        ),
-      );
+
+    // The chat model library first, because that is where the file usually
+    // already is. Anything downloaded or imported there shows up as a
+    // candidate immediately — no second download, no hunting through the
+    // system file picker for a file the app is already holding.
+    models.addAll(await _fromModelLibrary());
+
+    // Then this tool's own directory, for the built-ins it downloads itself.
+    final directory = await modelsDirectory();
+    if (await directory.exists()) {
+      final seen = models.map((model) => model.path).toSet();
+      await for (final entity in directory.list()) {
+        if (entity is! File) continue;
+        final name = entity.path.split('/').last;
+        if (!name.toLowerCase().endsWith('.gguf')) continue;
+        if (seen.contains(entity.path)) continue;
+        models.add(await _describe(name, entity.path, copied: false));
+      }
     }
+
     models.sort((a, b) {
       if (a.custom != b.custom) return a.custom ? 1 : -1;
       return a.sizeBytes.compareTo(b.sizeBytes);
     });
     return models;
+  }
+
+  /// Every GGUF in the chat model library that could plausibly embed.
+  ///
+  /// Offered without copying. The chat library owns its files and deletes
+  /// them when a model is removed, so the knowledge base borrows a path and
+  /// reports a missing file as a missing file — it does not quietly hold a
+  /// second copy the user cannot see.
+  ///
+  /// The name filter is a hint, not a gate: an embedding GGUF is not required
+  /// to have "embed" in its filename. Everything is listed and marked, so a
+  /// file that does not look like an embedding can still be tried rather than
+  /// being invisible.
+  Future<List<InstalledEmbeddingModel>> _fromModelLibrary() async {
+    final models = <InstalledEmbeddingModel>[];
+    final List<ModelDescriptor> library;
+    try {
+      library = await (_listLibraryModels?.call() ??
+          _modelLibrary.listModels());
+    } catch (error) {
+      // A broken library is not a reason to hide the built-in downloads.
+      debugPrint('EmbeddingModelStore: model library unavailable: $error');
+      return models;
+    }
+    for (final descriptor in library) {
+      final path = descriptor.storedFilePath;
+      if (!path.toLowerCase().endsWith('.gguf')) continue;
+      final file = File(path);
+      if (!await file.exists()) continue;
+      models.add(await _describe(descriptor.label, path, copied: false));
+    }
+    return models;
+  }
+
+  Future<InstalledEmbeddingModel> _describe(
+    String name,
+    String path, {
+    required bool copied,
+  }) async {
+    final fileName = path.split('/').last;
+    final builtIn = EmbeddingModelDescriptor.byFileName(fileName);
+    final size = await File(path).length();
+    return InstalledEmbeddingModel(
+      id: builtIn?.id ?? 'gguf:${path.hashCode}',
+      name: builtIn?.name ?? name,
+      path: path,
+      sizeBytes: size,
+      // A built-in keeps its declared width. Everything else has none, and
+      // inventing one is exactly the guess that makes an index silently
+      // unsearchable.
+      dimensions: builtIn?.dimensions,
+      maxTokens: builtIn?.maxTokens ?? 512,
+      custom: builtIn == null,
+    );
   }
 
   /// Download one of the built-in descriptors.

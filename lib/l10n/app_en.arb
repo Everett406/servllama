@@ -1087,5 +1087,27 @@
   "toolsCalculatorHint": "Expressions, with **, Math.sin() and let variables. Not real JavaScript.",
   "toolsKnowledge": "Knowledge search",
   "toolsKnowledgeHint": "The model can look through your documents first.",
-  "toolsKnowledgeUnavailable": "Needs an embedding model chosen and some documents imported."
+  "toolsKnowledgeUnavailable": "Needs an embedding model chosen and some documents imported.",
+  "knowledgeDocumentsAction": "Manage",
+  "knowledgeDocumentsEmpty": "No documents yet",
+  "knowledgeDocumentsEmptyHint": "Import an md or txt. Choose an embedding model and index first.",
+  "knowledgeImportDocuments": "Import documents",
+  "knowledgeDeleteDocument": "Delete",
+  "knowledgeDocumentNotIndexed": "Not indexed",
+  "knowledgeDocumentChunks": "{count} chunks",
+  "knowledgeDocumentsCount": "{count} documents",
+  "@knowledgeDocumentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@knowledgeDocumentChunks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

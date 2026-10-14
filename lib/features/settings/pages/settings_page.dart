@@ -91,7 +91,7 @@ class SettingsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: ClaudeSpacing.lg),
                 SettingsSection(
                   title: l10n.settingsSectionChat,
                   child: SettingsTileList(
@@ -148,7 +148,6 @@ class SettingsPage extends StatelessWidget {
                         onTap: () =>
                             _push(context, const GenerationParamsPage()),
                       ),
-                      _ToolsSection(),
                       SettingsMenuTile(
                         key: const Key('settings_knowledge_base_tile'),
                         icon: ClaudeIcons.chip,
@@ -160,6 +159,7 @@ class SettingsPage extends StatelessWidget {
                       ),
                       SwitchSettingTile(
                         key: const Key('settings_title_generation_tile'),
+                        icon: ClaudeIcons.tag,
                         title: l10n.titleGenerationEntry,
                         subtitle: l10n.titleGenerationHint,
                         value: titleGenerator.enabled,
@@ -181,7 +181,9 @@ class SettingsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: ClaudeSpacing.lg),
+                _ToolsSection(),
+                const SizedBox(height: ClaudeSpacing.lg),
                 SettingsSection(
                   title: l10n.settingsSectionAbout,
                   child: SettingsTileList(
@@ -619,10 +621,15 @@ class _ChatTimeoutSheetState extends State<_ChatTimeoutSheet> {
 
 /// The three built-in tools, each on its own switch.
 ///
-/// They live in settings rather than only in the knowledge page because two
-/// of the three have nothing to do with the knowledge base. They used to sit
-/// behind the knowledge base's "is there anything to search" check, which
-/// meant choosing no embedding model took the calculator away with it.
+/// A section of its own rather than rows inside the model section. They lived
+/// inline there before, which meant they had to draw their own title, their
+/// own hint and their own dividers to match a list built for icon rows — the
+/// most visible part of the settings page looking like an afterthought.
+///
+/// They are here and not only in the knowledge page because two of the three
+/// have nothing to do with the knowledge base. They used to sit behind its
+/// "is there anything to search" check, which meant choosing no embedding
+/// model took the calculator away with it.
 class _ToolsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -631,7 +638,7 @@ class _ToolsSection extends StatelessWidget {
     final settings = provider.toolSettings;
     final active = provider.activeTools;
 
-    Widget row(BuiltinTool tool, String title, String hint) {
+    Widget row(BuiltinTool tool, IconData icon, String title, String hint) {
       final on = settings.isEnabled(tool);
       // A switch that is on but cannot fire is the worst kind: it says the
       // tool is available and then nothing happens. Said outright instead.
@@ -641,6 +648,7 @@ class _ToolsSection extends StatelessWidget {
           !active.contains(BuiltinTool.knowledgeSearch);
       return SwitchSettingTile(
         key: Key('tool_switch_${tool.wireName}'),
+        icon: icon,
         title: title,
         subtitle: unavailable ? l10n.toolsKnowledgeUnavailable : hint,
         value: on,
@@ -648,37 +656,21 @@ class _ToolsSection extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SettingsSection(
+      title: l10n.toolsTitle,
+      subtitle: l10n.toolsHint,
+      child: SettingsTileList(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(
-              l10n.toolsTitle,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text(
-              l10n.toolsHint,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          row(BuiltinTool.clock, l10n.toolsClock, l10n.toolsClockHint),
+          row(BuiltinTool.clock, ClaudeIcons.clock, l10n.toolsClock, l10n.toolsClockHint),
           row(
             BuiltinTool.calculator,
+            ClaudeIcons.calculator,
             l10n.toolsCalculator,
             l10n.toolsCalculatorHint,
           ),
           row(
             BuiltinTool.knowledgeSearch,
+            ClaudeIcons.chip,
             l10n.toolsKnowledge,
             l10n.toolsKnowledgeHint,
           ),

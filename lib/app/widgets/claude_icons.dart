@@ -151,6 +151,13 @@ class ClaudeIcons {
   /// A file.
   static IconData get file => const IconData(0xe927, fontFamily: family);
 
+  /// Arithmetic the model can run.
+  static IconData get calculator =>
+      const IconData(0xe92b, fontFamily: family);
+
+  /// A generated title.
+  static IconData get tag => const IconData(0xe92c, fontFamily: family);
+
   /// A text document.
   static IconData get fileText => const IconData(0xe928, fontFamily: family);
 
@@ -416,6 +423,18 @@ class ClaudeIcons {
     0xe929: <SvgPathData>[
       SvgPathData(
         'M12 13L12 21M8 17L12 21L16 17M4 16.4641C2.7624 15.7496 2 14.4291 2 13C2 10.7909 3.7909 9 6 9C6 5.6863 8.6863 3 12 3C15.3137 3 18 5.6863 18 9C20.2091 9 22 10.7909 22 13C22 14.4291 21.2376 15.7496 20 16.4641',
+      ),
+    ],
+    /// An arithmetic expression.
+    0xe92b: <SvgPathData>[
+      SvgPathData(
+        'M5 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3ZM8 7H16M8 11H16M8 15H11M14 15H16',
+      ),
+    ],
+    /// A generated title.
+    0xe92c: <SvgPathData>[
+      SvgPathData(
+        'M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22H5.17226L2 22L2 12ZM12 8V16M8 12H16',
       ),
     ],
     0xe92a: <SvgPathData>[

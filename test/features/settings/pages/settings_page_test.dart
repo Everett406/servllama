@@ -15,6 +15,8 @@ import 'package:servllama/app/providers/app_theme_mode_provider.dart';
 import 'package:servllama/app/providers/system_prompt_provider.dart';
 import 'package:servllama/features/downloads/providers/download_provider.dart';
 import 'package:servllama/features/settings/pages/settings_page.dart';
+import 'package:servllama/shared/widgets/settings_menu_tile.dart';
+import 'package:servllama/shared/widgets/switch_setting_tile.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -182,6 +184,81 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Vela'), findsOneWidget);
+    });
+  });
+
+  // The complaint that started this: some rows had an icon and some did not,
+  // and the ones that did not were bolder. Both were true and both were bugs
+  // — a column of settings where half the rows are a different design.
+  group('row consistency', () {
+    Future<void> pumpSettings(WidgetTester tester) async {
+      _useTallSurface(tester);
+      await tester.pumpWidget(
+        _TestHost(
+          themeProvider: AppThemeModeProvider(kvStorage: KvStorage()),
+          localeProvider: AppLocaleProvider(kvStorage: KvStorage()),
+          chatTimeoutProvider: ChatTimeoutProvider(kvStorage: KvStorage()),
+          systemPromptProvider: SystemPromptProvider(kvStorage: KvStorage()),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('every switch row carries an icon', (tester) async {
+      await pumpSettings(tester);
+
+      final rows = tester
+          .widgetList<SwitchSettingTile>(find.byType(SwitchSettingTile))
+          .toList();
+      expect(rows, isNotEmpty, reason: 'no switch rows on the page at all');
+      for (final row in rows) {
+        expect(
+          row.icon,
+          isNotNull,
+          reason: 'a switch row with no icon sits beside icon menu rows',
+        );
+      }
+    });
+
+    testWidgets('a switch row is not bolder than a menu row', (tester) async {
+      await pumpSettings(tester);
+
+      // Read the rendered weight rather than the source: a token change would
+      // move both and the test would still pass.
+      FontWeight? weightOf(Finder row) => tester
+          .widget<Text>(
+            find.descendant(of: row, matching: find.byType(Text)).first,
+          )
+          .style
+          ?.fontWeight;
+
+      expect(find.byType(SwitchSettingTile), findsWidgets);
+      expect(find.byType(SettingsMenuTile), findsWidgets);
+
+      expect(
+        weightOf(find.byType(SwitchSettingTile).first),
+        weightOf(find.byType(SettingsMenuTile).first),
+        reason: 'two weights in one column is what made the page look uneven',
+      );
+    });
+
+    testWidgets('the tool switches sit in a section of their own', (
+      tester,
+    ) async {
+      await pumpSettings(tester);
+
+      expect(find.text('工具调用'), findsOneWidget);
+      for (final tool in <String>[
+        'current_time',
+        'calculator',
+        'knowledge_search',
+      ]) {
+        expect(
+          find.byKey(Key('tool_switch_$tool')),
+          findsOneWidget,
+          reason: '$tool has no row',
+        );
+      }
     });
   });
 }

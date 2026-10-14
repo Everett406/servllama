@@ -114,7 +114,7 @@ void main() {
         'more', 'slash', 'penSquare', 'archive', 'chevronDown',
         'error', 'security', 'key', 'folderOpen', 'wifi', 'route', 'timer',
         'star', 'smartphone', 'receipt', 'palette', 'language', 'package',
-        'file', 'fileText', 'cloudDownload', 'broom',
+        'file', 'fileText', 'cloudDownload', 'broom', 'calculator', 'tag',
       ];
       expect(names.toSet(), hasLength(ClaudeIcons.paths.length));
 
