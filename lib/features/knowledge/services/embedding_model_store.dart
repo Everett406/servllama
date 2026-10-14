@@ -173,11 +173,27 @@ class EmbeddingModelStore {
       }
     }
 
-    models.sort((a, b) {
-      if (a.custom != b.custom) return a.custom ? 1 : -1;
-      return a.sizeBytes.compareTo(b.sizeBytes);
-    });
+    models.sort(compareForPicking);
     return models;
+  }
+
+  /// Embedding models first, then the rest, each group by size.
+  ///
+  /// A library usually holds one embedder and a dozen chat models. Sorting by
+  /// size or by name puts the one the user came for somewhere in the middle
+  /// of a long list, which is the problem the picker is supposed to solve.
+  ///
+  /// A chat GGUF still shows up — an embedding model is not required to have
+  /// "embed" in its name, and hiding it would make it unselectable. It is
+  /// marked instead.
+  static int compareForPicking(
+    InstalledEmbeddingModel a,
+    InstalledEmbeddingModel b,
+  ) {
+    final aLooks = a.looksLikeEmbeddingModel;
+    final bLooks = b.looksLikeEmbeddingModel;
+    if (aLooks != bLooks) return aLooks ? -1 : 1;
+    return a.sizeBytes.compareTo(b.sizeBytes);
   }
 
   /// Every GGUF in the chat model library that could plausibly embed.

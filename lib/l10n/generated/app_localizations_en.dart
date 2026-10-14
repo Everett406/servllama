@@ -782,7 +782,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeModelMayNotEmbed =>
-      'This file does not look like an embedding model. Pointing a chat GGUF at /v1/embeddings produces errors or zeros, and both read as \"the search found nothing\".';
+      'May not embed — picking it might not work';
 
   @override
   String get knowledgeUseOwnModel => 'Use my own GGUF';
@@ -2050,4 +2050,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String knowledgeDocumentsCount(int count) {
     return '$count documents';
   }
+
+  @override
+  String get knowledgeChooseModel => 'Embedding model';
+
+  @override
+  String get knowledgeChooseModelAction => 'Pick from library';
+
+  @override
+  String knowledgeModelFromLibrary(int count) {
+    return '$count models available';
+  }
+
+  @override
+  String get knowledgeModelLibraryEmpty =>
+      'The model library is empty. Download an embedding model first.';
+
+  @override
+  String get knowledgeModelLooksLikeEmbedding =>
+      'Looks like an embedding model';
 }

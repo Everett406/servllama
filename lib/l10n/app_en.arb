@@ -368,7 +368,7 @@
   "knowledgeModelInUse": "In use",
   "knowledgeModelDownload": "Download",
   "knowledgeModelUnknownSize": "Vector width unknown until it is measured against an index.",
-  "knowledgeModelMayNotEmbed": "This file does not look like an embedding model. Pointing a chat GGUF at /v1/embeddings produces errors or zeros, and both read as \"the search found nothing\".",
+  "knowledgeModelMayNotEmbed": "May not embed — picking it might not work",
   "knowledgeUseOwnModel": "Use my own GGUF",
   "knowledgeUseOwnModelHint": "Any GGUF an embedding model was converted to. It is copied into the app so moving the original later cannot break the index.",
   "knowledgeAllowLookup": "Let chat look things up",
@@ -1109,5 +1109,18 @@
         "type": "int"
       }
     }
-  }
+  },
+  "knowledgeChooseModel": "Embedding model",
+  "knowledgeChooseModelAction": "Pick from library",
+  "knowledgeModelFromLibrary": "{count} models available",
+  "@knowledgeModelFromLibrary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "@count": "int"
+  },
+  "knowledgeModelLibraryEmpty": "The model library is empty. Download an embedding model first.",
+  "knowledgeModelLooksLikeEmbedding": "Looks like an embedding model"
 }

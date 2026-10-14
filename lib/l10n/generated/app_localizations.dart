@@ -1484,7 +1484,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeModelMayNotEmbed.
   ///
   /// In en, this message translates to:
-  /// **'This file does not look like an embedding model. Pointing a chat GGUF at /v1/embeddings produces errors or zeros, and both read as \"the search found nothing\".'**
+  /// **'May not embed — picking it might not work'**
   String get knowledgeModelMayNotEmbed;
 
   /// No description provided for @knowledgeUseOwnModel.
@@ -3628,6 +3628,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} documents'**
   String knowledgeDocumentsCount(int count);
+
+  /// No description provided for @knowledgeChooseModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedding model'**
+  String get knowledgeChooseModel;
+
+  /// No description provided for @knowledgeChooseModelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick from library'**
+  String get knowledgeChooseModelAction;
+
+  /// No description provided for @knowledgeModelFromLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} models available'**
+  String knowledgeModelFromLibrary(int count);
+
+  /// No description provided for @knowledgeModelLibraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The model library is empty. Download an embedding model first.'**
+  String get knowledgeModelLibraryEmpty;
+
+  /// No description provided for @knowledgeModelLooksLikeEmbedding.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like an embedding model'**
+  String get knowledgeModelLooksLikeEmbedding;
 }
 
 class _AppLocalizationsDelegate

@@ -751,8 +751,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeModelUnknownSize => '向量宽度未知，要等实际跑一次才知道。';
 
   @override
-  String get knowledgeModelMayNotEmbed =>
-      '这个文件看起来不是嵌入模型。把聊天 GGUF 指向 /v1/embeddings 会报错或者返回全零，而这两者看起来都像「搜不到」。';
+  String get knowledgeModelMayNotEmbed => '可能不是嵌入模型，选了不一定能用';
 
   @override
   String get knowledgeUseOwnModel => '用我自己的 GGUF';
@@ -1942,4 +1941,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String knowledgeDocumentsCount(int count) {
     return '$count 份文档';
   }
+
+  @override
+  String get knowledgeChooseModel => '选择嵌入模型';
+
+  @override
+  String get knowledgeChooseModelAction => '去模型库选';
+
+  @override
+  String knowledgeModelFromLibrary(int count) {
+    return '$count 个模型可选';
+  }
+
+  @override
+  String get knowledgeModelLibraryEmpty => '模型库是空的。先去下载一个嵌入模型。';
+
+  @override
+  String get knowledgeModelLooksLikeEmbedding => '看起来是嵌入模型';
 }

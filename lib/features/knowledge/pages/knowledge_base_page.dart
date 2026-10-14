@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,14 +7,15 @@ import 'package:servllama/app/app_theme.dart';
 import 'package:servllama/app/design/tokens.dart';
 import 'package:servllama/app/widgets/claude_icons.dart';
 import 'package:servllama/core/providers/knowledge_base_provider.dart';
-import 'package:servllama/features/knowledge/models/embedding_model_descriptor.dart';
+import 'package:servllama/core/providers/model_management_provider.dart';
+import 'package:servllama/app/sheet/vela_sheet.dart';
+import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/features/knowledge/models/retrieval_settings.dart';
 import 'package:servllama/features/knowledge/services/embedding_model_store.dart';
 import 'package:servllama/features/knowledge/pages/knowledge_documents_page.dart';
 import 'package:servllama/features/knowledge/services/knowledge_index.dart';
 import 'package:servllama/l10n/generated/app_localizations.dart';
 import 'package:servllama/l10n/l10n.dart';
-import 'package:servllama/shared/widgets/settings_menu_tile.dart';
 import 'package:servllama/shared/widgets/switch_setting_tile.dart';
 
 /// The knowledge base: the embedding model, the documents, and how much of
@@ -41,6 +44,21 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
     if (!provider.isLoaded) {
       provider.load();
     }
+    // Load the chat library too, then rescan. The embedding candidates come
+    // from there, and "the model is in my library but the knowledge base says
+    // it has none" is exactly what happens when this page scans an empty
+    // repository.
+    final library = context.read<ModelManagementProvider>();
+    unawaited(
+      library
+          .load()
+          .then((_) => provider.refreshModels())
+          .catchError((Object _) {
+            // A library that will not load is not a reason to leave the
+            // knowledge base page unusable; the scan simply finds whatever
+            // else it can.
+          }),
+    );
   }
 
   @override
@@ -64,17 +82,6 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
       if (path == null) continue;
       await provider.importFile(path: path);
     }
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _pickModelFile() async {
-    final provider = context.read<KnowledgeBaseProvider>();
-    final picked = await FilePicker.platform.pickFiles(
-      type: FileType.any,
-    );
-    final path = picked?.files.single.path;
-    if (path == null) return;
-    await provider.adoptModelFile(path);
     if (mounted) setState(() {});
   }
 
@@ -109,7 +116,7 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
             ClaudeSpacing.xl,
           ),
           children: [
-            _ModelSection(provider: provider, onPickFile: _pickModelFile),
+            _ModelSection(provider: provider),
             const SizedBox(height: ClaudeSpacing.lg),
             _RetrievalSection(provider: provider),
             const SizedBox(height: ClaudeSpacing.lg),
@@ -142,11 +149,22 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
 
 // ---- embedding model ----------------------------------------------------
 
+/// Picks the embedding model out of the model library, the same way the chat
+/// page picks a chat model.
+///
+/// It used to be a section of its own with three built-in downloads and a
+/// file picker, and that was wrong twice over. It hid the models the user
+/// already had — a `Qwen3-Embedding` sitting in the library was invisible
+/// here, and the only way to reach it was the system file picker for a file
+/// the app was already holding. And it made the knowledge base look like it
+/// had a second, separate model world, when there is one list.
+///
+/// So: no presets, no import. The model library is the only place a model
+/// comes from, and it already has search and filters.
 class _ModelSection extends StatelessWidget {
-  const _ModelSection({required this.provider, required this.onPickFile});
+  const _ModelSection({required this.provider});
 
   final KnowledgeBaseProvider provider;
-  final VoidCallback onPickFile;
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +174,7 @@ class _ModelSection extends StatelessWidget {
     return _Card(
       title: l10n.knowledgeModelTitle,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (selected == null)
             Text(
@@ -168,26 +186,110 @@ class _ModelSection extends StatelessWidget {
           else
             _SelectedModelRow(model: selected, provider: provider),
           const SizedBox(height: ClaudeSpacing.sm),
-          for (final descriptor in EmbeddingModelDescriptor.all)
-            _BuiltInModelRow(
-              descriptor: descriptor,
-              provider: provider,
-              onPickFile: onPickFile,
+          SettingsMenuTile(
+            key: const Key('knowledge_choose_model'),
+            icon: ClaudeIcons.chip,
+            title: l10n.knowledgeChooseModel,
+            value: selected?.name ?? l10n.knowledgeChooseModelAction,
+            onTap: provider.isBusy
+                ? null
+                : () => _pickFromLibrary(context, provider),
+          ),
+          if (provider.models.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: ClaudeSpacing.sm),
+              child: Text(
+                l10n.knowledgeModelFromLibrary(provider.models.length),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.inkTertiary,
+                ),
+              ),
             ),
-          const SizedBox(height: ClaudeSpacing.xs),
-          OutlinedButton.icon(
-            key: const Key('knowledge_use_own_model_button'),
-            onPressed: provider.isBusy ? null : onPickFile,
-            icon: ClaudeIcon(ClaudeIcons.chip, size: 16),
-            label: Text(l10n.knowledgeUseOwnModel),
-          ),
-          Text(
-            l10n.knowledgeUseOwnModelHint,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: context.inkTertiary),
-          ),
+          if (provider.models.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: ClaudeSpacing.sm),
+              child: Text(
+                l10n.knowledgeModelLibraryEmpty,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.inkTertiary,
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  /// The library list, in the sheet the chat page uses.
+  static Future<void> _pickFromLibrary(
+    BuildContext context,
+    KnowledgeBaseProvider provider,
+  ) async {
+    final l10n = context.l10n;
+    final library = context.read<ModelManagementProvider>();
+    unawaited(library.load());
+    final installed = provider.models;
+    if (installed.isEmpty) return;
+
+    // Already ordered by [EmbeddingModelStore.compareForPicking]: embedding
+    // models first.
+
+    await showVelaSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ClaudeSpacing.lg,
+                ClaudeSpacing.md,
+                ClaudeSpacing.lg,
+                ClaudeSpacing.sm,
+              ),
+              child: Text(
+                l10n.knowledgeChooseModel,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final model in installed)
+                    ListTile(
+                      key: Key('knowledge_model_${model.id}'),
+                      title: Text(model.name, maxLines: 1),
+                      subtitle: Text(
+                        model.looksLikeEmbeddingModel
+                            ? l10n.knowledgeModelLooksLikeEmbedding
+                            : l10n.knowledgeModelMayNotEmbed,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.inkTertiary,
+                        ),
+                      ),
+                      trailing: provider.selectedModel?.path == model.path
+                          ? Icon(
+                              Icons.check_rounded,
+                              size: 19,
+                              color: context.accent,
+                            )
+                          : null,
+                      selected: provider.selectedModel?.path == model.path,
+                      onTap: () async {
+                        await provider.selectModel(model);
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -264,92 +366,6 @@ class _SelectedModelRow extends StatelessWidget {
               key: const Key('knowledge_rebuild_button'),
               onPressed: provider.isBusy ? null : provider.rebuild,
               child: Text(l10n.knowledgeRebuild),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BuiltInModelRow extends StatelessWidget {
-  const _BuiltInModelRow({
-    required this.descriptor,
-    required this.provider,
-    required this.onPickFile,
-  });
-
-  final EmbeddingModelDescriptor descriptor;
-  final KnowledgeBaseProvider provider;
-  final VoidCallback onPickFile;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final installed = provider.models
-        .where((model) => model.id == descriptor.id)
-        .firstOrNull;
-    final isSelected = provider.selectedModel?.id == descriptor.id;
-    final progress = provider.downloadProgress;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: ClaudeSpacing.xs),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      descriptor.name,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '${descriptor.dimensions} 维 · '
-                      '${(descriptor.approxBytes / 1024 / 1024).round()} MB',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.inkTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                Text(
-                  l10n.knowledgeModelInUse,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: context.accent),
-                )
-              else if (installed != null)
-                TextButton(
-                  key: Key('knowledge_select_${descriptor.id}'),
-                  onPressed: () => provider.selectModel(installed),
-                  child: Text(l10n.knowledgeModelUse),
-                )
-              else
-                TextButton(
-                  key: Key('knowledge_download_${descriptor.id}'),
-                  onPressed: provider.isBusy
-                      ? null
-                      : () => provider.downloadModel(descriptor),
-                  child: Text(l10n.knowledgeModelDownload),
-                ),
-              if (installed != null)
-                IconButton(
-                  tooltip: l10n.commonDelete,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => provider.deleteModel(installed),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                ),
-            ],
-          ),
-          if (progress != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: LinearProgressIndicator(value: progress),
             ),
         ],
       ),

@@ -130,4 +130,46 @@ void main() {
     // No throw. A library that cannot be read is a reason to offer the
     // downloads, not a reason to have no way to set a model at all.
   });
+  group('ordering for the picker', () {
+    InstalledEmbeddingModel model(String name, int size) =>
+        InstalledEmbeddingModel(
+          id: name,
+          name: name,
+          path: '/models/$name.gguf',
+          sizeBytes: size,
+        );
+
+    test('an embedding model comes before a chat model, however big', () {
+      final sorted = <InstalledEmbeddingModel>[
+        // The realistic case: a 4 GB chat model and a 26 MB embedder.
+        model('Qwen3-8B-Q4_K_M', 4 * 1024 * 1024 * 1024),
+        model('bge-small-zh-v1.5-q8_0', 26 * 1024 * 1024),
+      ]..sort(EmbeddingModelStore.compareForPicking);
+
+      expect(
+        sorted.first.name,
+        'bge-small-zh-v1.5-q8_0',
+        reason: 'the model the user came for must not be below twenty chat ones',
+      );
+    });
+
+    test('an embedding model is still offered even without "embed" in its name', () {
+      // Filtered out of the list is unselectable, and unselectable looks
+      // exactly like absent.
+      final odd = model('my-own-encoder', 26 * 1024 * 1024);
+      expect(odd.looksLikeEmbeddingModel, isFalse);
+      // Listed, marked, and a click away — never hidden.
+      expect(odd.id, isNotEmpty);
+    });
+
+    test('within a group the smaller model comes first', () {
+      final sorted = <InstalledEmbeddingModel>[
+        model('bge-base-zh-v1.5', 105 * 1024 * 1024),
+        model('bge-small-zh-v1.5', 26 * 1024 * 1024),
+      ]..sort(EmbeddingModelStore.compareForPicking);
+
+      expect(sorted.first.name, 'bge-small-zh-v1.5');
+    });
+  });
+
 }

@@ -833,7 +833,7 @@
   "knowledgeModelInUse": "使用中",
   "knowledgeModelDownload": "下载",
   "knowledgeModelUnknownSize": "向量宽度未知，要等实际跑一次才知道。",
-  "knowledgeModelMayNotEmbed": "这个文件看起来不是嵌入模型。把聊天 GGUF 指向 /v1/embeddings 会报错或者返回全零，而这两者看起来都像「搜不到」。",
+  "knowledgeModelMayNotEmbed": "可能不是嵌入模型，选了不一定能用",
   "knowledgeUseOwnModel": "用我自己的 GGUF",
   "knowledgeUseOwnModelHint": "任何被转换成 GGUF 的嵌入模型。会被复制进应用，这样之后移动原文件不会把索引搞坏。",
   "knowledgeAllowLookup": "允许对话检索",
@@ -883,5 +883,18 @@
         "type": "int"
       }
     }
-  }
+  },
+  "knowledgeChooseModel": "选择嵌入模型",
+  "knowledgeChooseModelAction": "去模型库选",
+  "knowledgeModelFromLibrary": "{count} 个模型可选",
+  "@knowledgeModelFromLibrary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "@count": "int"
+  },
+  "knowledgeModelLibraryEmpty": "模型库是空的。先去下载一个嵌入模型。",
+  "knowledgeModelLooksLikeEmbedding": "看起来是嵌入模型"
 }
