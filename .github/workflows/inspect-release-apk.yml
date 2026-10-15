@@ -102,6 +102,14 @@ jobs:
 
       # The central directory records a CRC per entry, so a good extraction can
       # be confirmed against the manifest rather than trusted.
+      #
+      # This has to be zlib's CRC-32, not `cksum`. `cksum` implements the
+      # POSIX CRC-32 (polynomial 0x04C11DB7 applied MSB-first, no final XOR),
+      # while zip entries use the reflected CRC-32/ISO-HDLC that zlib computes.
+      # They are different values for the same bytes, so using `cksum` here
+      # reports every file in the archive as corrupt — which is exactly what
+      # it did on the first run, and looked alarming right up until
+      # libMNN.so, a file this had nothing to do with, "failed" too.
       - name: Confirm every extracted file matches its recorded CRC-32
         run: |
           set -euo pipefail
@@ -110,17 +118,32 @@ jobs:
           unzip -lv "$apk" 'lib/arm64-v8a/*' | awk '$NF ~ /^lib\// { print $7, $NF }' \
             > /tmp/expected-crc.txt
           cat /tmp/expected-crc.txt
-          fail=0
-          while read -r crc name; do
-            base="$(basename "$name")"
-            got="$(cksum "unpacked/lib/arm64-v8a/$base" | awk '{printf "%08x", $1}')"
-            if [ "$got" != "$crc" ]; then
-              echo "::error::CRC mismatch for $base: got $got, manifest says $crc"
-              fail=1
-            fi
-          done < /tmp/expected-crc.txt
-          [ "$fail" -eq 0 ] || exit 1
-          echo "all native libraries verified against the manifest"
+          python3 - <<'PY'
+          import binascii, sys, pathlib
+
+          bad = 0
+          checked = 0
+          for line in open('/tmp/expected-crc.txt'):
+              line = line.strip()
+              if not line:
+                  continue
+              crc, name = line.split(None, 1)
+              path = pathlib.Path('unpacked') / name
+              if not path.is_file():
+                  print(f'::error::{name} was not extracted')
+                  bad += 1
+                  continue
+              got = format(binascii.crc32(path.read_bytes()) & 0xffffffff, '08x')
+              checked += 1
+              if got != crc.lower():
+                  print(f'::error::CRC mismatch for {name}: got {got}, manifest says {crc}')
+                  bad += 1
+          print(f'checked {checked} librar{"y" if checked == 1 else "ies"}')
+          if bad:
+              print(f'::error::{bad} librar{"y" if bad == 1 else "ies"} failed verification')
+              sys.exit(1)
+          print('all native libraries verified against the manifest')
+          PY
 
       - name: Inventory
         run: |
