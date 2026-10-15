@@ -45,9 +45,15 @@
 - OpenCL (`libggml-opencl.so`) and Hexagon (`libggml-hexagon.so` + `libggml-htp-v*.so`) are part of the Snapdragon bundle. Do not NDK-strip the HTP kernels.
 - Hexagon empty-device fix is a project patch on llama.cpp **v0.4.1**: `patches/llama.cpp/0001-hexagon-skip-unsupported-devices.patch`.
 - Offered llama.cpp backends are `ServerLaunchSettings.supportedLlamaCppBackends`, which currently lists CPU, OpenCL and Hexagon. The device probe only enables or disables entries in that list.
-- **Whether OpenCL and Hexagon actually work on a given device is unverified.** The release
-  APK has never been unpacked intact, so it has never been confirmed whether the shipped
-  `lib/arm64-v8a/` contains a real OpenCL driver or the NDK stub. See `HANDOFF.md`. Do not
+- **What the published APK contains is verified; what it does on a device is not.**
+  `inspect-release-apk.yml` downloads the release asset, verifies it against the published
+  `SHA256SUMS.txt`, and confirms every native library against the CRC-32 in the archive
+  manifest. As of v1.27.0 that establishes: `libggml-opencl.so` (3,578,176 B),
+  `libggml-hexagon.so` (899,240 B) and four `libggml-htp-v*.so` (769 KB–852 KB, ELF
+  QUALCOMM DSP6) are all shipped, and all are real libraries, not NDK stubs.
+  `libOpenCL.so` is absent by design — it is a vendor system library on Android, and
+  `libggml-opencl.so` takes it from `/vendor/lib64` via `LD_LIBRARY_PATH`.
+  **Whether either accelerator actually runs on a given phone remains unverified.** Do not
   write in any doc or commit message that either works, or that either does not.
 - When updating llama-server, replace the `.so` files AND sync the version in `assets/bin/llama_server_manifest.json`. The manifest is display-only (About page) and is not validated against the binaries.
 
@@ -78,8 +84,20 @@
 
 ## Development and Verification
 
-- Run `flutter analyze` before submitting changes.
+- **Run `tool/verify.sh` before committing.** It runs `flutter analyze`, the test
+  suite against a baseline of known failures, the layering guards below, and a
+  structural check on the workflows. Use `--fast` to skip the test suite.
+- `tool/verify.sh` failing on something you did not touch is information about
+  the baseline, not a reason to stop: fix the code, or regenerate the baselines
+  with `--update` once the change is deliberate. See `tool/README.md`.
+- **The rules in this file are enforced where they are cheap to enforce.** The
+  layering rules map to `tool/known_architecture_violations.txt`: existing
+  violations are baselined, and a new one fails the build. `pubspec.yaml`
+  being the only version source is likewise checked. The rest are still prose.
 - Prefer adding unit tests when changing business logic.
 - Add the minimum necessary widget tests when changing page interactions.
 - Do not manually edit generated files, including `*.g.dart` and `lib/l10n/generated/*`.
 - Do not perform unrelated refactors. When touching old code, only bring it closer to the standard within the scope of the current change.
+- `python3 tool/lib/dead_code.py` lists declarations nothing references.
+  Deleting one is safe with respect to the build, but it is still a decision
+  about whether the component is wanted back.

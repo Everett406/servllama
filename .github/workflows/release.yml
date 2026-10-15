@@ -144,6 +144,15 @@ jobs:
           echo "Staged $count native libraries:"
           ls -la "$jni"
 
+      # The release checklist has always said "flutter analyze must be clean"
+      # and "only the known failures". Until now that was enforced by whoever
+      # happened to remember it locally, on a build that did not even have the
+      # analyzer in it. This is the same gate the verify workflow runs, run
+      # before anything is built: a regression here stops the release instead
+      # of being noticed three versions later.
+      - name: Verify analyze, tests and layering
+        run: ./tool/verify.sh
+
       - name: Build signed release APK
         # No --split-per-abi: the app pins ndk.abiFilters to arm64-v8a
         # because the llama-server binaries are arm64-only, and Gradle

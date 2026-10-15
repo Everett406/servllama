@@ -169,3 +169,7 @@ android/app/src/main/jniLibs/**/*.so
 
 # Vendored gpt_markdown is a path dependency, not a fetch.
 packages/**/pubspec.lock
+
+# Python bytecode from tool/lib
+__pycache__/
+*.pyc

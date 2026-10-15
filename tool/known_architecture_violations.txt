@@ -1,0 +1,33 @@
+# Known architecture violations, with how many offending imports each has.
+#
+# PROVENANCE: measured by `tool/check_architecture.sh` against the tree at
+# v1.27.0 plus the working set for v1.28.0. Unlike the test baseline this one
+# was measured, not transcribed, because the check is grep and needs no
+# Flutter.
+#
+# These are pre-existing and knowingly tolerated, not endorsed. Each is here
+# so that the guard starts green and only turns red on a *new* violation —
+# which is the only way a check like this survives contact with a real
+# codebase. Removing one is a win: delete its line here in the same commit.
+#
+# Format: <file path><TAB><offending import count>
+# Blank lines and lines starting with # are ignored.
+#
+# lib/core/providers/knowledge_base_provider.dart
+#   The KnowledgeBaseProvider lives in core/ but owns the whole knowledge
+#   feature: EmbeddingServer (a child process), EmbeddingModelStore,
+#   KnowledgeBaseService, KnowledgeIndex, plus the retrieval settings, plus
+#   chat's builtin_tools. AGENTS.md says core/ is for foundation shared across
+#   features, and that the state layer must not own low-level resource
+#   details. Both are currently false here. Moving it under
+#   lib/features/knowledge/ is the fix; it was left alone because it is a
+#   large refactor that could not be checked without a Flutter toolchain.
+#
+# lib/shared/l10n/runtime_labels.dart
+#   Localisation labels built from downloads models and services. Reasonable
+#   in isolation — the strings genuinely describe download state — but it
+#   means lib/shared/ is not independent of a feature, so anything shared can
+#   acquire a downloads dependency transitively.
+
+lib/core/providers/knowledge_base_provider.dart	7
+lib/shared/l10n/runtime_labels.dart	5

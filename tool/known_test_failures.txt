@@ -1,0 +1,22 @@
+# Known-failing test files and how many failures each is expected to have.
+#
+# PROVENANCE: these counts are transcribed from HANDOFF.md as of v1.27.0.
+# They have not been re-measured, because the machine this was written on has
+# no Flutter toolchain. Treat them as "the documented state", and regenerate
+# with `tool/verify.sh --update` the first time you run it where Flutter
+# exists. Until then a genuine regression in one of these files shows up as a
+# count *above* the number here, which is still the signal that matters.
+#
+# Format: <test file path><TAB><expected failure count>
+# Blank lines and lines starting with # are ignored.
+#
+# The comparison is per-file rather than on the total. "21 failures" is the
+# same number both when nothing regressed and when one file got worse and
+# another got better, so a total cannot tell a clean run from a dirty one.
+# Counting by file can: a new file in the report, or a count above the one
+# below, fails.
+
+test/features/chat/pages/chat_page_test.dart	18
+test/core/services/server_launch_args_builder_test.dart	1
+test/features/about/pages/about_page_test.dart	1
+test/features/server/pages/server_page_test.dart	1
