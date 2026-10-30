@@ -10,7 +10,7 @@
   <p><strong>Your phone is the server. Nothing leaves the device.</strong></p>
 
   <p>
-    <a href="https://github.com/Everett406/servllama/releases/latest">
+    <a href="https://gitee.com/Everett5678/servllama/releases/tag/v1.27.0">
       <img alt="Download the latest release" src="https://img.shields.io/badge/Download-Latest_Release-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
     </a>
   </p>
@@ -113,7 +113,7 @@ smaller model if unsure.
 ## Quick start
 
 1. Install the latest APK from
-   [GitHub Releases](https://github.com/Everett406/servllama/releases/latest).
+   [GitHub Releases](https://gitee.com/Everett5678/servllama/releases/tag/v1.27.0).
 2. Open the model library. Download from Hugging Face or ModelScope, or import a local GGUF
    or MNN model.
 3. Pick an engine and a model from the Chat or Server page.
@@ -181,7 +181,7 @@ on a given device is a separate question this project has **not** verified on ha
 Flutter with Dart 3.9, Android SDK, JDK 17.
 
 ```bash
-git clone https://github.com/Everett406/servllama.git
+git clone https://gitee.com/Everett5678/servllama.git
 cd servllama
 flutter pub get
 flutter build apk --release
