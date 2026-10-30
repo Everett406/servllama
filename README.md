@@ -1,9 +1,9 @@
----
 
 > [!NOTE]
 > **本仓库已迁移至 Gitee**：<https://gitee.com/Everett5678/servllama>
 > GitHub 端仅作只读归档，新代码请推送到 Gitee。
 
+---
 <div align="center">
   <img src="assets/app_icon.svg" alt="Vela icon" width="112" />
   <h1>Vela</h1>
