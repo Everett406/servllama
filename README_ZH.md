@@ -4,7 +4,7 @@
   <p><strong>你的手机就是服务器，数据不离开设备</strong></p>
 
   <p>
-    <a href="https://github.com/Everett406/servllama/releases/latest">
+    <a href="https://gitee.com/Everett5678/servllama/releases/tag/v1.27.0">
       <img alt="下载最新版本" src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
     </a>
   </p>
@@ -90,7 +90,7 @@ API，同一台手机或同一局域网里的其他应用都能调用。
 
 ## 快速开始
 
-1. 从 [GitHub Releases](https://github.com/Everett406/servllama/releases/latest) 装最新的 APK。
+1. 从 [GitHub Releases](https://gitee.com/Everett5678/servllama/releases/tag/v1.27.0) 装最新的 APK。
 2. 打开模型库。从 Hugging Face 或 ModelScope 下载，或导入本地 GGUF / MNN 模型。
 3. 在对话页或服务器页选引擎和模型。
 4. 启动服务器。在 Vela 里聊，或者把地址给别的客户端。
@@ -153,7 +153,7 @@ OpenCL 和 Hexagon 在具体设备上到底能不能用，是另一个问题，�
 Flutter（Dart 3.9）、Android SDK、JDK 17。
 
 ```bash
-git clone https://github.com/Everett406/servllama.git
+git clone https://gitee.com/Everett5678/servllama.git
 cd servllama
 flutter pub get
 flutter build apk --release
